@@ -9,3 +9,9 @@ devtools::install_github("MurrayEfford/ipsecr")
 ```
 
 Compilation of C++ code is required.
+
+Efford, M. G. (2004) Density estimation in live-trapping studies. *Oikos* **106**, 598--610.
+
+Efford, M. G., Dawson, D. K. and Robbins C. S. (2004) DENSITY: software
+for analysing capture-recapture data from passive detector arrays.
+*Animal Biodiversity and Conservation* **27**, 217--228.
