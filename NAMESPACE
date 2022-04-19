@@ -1,0 +1,61 @@
+# 2022-03-31, 2022-04-19
+
+import (secr)
+import (parallel)
+
+# Base R
+
+importFrom (graphics, .filled.contour, abline, arrows, contour, hist, 
+    lines, locator, mtext, par, persp, points, polygon, rect, 
+    segments, strheight, strwidth, symbols, text, legend, axis)
+importFrom (grDevices, chull, contourLines, grey, palette, 
+    terrain.colors, topo.colors, rainbow)
+importFrom (stats, AIC, approx, approxfun, as.formula, chisq.test, coef,
+    cutree, deviance, df.residual, dist, dpois,  formula, hclust,
+    integrate, lm, logLik, median, model.matrix, nlm, nls, optim,
+    optimise, optimize, pchisq, pgamma, plnorm, pnorm, poisson,
+    predict, qchisq, qnorm, rbeta, rbinom, rexp, rgamma, rlnorm, 
+    rmultinom, rnbinom, rnorm, rpois, rt, runif, rweibull, sd, 
+    simulate, smooth.spline, terms, uniroot, update, update.formula, 
+    var, vcov)
+importFrom (tools, file_ext)
+importFrom (utils, count.fields, flush.console, getS3method, head,
+    object.size, packageDescription, packageVersion, read.csv,
+    read.table, tail, write.table)   
+
+# Other packages
+
+importFrom (MASS, 
+    ginv, 
+    eqscplot)
+
+importFrom (stringr, 
+    str_pad, 
+    str_length)
+
+importFrom (nlme, 
+    "fdHess")
+
+export (ipsecr.fit)
+export (proxyfn0)
+export (proxyfn1)
+
+S3method(print, ipsecr)
+S3method(summary, ipsecr)
+S3method(print, summary.ipsecr)
+S3method(plot, ipsecr)
+S3method(predict, ipsecr)
+S3method(vcov, ipsecr)
+S3method(coef, ipsecr)
+S3method(region.N, ipsecr)
+
+S3method(makeNewData, ipsecr)
+
+importFrom (Rcpp, evalCpp)
+
+importFrom (RcppParallel, 
+    RcppParallelLibs)
+
+useDynLib (ipsecr)
+## DEBUGGING ONLY (cpp functions not documented)
+## exportPattern("*cpp")

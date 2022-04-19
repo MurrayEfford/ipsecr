@@ -1,0 +1,11 @@
+cran-comments*.txt
+ipsecrparallel.log
+knownbugs.txt
+^.*\.Rproj$
+^\.Rproj\.user$
+.build.timestamp
+ONEWS
+src\*.o
+revdep
+extraR
+

@@ -1,0 +1,326 @@
+---
+title: '**ipsecr** 1.0 - spatially explicit capture--recapture by inverse prediction'
+author: "Murray Efford"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    toc: yes
+    toc_depth: 2
+vignette: > 
+  %\VignetteIndexEntry{Spatially explicit capture--recapture by inverse prediction}
+  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+\renewcommand{\vec}[1]{\mathbf{#1}}
+
+\vspace{12pt}
+
+This document provides an overview of **ipsecr** 1.0, an R package for spatially explicit capture--recapture analysis (SECR). The parent package **secr** included the function `ip.secr`; **ipsecr** extends the capability of that function in its central function `ipsecr.fit` whose arguments are closely modelled on `secr.fit` from **secr**.
+
+# Example
+
+```{r setup, message = FALSE}
+library(ipsecr)
+setNumThreads(2)
+```
+
+The proxy function takes a capthist object as its first argument. It returns a vector of surrogate values, one for each coefficient (beta parameter) in the model. Two alternatives are provided, `proxyfn0` and `proxyfn1` (the default). For example,
+
+```{r exampleproxy}
+proxyfn0(captdata)
+proxyfn1(captdata)
+```
+
+Users are free to define their own proxyfn, and this is necessary when the model involves additional coefficients (beta parameters) as in the density trend example below.
+
+```{r examplefit, cache = TRUE}
+ip.single <- ipsecr.fit(captdata, detectfn = 'HHN', proxyfn = proxyfn1)
+predict(ip.single)
+```
+
+Changing the proxy function may have little effect on the estimates:
+```{r examplefit2, cache = TRUE}
+predict(ipsecr.fit(captdata, detectfn = 'HHN', proxyfn = proxyfn0, trace = FALSE))
+```
+
+
+```{r exampleoutput}
+ellipse.secr(ip.single, par = c('lambda0', 'sigma'), col='red')
+```
+
+
+Analyse as multi-catch in **ipsecr** and **secr**
+
+```{r examplemulti, cache = TRUE}
+ip.multi <- ipsecr.fit(captdata, detectfn = 'HHN', details = list(newdetector = 'multi', trace = FALSE))
+secr.multi <- secr.fit(captdata, detectfn = 'HHN', trace = FALSE)
+```
+
+```{r compare}
+collate(ip.single, ip.multi, secr.multi)[1,,,]
+```
+
+
+```{r examplecapped, eval = FALSE, echo = FALSE, cache = TRUE}
+# Analyse as 'capped'
+captdatac <- captdata
+detector(traps(captdatac)) <- 'capped'
+setNumThreads(1)
+ip.capped <- ipsecr.fit(captdatac, detectfn = 'HHN', trace = FALSE)
+secr.capped <- secr.fit(captdatac, detectfn = 'HHN', trace = FALSE)
+```
+
+# Sparse data
+
+```{r sparse}
+library(ipsecr)
+set.seed(123)
+grid <- make.grid(6,6, detector = 'single')
+ch <- sim.capthist(grid, popn=list(D=1, buffer=100),detectfn='HHN', 
+    detectpar = list(lambda0 = 0.1, sigma = 20), noccasions = 4)
+summary(ch)
+fit <- ipsecr.fit(ch, detectfn = 'HHN', start = list(D = 0.8, lambda0 = 0.15, sigma = 15),
+    details = list(max.nsim = 1000, devmax= 0.05), ncores = 1)
+summary(fit)
+```
+
+# Density gradient
+
+This requires covariates to be shared between the mask and traps objects. A new 
+proxy function is defined that uses the x-coordinate of the trap or mask point. 
+
+```{r Dsurfacefit, eval = FALSE, cache = TRUE}
+# note need to reference secr:: functions explicitly 
+proxy.x <- function (capthist, ...) {
+    n <- nrow(capthist)         ## number of individuals
+    ch <- abs(capthist)>0
+    nocc <- ncol(capthist)      ## number of occasions
+    ni <- apply(ch, 2, sum)     ## individuals on each occasion
+    estimates <- c(n, sum(ni)/n/nocc)
+    # proxy for x-gradient
+    trps <- secr::traps(capthist)
+    x <- secr::covariates(trps)[secr::trap(capthist, names = FALSE),, drop = FALSE ]$x0
+    dxy <- density(x, n = 64, cut = 0, from = min(x), to = max(x))
+    fitx <- coef(lm(log(y)~x, data=dxy[c('x','y')]))
+    rpsv <- secr::RPSV(capthist, CC = TRUE)
+    c(log(estimates[1]), fitx[2], estimates[2], rpsv)
+}
+setNumThreads(7)
+# define covariate 'x0' for both mask and traps
+covariates(traps(captdata)) <- data.frame(x0 = traps(captdata)$x/100)
+mask <- make.mask(traps(captdata))
+covariates(mask) <- data.frame(x0 = mask$x/100)
+ipx <- ipsecr.fit(captdata, mask = mask, detectfn = 'HHN', model = list(D~x0), 
+  proxyfn = proxy.x)
+```
+
+```{r Dsurfaceoutput, eval = FALSE}
+predict(ipx)
+plot(predictDsurface(ipx))
+plot(traps(captdata), add = TRUE)
+region.N(ipx)
+plotMaskEdge(ipx$mask, add=T)
+maskarea(ipx$mask)
+```
+
+
+# Fractional designs
+
+The package **FrF2** may be used for fractional factorial designs (Groemping, 2014). Fractional designs are probably useful only when parameters are numerous.
+
+Fractional designs are selected by setting `details = list(factorial = 'fractional')` in `ipsecr.fit`. 
+```{r, eval=FALSE}
+ipsecr.fit(captdata, details = list(factorial = 'fractional'))
+```
+
+The default is a 1/2 factorial design, illustrated by this code:
+```{r fractional, eval = FALSE, message = FALSE}
+library(FrF2)
+NP <- 3
+boxsize <- rep(0.2,3)
+design <- FrF2(2^(NP-1),NP, factor.names = c('D','lambda0','sigma'), ncenter = 2)
+data.frame(design)
+# recast factors as numeric
+design <- sapply(design, function(x) as.numeric(as.character(x)))
+design <- sweep(design, MAR=2, STATS = boxsize, FUN='*')
+design
+# apply to beta
+beta <- log(c(5,0.2,25))
+designbeta <- sweep(design, MAR=2, STATS=beta, FUN='+')
+designbeta 
+```
+
+For other designs you may specify the desired arguments of FrF2 as a list e.g., `details = list(factorial = 'fractional', FrF2args = list(nruns = 4, nfactors = 3, ncenter = 3))`. 
+
+# **ipsecr** functionality shared with **secr**
+
+Methods for 'ipsecr' of generic functions defined in **secr**
+
+| Function | Description |
+|----------|-------------|
+|makeNewData*| generate dataframe suitable for `predict.ipsecr` |
+|region.N*| estimate number of animals in mask or polygon |
+
+Methods for 'ipsecr' of generic functions from base R
+
+| Function | Description |
+|----------|-------------|
+|coef*| coefficients (beta parameters) of fitted model |
+|plot*| plot detection function from fitted model |
+|print*| display 'ipsecr' object|
+|predict*| predict real parameters |
+|summary*| summarise fitted model|
+|vcov*| variance-covariance matrix of coefficients (beta parameters) |
+
+Functions from **secr** that work on fitted 'ipsecr' objects as-is
+
+| Function | Description |
+|----------|-------------|
+|ellipse.secr| plot confidence ellipse for 2 parameters |
+|predictDsurface| predict density for each cell of mask |
+|makeStart| generate starting values from various inputs |
+
+# Distiller and Borchers simulations
+
+| Type | Scenario | Dmax | Ds   | Dbar | Unique | Trap\% |
+| ---- | -------- | ---- | --   | ---- | ------ | ------ |
+| Exponential | 1 | 6.00 | 2.00 | 2.77 | 65 | 94 |
+|             | 2 | 6.00 | 1.00 | 1.79 | 50 | 80 |
+|             | 3 | 6.00 | 0.50 | 1.20 | 36 | 64 |
+|             | 4 | 2.00 | 0.67 | 0.92 | 32 | 60 |
+| Quadratic   | 1 | 3.68 | 2.48 | 2.56 | 66 | 96 |
+|             | 2 | 3.71 | 0.52 | 1.30 | 47 | 81 |
+|             | 3 | 3.86 | 0.03 | 1.33 | 42 | 69 |
+|             | 4 | 1.49 | 0.74 | 0.80 | 32 | 63 |
+
+```{r popsim, eval = TRUE}
+library(ipsecr)
+
+grid <- make.grid(5, 4, spacing = 100, detector = 'single')
+mask <- make.mask(grid, buffer = 400, spacing = 25)
+covariates(grid) <- data.frame(x0 = grid$x/100)
+x0 <- mask$x/100 # 0-8
+
+covariates(mask) <- data.frame(
+  x0 = mask$x/100, # 0-8
+  x1 = exp(log(3)/8 * x0 + log(2)),
+  x2 = exp(log(6)/8 * x0),
+  x3 = exp(log(12)*x0/8)*0.5,
+  x4 = exp(log(3)*x0/8)*0.667
+)
+```
+
+```{r simplot, eval = TRUE}
+plot(0,0, type='n', xlim=c(-400,800), ylim=c(0,6), xlab = 'X', ylab='Density')
+abline(h=2, v=c(0,800))
+mapply(points, covariates(mask), MoreArgs=list(x = mask$x), col=1:5)
+central <- mask$x>=-200 & mask$x<= 600 & mask$y>=-200 & mask$y <= 500
+centralmask <- subset(mask, central)
+sapply(covariates(centralmask), mean)
+plot(centralmask, dots=F, mesh='white')
+plot(grid, add=T)
+
+pop <- sim.popn (D = 'x2', core = mask, model2D = "IHP", Ndist = "poisson")
+ch <- sim.capthist(grid, popn = pop, detectfn = 0, detectpar = list(g0 = 0.2, sigma = 100))
+```
+
+```{r sim, eval = FALSE}
+setNumThreads(15)
+ipxlist <- list()
+MClist <- list()
+MCg0list <- list()
+n <- numeric(500)
+set.seed(123)
+
+for (r in 1:500) {
+  pop <- sim.popn (D = 'x2', core = mask, model2D = "IHP", Ndist = "poisson")
+  ch <- sim.capthist(grid, popn = pop, detectfn = 0, detectpar = list(g0 = 0.2, sigma = 100))
+  MClist[[r]] <- secr.fit(ch, model = D~x0, mask = mask, detectfn = 0, trace = FALSE)
+  MCg0list[[r]] <- secr.fit(ch, model = list(D~x0, g0~x0), mask = mask, detectfn = 0, trace = FALSE)
+  ipxlist[[r]] <- ipsecr.fit(ch, model=D~x0, mask = mask, detectfn = 0, proxyfn = proxy.x,
+    details=list(var.nsim = 0))
+  n[r] <-nrow(ch)
+  cat('completed replicate ',r, ' ', format(Sys.time(), "%H:%M:%S %d %b %Y"), '\n')
+}
+
+save(MClist, MCg0list, ipxlist, file='simx2.RData')
+```
+
+```{r simsummary}
+getstats <- function (lst, true = log(3)/8, coef, parm = NULL) {
+  if (is.null(parm)) {
+   x <- sapply(lst, function(x) coef(x)[coef,'beta'])  
+  }
+  else {
+   x <- sapply(lst, function(x) predict(x)[parm,'estimate'])  
+  }
+  N <- sum(!is.na(x))
+  meanx <- mean(x, na.rm = T)
+  sex <- sd(x, na.rm=T)/sqrt(N)
+  round(c(
+    mean = meanx, 
+    se = sex,
+    RB = 100*(meanx - true)/true,
+    seRB = 100*sex/true), 4)
+}
+```
+
+```{r x1, eval = FALSE}
+setwd('d:/density communication/trap saturation')
+load('simx1.RData')
+sapply(list(MC=MClist, MCg0=MCg0list,ipx=ipxlist), getstats, true = log(3)/8, coef = 'D.x0')
+sapply(list(MC=MClist, MCg0=MCg0list,ipx=ipxlist), getstats, true = 0.2, parm = 'g0')
+sapply(list(MC=MClist, MCg0=MCg0list,ipx=ipxlist), getstats, true = 100, parm = 'sigma')
+```
+
+```{r x2, eval = FALSE}
+setwd('d:/density communication/trap saturation')
+load('simx2.RData')
+sapply(list(MC=MClist, MCg0=MCg0list,ipx=ipxlist), getstats, true = log(6)/8, coef = 'D.x0')
+sapply(list(MC=MClist, MCg0=MCg0list,ipx=ipxlist), getstats, true = 0.2, parm = 'g0')
+sapply(list(MC=MClist, MCg0=MCg0list,ipx=ipxlist), getstats, true = 100, parm = 'sigma')
+```
+
+Modelling variation in g0 absorbs bias in model for D.
+
+# References
+
+Borchers, D. L. and Efford, M. G. (2008) Spatially explicit maximum likelihood methods for capture--recapture studies. *Biometrics* **64**, 377--385.
+
+Distiller, G. and Borchers, D. L. (2015) A spatially explicit capture--recapture estimator for single-catch traps. *Ecology and Evolution* **5**, 5075--5087.
+
+Efford, M. G. (2004) Density estimation in live-trapping studies. *Oikos* **106**, 598--610.
+
+Efford, M. G. (2021). secr: Spatially explicit capture--recapture models. R package version
+  4.5.4. https://CRAN.R-project.org/package=secr/
+
+Groemping, U. (2014). R Package FrF2 for Creating and Analyzing Fractional Factorial 2-Level Designs. *Journal of Statistical Software*, **56**, 1--56. https://www.jstatsoft.org/article/view/v056i01.
+
+[secr-manual.pdf]: https://www.otago.ac.nz/density/pdfs/secr-manual.pdf
+[secr-overview.pdf]: https://www.otago.ac.nz/density/pdfs/secr-overview.pdf
+[secr-datainput.pdf]: https://www.otago.ac.nz/density/pdfs/secr-datainput.pdf
+[secr-densitysurfaces.pdf]: https://www.otago.ac.nz/density/pdfs/secr-densitysurfaces.pdf
+[secr-finitemixtures.pdf]: https://www.otago.ac.nz/density/pdfs/secr-finitemixtures.pdf
+[secr-habitatmasks.pdf]: https://www.otago.ac.nz/density/pdfs/secr-habitatmasks.pdf
+[secr-markresight.pdf]: https://www.otago.ac.nz/density/pdfs/secr-markresight.pdf
+[secr-models.pdf]: https://www.otago.ac.nz/density/pdfs/secr-models.pdf
+[secr-multisession.pdf]: https://www.otago.ac.nz/density/pdfs/secr-multisession.pdf
+[secr-noneuclidean.pdf]: https://www.otago.ac.nz/density/pdfs/secr-noneuclidean.pdf
+[secr-parameterisations.pdf]: https://www.otago.ac.nz/density/pdfs/secr-parameterisations.pdf
+[secr-polygondetectors.pdf]: https://www.otago.ac.nz/density/pdfs/secr-polygondetectors.pdf
+[secr-sound.pdf]: https://www.otago.ac.nz/density/pdfs/secr-sound.pdf
+[secr-spatialdata.pdf]: https://www.otago.ac.nz/density/pdfs/secr-spatialdata.pdf
+[secr-telemetry.pdf]: https://www.otago.ac.nz/density/pdfs/secr-telemetry.pdf
+[secr-tutorial.pdf]: https://www.otago.ac.nz/density/pdfs/secr-tutorial.pdf
+[secr-troubleshooting.pdf]: https://www.otago.ac.nz/density/pdfs/secr-troubleshooting.pdf
+[secr-varyingeffort.pdf]: https://www.otago.ac.nz/density/pdfs/secr-varyingeffort.pdf
+
+[secrdesign-vignette.pdf]: https://www.otago.ac.nz/density/pdfs/secrdesign-vignette.pdf
+[secrlinear-vignette.pdf]: https://CRAN.R-project.org/package=secrlinear/vignettes/secrlinear-vignette.pdf
+
+[secr-version4.pdf]: https://www.otago.ac.nz/density/pdfs/secr-version4.pdf
+
+[phidot]: http://www.phidot.org/forum/
+[secrgroup]: <https://groups.google.com/forum/#!forum/secrgroup>
+[CRAN]: https://cran.r-project.org/package=secr
