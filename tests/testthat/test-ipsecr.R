@@ -1,4 +1,4 @@
-## Started 2022-04-17,19
+## Started 2022-04-17,19,20
 
 library(ipsecr)
 
@@ -9,18 +9,18 @@ library(ipsecr)
 # create small working datasets
 
 ###############################################################################
-set.seed(1237)
+set.seed(123)
 setNumThreads(2)
-fit <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN')
+fit <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN', trace = FALSE)
 pred <- predict(fit)
 
 test_that("correct single-catch estimate", {
-    expect_equal(pred[,'estimate'], c(5.6225459,  0.4374263, 28.2450044), 
+    expect_equal(pred[,'estimate'], c(5.6772568, 0.4365298, 28.2901364), 
         tolerance = 1e-4, check.attributes = FALSE)
 })
 
 test_that("correct single-catch SE", {
-    expect_equal(pred[,'SE.estimate'], c(0.65039471, 0.07577939, 1.33063897), 
+    expect_equal(pred[,'SE.estimate'], c(0.81674255, 0.06611273, 1.40548990), 
         tolerance = 1e-4, check.attributes = FALSE)
 })
 
