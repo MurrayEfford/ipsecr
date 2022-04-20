@@ -97,7 +97,7 @@ ipsecr.fit <- function (
         factorial    = 'full',
         FrF2args     = NULL
     )
-    if (any(!(names(details) %in% names(defaultsdetails)))) {
+    if (any(!(names(details) %in% names(defaultdetails)))) {
         stop ("details list includes invalid name")
     }
     details <- replace (defaultdetails, names(details), details)
