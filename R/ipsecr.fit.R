@@ -97,6 +97,9 @@ ipsecr.fit <- function (
         factorial    = 'full',
         FrF2args     = NULL
     )
+    if (any(!(names(details) %in% names(defaultsdetails)))) {
+        stop ("details list includes invalid name")
+    }
     details <- replace (defaultdetails, names(details), details)
     if (details$max.nbox<2) stop("ipsecr.fit details$max.nbox >= 2")
     details$distribution <- match.arg(details$distribution, choices = c('poisson','binomial','even'))
@@ -244,7 +247,7 @@ ipsecr.fit <- function (
             multi = 0, proximity = 1, count = 2, capped = 8, 9)
         if (detectcode == 9) stop ("unsupported detector type")
         temp <- CHcpp(
-            popn, 
+            as.matrix(popn), 
             as.matrix(traps), 
             as.matrix(usge),
             as.integer(detectfn), 
@@ -269,17 +272,17 @@ ipsecr.fit <- function (
     
     if (ncores > 1) {
         memo ('Preparing cluster for parallel processing', trace)
-        if(.Platform$OS.type == "unix") {
-            clust <- makeCluster(ncores, type = "FORK")
-        } 
-        else {
+        # if(.Platform$OS.type == "unix") {
+        #     clust <- makeCluster(ncores, type = "FORK")
+        # } 
+        # else {
             clust <- makeCluster(ncores, type = "PSOCK")
             clusterExport(clust, c(
                 "mask", "link", "fixed", "details", "traps",
                 "detectfn", "noccasions", "proxyfn",
                 "parindx", "designD", "getD", "simCH"),
                 environment())
-        }
+        # }
         on.exit(stopCluster(clust))
         clusterSetRNGStream(clust, seed)
     }
@@ -505,11 +508,11 @@ ipsecr.fit <- function (
             dev <- 0   # criterion for precision (SE, RSE) before set
             if (ncores > 1) {
                 list(...) # evaluate any promises cf boot
-                newsim <- parRapply(clust, basedesign, simfn, tempdistn, ...)
+                newsim <- parRapply(clust, basedesign, simfn, distribution = tempdistn, ...)
                 newsim <- t(matrix(newsim, ncol = nrow(basedesign)))
             }
             else {
-                newsim <- t(apply(basedesign,1,simfn, tempdistn, ...))
+                newsim <- t(apply(basedesign,1,simfn, distribution = tempdistn, ...))
             }
             OK <- apply(!apply(newsim,1, is.na), 2, all)
             if (sum(OK) == 0) {
