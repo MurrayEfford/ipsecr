@@ -11,13 +11,13 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // popcpp
-NumericMatrix popcpp(const NumericMatrix& mask, NumericVector& prob, double& maskspacing, int& N);
+Rcpp::NumericMatrix popcpp(const Rcpp::NumericMatrix& mask, Rcpp::NumericVector& prob, double& maskspacing, int& N);
 RcppExport SEXP _ipsecr_popcpp(SEXP maskSEXP, SEXP probSEXP, SEXP maskspacingSEXP, SEXP NSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const NumericMatrix& >::type mask(maskSEXP);
-    Rcpp::traits::input_parameter< NumericVector& >::type prob(probSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type mask(maskSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector& >::type prob(probSEXP);
     Rcpp::traits::input_parameter< double& >::type maskspacing(maskspacingSEXP);
     Rcpp::traits::input_parameter< int& >::type N(NSEXP);
     rcpp_result_gen = Rcpp::wrap(popcpp(mask, prob, maskspacing, N));
@@ -25,32 +25,32 @@ BEGIN_RCPP
 END_RCPP
 }
 // popevencpp
-NumericMatrix popevencpp(const NumericMatrix& bounds, int& N);
+Rcpp::NumericMatrix popevencpp(const Rcpp::NumericMatrix& bounds, int& N);
 RcppExport SEXP _ipsecr_popevencpp(SEXP boundsSEXP, SEXP NSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const NumericMatrix& >::type bounds(boundsSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type bounds(boundsSEXP);
     Rcpp::traits::input_parameter< int& >::type N(NSEXP);
     rcpp_result_gen = Rcpp::wrap(popevencpp(bounds, N));
     return rcpp_result_gen;
 END_RCPP
 }
 // CHcpp
-List CHcpp(const NumericMatrix& animals, const NumericMatrix& traps, const NumericMatrix& Tsk, int detectfn, int detect, const NumericVector& gsb, const int btype, const int Markov, const IntegerVector& binomN);
+Rcpp::List CHcpp(const Rcpp::NumericMatrix& animals, const Rcpp::NumericMatrix& traps, const Rcpp::NumericMatrix& Tsk, int detectfn, int detect, const Rcpp::NumericVector& gsb, const int btype, const int Markov, const Rcpp::IntegerVector& binomN);
 RcppExport SEXP _ipsecr_CHcpp(SEXP animalsSEXP, SEXP trapsSEXP, SEXP TskSEXP, SEXP detectfnSEXP, SEXP detectSEXP, SEXP gsbSEXP, SEXP btypeSEXP, SEXP MarkovSEXP, SEXP binomNSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const NumericMatrix& >::type animals(animalsSEXP);
-    Rcpp::traits::input_parameter< const NumericMatrix& >::type traps(trapsSEXP);
-    Rcpp::traits::input_parameter< const NumericMatrix& >::type Tsk(TskSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type animals(animalsSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type traps(trapsSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type Tsk(TskSEXP);
     Rcpp::traits::input_parameter< int >::type detectfn(detectfnSEXP);
     Rcpp::traits::input_parameter< int >::type detect(detectSEXP);
-    Rcpp::traits::input_parameter< const NumericVector& >::type gsb(gsbSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type gsb(gsbSEXP);
     Rcpp::traits::input_parameter< const int >::type btype(btypeSEXP);
     Rcpp::traits::input_parameter< const int >::type Markov(MarkovSEXP);
-    Rcpp::traits::input_parameter< const IntegerVector& >::type binomN(binomNSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type binomN(binomNSEXP);
     rcpp_result_gen = Rcpp::wrap(CHcpp(animals, traps, Tsk, detectfn, detect, gsb, btype, Markov, binomN));
     return rcpp_result_gen;
 END_RCPP

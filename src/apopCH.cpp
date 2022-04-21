@@ -1,14 +1,12 @@
 #include "ipsecr.h"
 
-using namespace Rcpp;
-
 //===============================================================================
 
 // hazard (fn 14:19) or g (fn 0:11)
 double zcpp (
         const double r2,
         const int detectfn,
-        const NumericVector gsbval)
+        const Rcpp::NumericVector gsbval)
 {
     double temp;
     if ((detectfn == 0) || (detectfn == 14)) {        // halfnormal or hazard halfnormal
@@ -60,14 +58,6 @@ double zcpp (
 
 // generate a population of animals distributed according to cell density
 
-// https://stackoverflow.com/questions/24618370/using-rmultinom-with-rcpp
-IntegerVector oneMultinomCall(NumericVector probs, int N) {
-    int k = probs.size();
-    IntegerVector ans(k);
-    rmultinom(N, probs.begin(), k, ans.begin());
-    return(ans);
-}
-
 //==============================================================================
 
 // btype is code for behavioural response 
@@ -98,25 +88,34 @@ int bswitch (
 }
 //==============================================================================
 
+// https://stackoverflow.com/questions/24618370/using-rmultinom-with-rcpp
+Rcpp::IntegerVector oneMultinomCall(Rcpp::NumericVector probs, int N) {
+    int k = probs.size();
+    Rcpp::IntegerVector ans(k);
+    rmultinom(N, probs.begin(), k, ans.begin());
+    return(ans);
+}
+//==============================================================================
 
 // [[Rcpp::export]]
-NumericMatrix popcpp (
-        const NumericMatrix &mask,  // x-y coord
-        NumericVector &prob,     // cell probability)
+Rcpp::NumericMatrix popcpp (
+        const Rcpp::NumericMatrix &mask,  // x-y coord
+        Rcpp::NumericVector &prob,     // cell probability)
         double &maskspacing,
         int &N) {
-    RNGScope scope;             // Rcpp initialise and finalise random seed 
+    Rcpp::RNGScope scope;             // Rcpp initialise and finalise random seed 
     
     int M = mask.nrow();
-    IntegerVector nm(M);
-    NumericMatrix animals (N,2);
-    if (N==0) return(animals);
+    Rcpp::IntegerVector nm(M);
+    Rcpp::NumericMatrix animals (N,2);
+    // not to be called with N < 1
+    if (N<1) Rcpp::stop ("zero population requested");
     nm = oneMultinomCall(prob, N);
     int n = 0;
     for (int m = 0; m < M; m++) {
         for (int i = 0; i < nm[m]; i++) {
             for (int j = 0; j<2; j++) {
-                animals(n,j) = mask(m,j) + (unif_rand()-0.5)*maskspacing;
+                animals(n,j) = mask(m,j) + (R::runif(0,1)-0.5)*maskspacing;
             }
             n++;
         }
@@ -126,30 +125,30 @@ NumericMatrix popcpp (
 //==============================================================================
 
 // [[Rcpp::export]]
-NumericMatrix popevencpp (
-        const NumericMatrix &bounds,  // x-y coord
+Rcpp::NumericMatrix popevencpp (
+        const Rcpp::NumericMatrix &bounds,  // x-y coord
         int &N) {
-    RNGScope scope;             // Rcpp initialise and finalise random seed 
-    NumericMatrix animals (N,2);
-    if (N>0) {
-        double dx = bounds(1,0) - bounds(0,0);
-        double dy = bounds(1,1) - bounds(0,1);
-        double area = dx * dy;
-        double spacing = std::sqrt(area/N);
-        int nx = trunc(dx/spacing);
-        int ny = trunc(dy/spacing);
-        double marginx = (dx - (nx-1)*spacing) / 2;
-        double marginy = (dy - (ny-1)*spacing) / 2;
-        double x,y;
-        marginx = marginx * unif_rand() + bounds(0,0);
-        marginy = marginy * unif_rand() + bounds(0,1);
-        for (int i = 0; i<nx; i++) {
-            x = marginx + spacing * i;
-            for (int j = 0; j<ny; j++) {
-                y = marginy + spacing * j;
-                animals(i*ny+j,0) = x;
-                animals(i*ny+j,1) = y;
-            }
+    Rcpp::RNGScope scope;             // Rcpp initialise and finalise random seed 
+    // not to be called with N < 1
+    if (N<1) Rcpp::stop ("zero population requested");
+    Rcpp::NumericMatrix animals (N,2);
+    double dx = bounds(1,0) - bounds(0,0);
+    double dy = bounds(1,1) - bounds(0,1);
+    double area = dx * dy;
+    double spacing = std::sqrt(area/N);
+    int nx = trunc(dx/spacing);
+    int ny = trunc(dy/spacing);
+    double marginx = (dx - (nx-1)*spacing) / 2;
+    double marginy = (dy - (ny-1)*spacing) / 2;
+    double x,y;
+    marginx = marginx * R::runif(0,1) + bounds(0,0);
+    marginy = marginy * R::runif(0,1) + bounds(0,1);
+    for (int i = 0; i<nx; i++) {
+        x = marginx + spacing * i;
+        for (int j = 0; j<ny; j++) {
+            y = marginy + spacing * j;
+            animals(i*ny+j,0) = x;
+            animals(i*ny+j,1) = y;
         }
     }
     return (animals);
@@ -157,16 +156,16 @@ NumericMatrix popevencpp (
 //==============================================================================
 
 // [[Rcpp::export]]
-List CHcpp (
-        const NumericMatrix &animals, // x-y coord
-        const NumericMatrix &traps,   // x-y coord
-        const NumericMatrix &Tsk,     // usage
+Rcpp::List CHcpp (
+        const Rcpp::NumericMatrix &animals, // x-y coord
+        const Rcpp::NumericMatrix &traps,   // x-y coord
+        const Rcpp::NumericMatrix &Tsk,     // usage
         int   detectfn,
         int   detect,
-        const NumericVector &gsb,
+        const Rcpp::NumericVector &gsb,
         const int           btype,    // code for behavioural response  0 none etc. 
         const int           Markov,   // learned vs transient behavioural response 0 learned 1 Markov 
-        const IntegerVector &binomN   // number of trials for 'count' detector modelled with binomial 
+        const Rcpp::IntegerVector &binomN   // number of trials for 'count' detector modelled with binomial 
 ) {
     
     //  detect may take values -
@@ -176,28 +175,27 @@ List CHcpp (
     //  2  count  proximity detectors
     
     int N = animals.nrow();
+    // not to be called with N < 1
+    if (N<1) Rcpp::stop ("no animals in population");
     int K = Tsk.nrow();
     int S = Tsk.ncol();
     int i,k,n,s;
     double d2;
-    NumericMatrix gik (N,K);
+    Rcpp::NumericMatrix gik (N,K);
     
     double p;
     int    ik;
     int    nc = 0;
     int    count = 0;
     double runif;
-    // int    wxi = 0;
-    // int    c = 0;
     double Tski = 1.0;  
-    bool before;
+    bool   before;
     
     std::vector<int> caughtbefore(N * K, 0);
-    std::vector<int> x(N, 0);          // mixture class of animal i 
-    
+
     // return values
-    IntegerVector caught(N);           // caught in session 
-    IntegerVector value (N*S*K);     // return value array
+    Rcpp::IntegerVector caught(N);           // caught in session 
+    Rcpp::IntegerVector value (N*S*K);     // return value array
     
     for (n = 0; n<N; n++) {
         for (k=0; k<K; k++) {
@@ -227,20 +225,21 @@ List CHcpp (
     
     //========================================================
     // 'multi-catch and capped only' declarations 
-    std::vector<double> h(N * K);        // multi-catch only 
-    std::vector<double> hsum(N);         // multi-catch only 
+    std::vector<double> h(N * K);        
+    std::vector<double> hsum(R::imax2(N,K)); 
     std::vector<double> cump(K+1,0);     // multi-catch only 
     std::vector<double> cumk(N+1,0);     // capped only 
     
     //========================================================
     // MAIN LINE 
     
-    List nullresult = List::create(Named("n") = 0,
-        Named("caught") = caught,
-        Named("value") = value,
-        Named("resultcode") = 2);
+    Rcpp::List nullresult = Rcpp::List::create(
+        Rcpp::Named("n") = 0,
+        Rcpp::Named("caught") = caught,
+        Rcpp::Named("value") = value,
+        Rcpp::Named("resultcode") = 2);
     
-    RNGScope scope;             // Rcpp initialise and finalise random seed 
+    Rcpp::RNGScope scope;             // Rcpp initialise and finalise random seed 
     
     if ((detect < -1) || (detect > 2 && detect != 8)) {
         return(nullresult);
@@ -342,14 +341,14 @@ List CHcpp (
                 for (k=0; k<K; k++) {
                     cump[k+1] = cump[k] + h[k * N + i]/hsum[i];
                 }
-                if (unif_rand() < (1-exp(-hsum[i]))) {
+                if (R::runif(0,1) < (1-exp(-hsum[i]))) {
                     if (caught[i]==0)  {        // first capture of this animal 
                         nc++;
                         caught[i] = nc;
                     }
                     // find trap with probability proportional to p
                     // searches cumulative distribution of p  
-                    runif = unif_rand();
+                    runif = R::runif(0,1);
                     k = 0;
                     // while ((runif > cump[k]) && (k<K)) k++;   // bug fix 2019-10-04
                     while ((runif > cump[k+1]) && (k<K)) k++;
@@ -367,6 +366,7 @@ List CHcpp (
                     hsum[k] = 0;
                     for (i=0; i<N; i++) {
                         before = bswitch (btype, N, i, k, caughtbefore);
+                        // currently no behavioural response 2022-04-21
                         if (before)
                             h[k * N + i] = Tski * -log(1-gik(i,k));
                         else
@@ -383,12 +383,13 @@ List CHcpp (
                     for(i=0; i<N; i++) {  
                         cumk[i+1] = cumk[i] + h[k * N + i]/hsum[k];
                     }
-                    if (unif_rand() < (1-exp(-hsum[k]))) {
+                    if (R::runif(0,1) < (1-exp(-hsum[k]))) {
                         // find animal with probability proportional to p
                         // searches cumulative distribution of p  
-                        runif = unif_rand();
+                        runif = R::runif(0,1);
                         i = 0;
                         while ((runif > cumk[i+1]) && (i<N)) i++;
+                        // Rprintf("trapped animal i %4d \n", i);
                         if (caught[i]==0)  {        // first capture of this animal 
                             nc++;
                             caught[i] = nc;
@@ -417,7 +418,7 @@ List CHcpp (
                                 if (detect == 1) {
                                     if (fabs(Tski-1) > 1e-10)
                                         p = 1 - pow(1-p, Tski);
-                                    count = unif_rand() < p;        // binary proximity 
+                                    count = R::runif(0,1) < p;        // binary proximity 
                                 }
                                 else if (detect == 2) {             // count proximity 
                                     if (binomN[s] == 1)
@@ -473,10 +474,11 @@ List CHcpp (
         
     }   // loop over s 
     
-    return (List::create(Named("n") = nc, 
-        Named("caught") = caught,
-        Named("value") = value,
-        Named("resultcode") = 0));
+    return (Rcpp::List::create(
+            Rcpp::Named("n") = nc, 
+            Rcpp::Named("caught") = caught,
+            Rcpp::Named("value") = value,
+            Rcpp::Named("resultcode") = 0));
     
 }
 

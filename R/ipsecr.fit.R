@@ -94,6 +94,7 @@ ipsecr.fit <- function (
         contrasts    = NULL,
         CHmethod     = 'internal',
         popmethod    = 'internal',
+        Nmax         = 1e4,
         factorial    = 'full',
         FrF2args     = NULL
     )
@@ -252,8 +253,9 @@ ipsecr.fit <- function (
             as.matrix(usge),
             as.integer(detectfn), 
             as.integer(detectcode), 
-            unlist(detectpar),
+            unlist(detectpar[parnames(detectfn)]),  # robust to order of detectpar
             0, 0, 0)
+        
         if (temp$resultcode != 0) {
             stop ("simulated detection failed, code ", temp$resultcode)
         }
@@ -301,9 +303,9 @@ ipsecr.fit <- function (
         D <- getD(designD, beta, mask, parindx, link, fixed)
         N <- sum(D) * attr(mask, 'area')
         Ndist <- switch(distribution, poisson = 'poisson', binomial = 'fixed', even = 'fixed')    
-        N <- switch(Ndist, poisson = rpois(1, N), fixed = round(N), NA)
+        N <- switch(tolower(Ndist), poisson = rpois(1, N), fixed = round(N), NA)
         # cannot simulate zero animals, so return NA for predicted
-        if (is.na(N) || N<=0) return(rep(NA, NP))
+        if (is.na(N) || N<=0 || N>details$Nmax) return(rep(NA, NP))
         
         if (details$popmethod == 'internal') {
             prob <- D/sum(D)
@@ -326,6 +328,7 @@ ipsecr.fit <- function (
                     popn <- popevencpp(as.matrix(bounds), as.integer(N))
                 }
                 else {
+                    # cat('N ', N, ' sum(prob) ', sum(prob), '\n')
                     popn <- popcpp(as.matrix(mask), as.double(prob), 
                         as.double(spacing(mask)/100), as.integer(N))
                 }
@@ -342,6 +345,7 @@ ipsecr.fit <- function (
             #------------------------------------------------
             # sample from population
             if (details$CHmethod == 'internal') {   # C++
+                # cat('nrow(popn) ', nrow(popn), 'unlist(detectpar) ', unlist(detectpar), '\n')
                 ch <- simCH(traps, popn, detectfn, detectpar, noccasions)
             }
             else if (details$CHmethod == 'sim.capthist') {   
