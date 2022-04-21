@@ -16,10 +16,6 @@
 #include <R.h>       // random numbers
 
 #include <Rcpp.h>
-#include <RcppParallel.h>
-
-using namespace Rcpp;
-using namespace RcppParallel;
 
 // constants
 #define fuzz 1e-200
