@@ -274,17 +274,17 @@ ipsecr.fit <- function (
     
     if (ncores > 1) {
         memo ('Preparing cluster for parallel processing', trace)
-        # if(.Platform$OS.type == "unix") {
-        #     clust <- makeCluster(ncores, type = "FORK")
-        # } 
-        # else {
+        if(.Platform$OS.type == "unix") {
+            clust <- makeCluster(ncores, type = "FORK")
+        }
+        else {
             clust <- makeCluster(ncores, type = "PSOCK")
             clusterExport(clust, c(
                 "mask", "link", "fixed", "details", "traps",
                 "detectfn", "noccasions", "proxyfn",
                 "parindx", "designD", "getD", "simCH"),
                 environment())
-        # }
+        }
         on.exit(stopCluster(clust))
         clusterSetRNGStream(clust, seed)
     }
