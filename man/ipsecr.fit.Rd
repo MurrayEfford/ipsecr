@@ -68,7 +68,7 @@ described separately - see \code{\link{details}}.
   Name \tab Default \tab Description \cr
   boxsize \tab 0.2  \tab scalar or vector of length np for size of design as fraction of central parameter value\cr 
   boxsize2 \tab 0.05  \tab as for \code{boxsize}; used from second box onwards\cr
-  boxtype \tab 'absolute' \tab 'absolute' or 'relative' \cr
+  boxtype \tab 'absolute' \tab `absolute' or `relative' \cr
   centre \tab 3 \tab number of centre points in simulation design\cr
   CVmax \tab  0.002 \tab tolerance for precision of points in predictor space \cr
   var.nsim \tab 1000 \tab number of additional simulations to estimate variance-covariance matrix \cr
@@ -76,7 +76,7 @@ described separately - see \code{\link{details}}.
   max.nsim \tab 2000 \tab maximum number of simulations per point \cr
   max.nbox \tab 5 \tab maximum number of attempts to `frame' solution \cr
   max.ntries \tab 2 \tab maximum number of attempts at each simulation \cr
-  distribution \tab 'poisson' \tab 'poisson', 'binomial' or 'even' \cr
+  distribution \tab `poisson' \tab `poisson', `binomial' or `even' \cr
   even \tab FALSE \tab 'binomial' or 'even' population distribution in main simulations\cr
   binomN \tab 0 \tab integer code for distribution of counts (unused) \cr
   ignoreusage \tab FALSE \tab override usage in traps object of capthist \cr
@@ -84,9 +84,9 @@ described separately - see \code{\link{details}}.
   savecall \tab TRUE \tab optionally suppress saving of call \cr
   newdetector \tab NULL \tab detector type to override detector(traps(capthist)) \cr
   contrasts \tab NULL \tab coding of factor predictors \cr
-  popmethod \tab 'internal' \tab 'internal' or 'sim.popn'\cr
-  CHmethod \tab 'internal' \tab 'internal' or 'sim.capthist'\cr
-  factorial \tab 'full' \tab \cr
+  popmethod \tab `internal' \tab `internal' or `sim.popn'\cr
+  CHmethod \tab `internal' \tab `internal' or `sim.capthist'\cr
+  factorial \tab `full' \tab `full' or `fractional' \cr
   FrF2args \tab NULL \tab \cr
 
 }

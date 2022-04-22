@@ -16,9 +16,8 @@ to simplify the documentation. They are described here.
 
 \code{details$contrasts} may be used to specify the coding of factor predictors. The value should be suitable for the 'contrasts.arg' argument of \code{\link[stats]{model.matrix}}. See `Trend across sessions' in \href{https://www.otago.ac.nz/density/pdfs/secr-multisession.pdf}{secr-multisession.pdf} for an example.
 
-\code{details$debug} is an integer code used to control the printing of intermediate 
-values (1,2) and to switch on the R code browser (3). In ordinary use it should not be 
-changed from the default (0).
+\code{details$debug} is used only for debugging. In ordinary use it should not be 
+changed from the default (FALSE).
 
 \code{details$distribution} specifies the distribution of the number of
 individuals detected \eqn{n}; this may be conditional on the number in the
@@ -35,6 +34,10 @@ estimated are indicated by NA. Other elements should be valid values on
 the link scale and will be substituted during likelihood
 maximisation. Check the order of beta parameters in a previously fitted
 model.
+
+\code{details$FrF2} "full" or "fractional" design. Fractional requires the package **FrF2** (Groemping 2014).
+
+\code{details$FrF2args} list of arguments defining a fractional design
 
 \code{details$ignoreusage} = TRUE causes the function to ignore
 usage (varying effort) information in the traps component. The default
@@ -64,4 +67,10 @@ Defaults
   \code{\link{ipsecr.fit} }
 }
 
+\references{
+
+Groemping, U. (2014). R Package FrF2 for Creating and Analyzing Fractional Factorial 2-Level Designs. \emph{Journal of Statistical Software}, \bold{56}, 1--56. 
+https://www.jstatsoft.org/article/view/v056i01.
+
+}
 \keyword{ models }

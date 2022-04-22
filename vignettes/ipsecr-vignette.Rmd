@@ -16,16 +16,36 @@ vignette: >
 
 \vspace{12pt}
 
-This document provides an overview of **ipsecr** 1.0, an R package for spatially explicit capture--recapture analysis (SECR). The parent package **secr** included the function `ip.secr`; **ipsecr** extends the capability of that function in its central function `ipsecr.fit` whose arguments are closely modelled on `secr.fit` from **secr**.
+This document provides an overview of **ipsecr** 1.0, an R package for spatially explicit capture--recapture analysis (SECR) that uses simulation and inverse prediction instead of maximum likelihood as in **secr**. The parent package **secr** included the function `ip.secr`; **ipsecr** extends the capability of that function in its central function `ipsecr.fit` whose arguments are closely modelled on `secr.fit` from **secr**. 
+
+**ipsecr** 1.0 is limited to single-session data and does not yet allow variation in detection parameters (e.g., $\lambda_0$, $\sigma$).
+
+# Inverse prediction for capture--recapture estimation
+
+The method (Efford 2004; Efford, Dawson and Robbins 2004) uses a vector-valued function of the raw data that provides a proxy for each coefficient (beta parameter) in the capture--recapture model. The proxy is assumed to be monotonically related to the coefficient, and is used to fit a linear model over a small region in parameter space ('box'). The default proxy function `proxyfn1` works for simple models (constant density and detection parameters).
+
+The algorithm includes these steps
+
+1. Compute proxy function from data
+2. Simulate data for parameters at the vertices* of a box around plausible estimates
+3. Compute proxy function for each simulation to generate predictor matrix 
+4. Fit a multivariate multiple regression model predicting the proxy function at each vertex
+5. Invert regression model to estimate parameters from the data proxies (1)
+6. If the estimated parameters do not all lie inside box, adjust the box and repeat from (2)
+7. Simulate at the estimates to obtain variance-covariance matrix 
+
+\* including some centre points
 
 # Example
+
+This example uses a simulated single-catch trap dataset in **secr** that is loaded automatically when **ipsecr** is loaded:
 
 ```{r setup, message = FALSE}
 library(ipsecr)
 setNumThreads(2)
 ```
 
-The proxy function takes a capthist object as its first argument. It returns a vector of surrogate values, one for each coefficient (beta parameter) in the model. Two alternatives are provided, `proxyfn0` and `proxyfn1` (the default). For example,
+The proxy function takes an **secr** capthist object as its first argument (see [here](https://www.otago.ac.nz/density/pdfs/secr-datainput.pdf) for instructions on data input). It returns a vector of surrogate values, one for each coefficient (beta parameter) in the model. Two alternatives are provided, `proxyfn0` and `proxyfn1` (the default). For example,
 
 ```{r exampleproxy}
 proxyfn0(captdata)
@@ -44,36 +64,32 @@ Changing the proxy function may have little effect on the estimates:
 predict(ipsecr.fit(captdata, detectfn = 'HHN', proxyfn = proxyfn0, trace = FALSE))
 ```
 
-
-```{r exampleoutput}
+```{r exampleoutput, echo = FALSE, eval = FALSE}
 ellipse.secr(ip.single, par = c('lambda0', 'sigma'), col='red')
 ```
-
 
 Analyse as multi-catch in **ipsecr** and **secr**
 
 ```{r examplemulti, cache = TRUE}
-ip.multi <- ipsecr.fit(captdata, detectfn = 'HHN', details = list(newdetector = 'multi', trace = FALSE))
 secr.multi <- secr.fit(captdata, detectfn = 'HHN', trace = FALSE)
+ip.multi <- ipsecr.fit(captdata, detectfn = 'HHN', details = list(newdetector = 'multi'), 
+  trace = FALSE)
 ```
 
 ```{r compare}
 collate(ip.single, ip.multi, secr.multi)[1,,,]
 ```
 
-
 ```{r examplecapped, eval = FALSE, echo = FALSE, cache = TRUE}
 # Analyse as 'capped'
-captdatac <- captdata
-detector(traps(captdatac)) <- 'capped'
-setNumThreads(1)
-ip.capped <- ipsecr.fit(captdatac, detectfn = 'HHN', trace = FALSE)
-secr.capped <- secr.fit(captdatac, detectfn = 'HHN', trace = FALSE)
+ip.capped <- ipsecr.fit(captdata, detectfn = 'HHN', details = list(newdetector = 'capped'), 
+  trace = FALSE)
+secr.capped <- secr.fit(captdata, detectfn = 'HHN', details = list(newdetector = 'capped'), 
+  trace = FALSE)
 ```
 
-# Sparse data
-
-```{r sparse}
+```{r sparse, eval = FALSE, echo = FALSE}
+# Test with sparse data
 library(ipsecr)
 set.seed(123)
 grid <- make.grid(6,6, detector = 'single')
@@ -130,7 +146,7 @@ maskarea(ipx$mask)
 The package **FrF2** may be used for fractional factorial designs (Groemping, 2014). Fractional designs are probably useful only when parameters are numerous.
 
 Fractional designs are selected by setting `details = list(factorial = 'fractional')` in `ipsecr.fit`. 
-```{r, eval=FALSE}
+```{r, eval = FALSE}
 ipsecr.fit(captdata, details = list(factorial = 'fractional'))
 ```
 
@@ -292,8 +308,12 @@ Distiller, G. and Borchers, D. L. (2015) A spatially explicit capture--recapture
 
 Efford, M. G. (2004) Density estimation in live-trapping studies. *Oikos* **106**, 598--610.
 
-Efford, M. G. (2021). secr: Spatially explicit capture--recapture models. R package version
+Efford, M. G. (2022). secr: Spatially explicit capture--recapture models. R package version
   4.5.4. https://CRAN.R-project.org/package=secr/
+
+Efford, M. G., Dawson, D. K. and Robbins C. S. (2004) DENSITY: software
+for analysing capture-recapture data from passive detector arrays.
+*Animal Biodiversity and Conservation* **27**, 217--228.
 
 Groemping, U. (2014). R Package FrF2 for Creating and Analyzing Fractional Factorial 2-Level Designs. *Journal of Statistical Software*, **56**, 1--56. https://www.jstatsoft.org/article/view/v056i01.
 
