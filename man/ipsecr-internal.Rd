@@ -13,15 +13,14 @@ Functions called internally by \pkg{ipsecr}.
 
 \usage{
 
-proxyfn0(capthist, mask, N.estimator =  c("n", "null","zippin","jackknife"))
-proxyfn1(capthist, mask, N.estimator =  c("n", "null","zippin","jackknife"))
+proxyfn0(capthist, N.estimator =  c("n", "null","zippin","jackknife"))
+proxyfn1(capthist, N.estimator =  c("n", "null","zippin","jackknife"))
 
 }
 
 \arguments{
 
   \item{capthist}{secr capthist object}
-  \item{mask}{secr mask object}
   \item{N.estimator}{character name of closed-population estimator}
   
 }

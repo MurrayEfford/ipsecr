@@ -1,5 +1,5 @@
 
-proxyfn0 <- function (capthist, mask, N.estimator =  c("n", "null","zippin","jackknife")) {
+proxyfn0 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife")) {
     N.estimator <- tolower(N.estimator)
     N.estimator <- match.arg(N.estimator)
     ## capthist single-session only; ignoring losses
@@ -27,7 +27,7 @@ proxyfn0 <- function (capthist, mask, N.estimator =  c("n", "null","zippin","jac
 }
 ##################################################
 
-proxyfn1 <- function (capthist, mask, N.estimator =  c("n", "null","zippin","jackknife")) {
+proxyfn1 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife")) {
     N.estimator <- tolower(N.estimator)
     N.estimator <- match.arg(N.estimator)
     ## capthist single-session only; ignoring losses
