@@ -2,7 +2,7 @@
 ## ipsecr/R/utility.R
 #######################################################################################
 
-## 2022-04-04
+## 2022-04-04, 2022-05-04
 #######################################################################################
 
 # Global variables in namespace
@@ -12,8 +12,8 @@
 
 .localstuff <- new.env()
 
-.localstuff$packageType <- ' pre-release'
-# .localstuff$packageType <- ''
+# .localstuff$packageType <- ' pre-release'
+.localstuff$packageType <- ''
 
 .localstuff$validdetectors <- c('single','multi','proximity','count', 
     'polygonX', 'transectX', 'signal', 'polygon', 'transect', 
