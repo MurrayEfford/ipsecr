@@ -8,6 +8,8 @@ Bugs fixed
     
 Other
     o   remove unnecessary SystemRequirements
+    o   speed up vignette
+    o   help improvements
     
 Changes in version 1.0.0 (2022-05-04)
 
