@@ -1,10 +1,15 @@
-Changes in version 1.0.0 (2022-05-04)
+Changes in version 1.0.1 (2022-05-05)
 
 New features or changed behaviour of old functions
-    o   initial 
+    o   none
     
 Bugs fixed
     o   none
     
 Other
-    o   none
+    o   remove unnecessary SystemRequirements
+    
+Changes in version 1.0.0 (2022-05-04)
+
+New features or changed behaviour of old functions
+    o   initial 

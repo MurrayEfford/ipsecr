@@ -1,8 +1,8 @@
 Package: ipsecr
 Type: Package
 Title: Spatially Explicit Capture-Recapture by Inverse Prediction
-Version: 1.0.0
-Date: 2022-05-04
+Version: 1.0.1
+Date: 2022-05-05
 Depends: R (>= 3.5.0), secr (>= 4.5.4)
 Imports: graphics, grDevices, MASS, utils, parallel, stats, tools, stringr, nlme,  Rcpp (>= 0.12.14)
 Suggests: FrF2, rmarkdown, knitr, testthat    
@@ -13,5 +13,4 @@ Description: Functions to estimate the density and size of a spatially distribut
 License: GPL (>= 2)
 LazyData: yes
 LazyDataCompression: xz
-SystemRequirements: GNU make
 URL: https://github.com/MurrayEfford/ipsecr/
