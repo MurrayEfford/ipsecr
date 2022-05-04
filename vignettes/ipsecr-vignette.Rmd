@@ -51,7 +51,26 @@ library(ipsecr)
 setNumThreads(2)   # adjust to number of available cores
 ```
 
-```{r examplefit, cache = TRUE}
+```{r retrieve, eval = TRUE, echo = FALSE}
+# previously...
+# 
+# setwd('../ipsecr/inst/example')
+# saveRDS(ip.single,   'ip.single.RDS')
+# saveRDS(ip.single.0, 'ip.single.0.RDS')
+# saveRDS(ip.multi,    'ip.multi.RDS')
+# saveRDS(secr.multi,  'secr.multi.RDS')
+# saveRDS(ipx,         'ipx.RDS')
+
+# retrieve saved fits from example folder to save time
+ip.single   <- readRDS(system.file("example", "ip.single.RDS", package = "ipsecr"))
+ip.single.0 <- readRDS(system.file("example", "ip.single.0.RDS", package = "ipsecr"))
+ip.multi    <- readRDS(system.file("example", "ip.multi.RDS", package = "ipsecr"))
+secr.multi  <- readRDS(system.file("example", "secr.multi.RDS", package = "ipsecr"))
+ipx         <- readRDS(system.file("example", "ipx.RDS", package = "ipsecr"))
+```
+
+
+```{r examplefit, eval = FALSE}
 ip.single <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN')
 ```
 
@@ -74,22 +93,22 @@ Users are free to define their own proxyfn, and this is necessary when the model
 
 Changing the proxy function may have little effect on the estimates:
 
-```{r examplefit2, cache = TRUE}
+
+```{r compareproxy0, eval = FALSE}
 ip.single.0 <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN', proxyfn = proxyfn0, 
   trace = FALSE)
-# secr function 'collate' works for both secr and ipsecr fits 
-collate(ip.single, ip.single.0)[1,,,]
 ```
 
-```{r exampleoutput, echo = FALSE, eval = FALSE}
-ellipse.secr(ip.single, par = c('lambda0', 'sigma'), col='red')
+```{r compareproxy1}
+# secr function 'collate' works for both secr and ipsecr fits 
+collate(ip.single, ip.single.0)[1,,,]
 ```
 
 # Comparing multi- and single-catch fits
 
 **secr** fits a ML multi-catch model to data from single-catch traps. It is interesting to compare the MLE from **secr** with those from **ipsecr** which can switch between single- and multi-catch models.
 
-```{r examplemulti, cache = TRUE}
+```{r examplemulti, eval = FALSE}
 secr.multi <- secr.fit(captdata, buffer = 100, detectfn = 'HHN', trace = FALSE)
 ip.multi <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN', trace = FALSE,
   details = list(newdetector = 'multi'))
@@ -151,7 +170,7 @@ Distiller and Borchers (2015) simulated an example with a gradient in population
 
 First simulate some data with an east-west gradient in density.
 
-```{r simch}
+```{r simch, eval = TRUE}
 # define covariate 'x0' for both traps and mask
 tr <- traps(captdata)
 covariates(tr) <- data.frame(x0 = tr$x/100)
@@ -186,19 +205,11 @@ proxy.x <- function (capthist, ...) {
 ipx <- ipsecr.fit(ch, mask = mask, detectfn = 'HHN', model = list(D~x0), proxyfn = proxy.x)
 ```
 
-```{r retrieve, eval = TRUE, echo = FALSE}
-# previously...
-# saveRDS(ipx, 'ipx.RDS')
-# retrieve saved fit from example folder to save time
-ipxfile <- system.file("example", "ipx.RDS", package = "ipsecr")
-ipx <- readRDS(ipxfile)
-```
-
 ```{r Dsurfaceoutput, eval = TRUE}
 coef(ipx)
 predict(ipx)
 plot(predictDsurface(ipx))
-plot(traps(captdata), add = TRUE)
+plot(tr, add = TRUE)
 plotMaskEdge(ipx$mask, add=T)
 ```
 
