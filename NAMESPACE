@@ -53,8 +53,8 @@ S3method(makeNewData, ipsecr)
 
 importFrom (Rcpp, evalCpp)
 
-importFrom (RcppParallel, 
-    RcppParallelLibs)
+## importFrom (RcppParallel, 
+##     RcppParallelLibs)
 
 useDynLib (ipsecr)
 ## DEBUGGING ONLY (cpp functions not documented)
