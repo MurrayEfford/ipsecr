@@ -55,7 +55,7 @@ Defaults
   \item{centre}{ number of centre points in simulation design}
   \item{min.nsim}{ minimum number of simulations per point }
   \item{max.nsim}{ maximum number of simulations per point }
-  \item{CVmax}{ tolerance for precision of points in predictor space }
+  \item{devmax}{ tolerance for precision of points in predictor space }
   \item{var.nsim}{ number of additional simulations to estimate variance-covariance matrix }
   \item{max.nbox}{ maximum number of attempts to `frame' solution }
   \item{max.ntries}{ maximum number of attempts at each simulation }
