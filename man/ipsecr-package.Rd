@@ -10,7 +10,7 @@
 
   Functions to estimate the density and size of a spatially
   distributed animal population sampled with an array of passive
-  detectors, such as traps, or by searching polygons or transects.
+  detectors, such as traps.
 
 }
 
@@ -26,17 +26,14 @@ License: \tab GNU General Public License Version 2 or later\cr
 
 Spatially explicit capture--recapture is a set of methods for studying
 marked animals distributed in space. Data comprise the locations of
-detectors (traps, searched areas, etc. described in an object of class
-`traps'), and the detection histories of individually marked
+detectors (described in an object of class `traps'), and the 
+detection histories of individually marked
 animals. Individual histories are stored in an object of class
 `capthist' that includes the relevant `traps' object.
 
 Models for population density (animals per hectare) and detection are
 defined in \pkg{ipsecr} using symbolic formula notation. Density models
-may include spatial or temporal trend. Possible predictors for detection
-probability include both pre-defined variables (t, b, etc.)
-corresponding to `time', `behaviour' and other effects), and
-user-defined covariates of several kinds. Habitat is distinguished from
+may include spatial trend. Habitat is distinguished from
 nonhabitat with an object of class `mask'.
 
 Models are fitted in \pkg{ipsecr} by simulation and inverse prediction (Efford 2004).
@@ -63,7 +60,7 @@ documentation or new features consistent with the overall design.
 of a detection function (usually g0 and sigma) by `matching' statistics
 from \code{proxyfn(capthist)} (the target vector) and statistics
 from simulations of a 2-D population using the postulated detection
-model. Statistics (see Note) are defined by the predictor function,
+model. Statistics (see Note) are defined by the proxy function,
 which should return a vector equal in length to the number of parameters
 (np = 3). Simulations of the 2-D population use \code{\link{sim.popn}}.
 The simulated population is sampled with \code{\link{sim.capthist}}
@@ -83,8 +80,7 @@ Use `Ndist = fixed' to fix the number in the buffered or masked area
 standard error of \eqn{\hat{D}}{D-hat}, but conditioning is not always
 justified - seek advice from a statistician if you are unsure.
 
-The simulated 2-D distribution of animals is Poisson by default. There
-is no `even' option as in Density.
+The simulated 2-D distribution of animals is Poisson by default.
 
 Simulations are conducted on a factorial experimental design in
 parameter space - i.e. at the vertices of a cuboid `box' centred on the
@@ -97,9 +93,8 @@ may be a vector defining different scaling on each parameter dimension.
 
 A multivariate linear model is fitted to predict each set of simulated
 statistics from the known parameter values. The number of simulations at
-each design point is increased (doubled) until the residual standard
-error divided by the central value is less than CVmax for all
-parameters. An error occurs if max.nsim is exceeded.
+each design point is increased until a specified precision is reached, 
+up to the limit max.nsim.
 
 Once a model with sufficient precision has been obtained, a new working
 vector of parameter estimates is `predicted' by inverting the linear
@@ -116,13 +111,6 @@ to suppress the variance step.
 
 See Efford et al. (2004) for another description of the method, and
 Efford et al. (2005) for an application.
-
-The value of \code{predictortype} is passed as the third argument of
-the chosen \code{proxyfn}. By default this is \code{\link{proxyfn1}}, for which
-the second argument (\code{N.estimator}) is a character value from
-c("n", "null","zippin","jackknife"), corresponding respectively to the
-number of individuals caught (Mt+1), and \eqn{\hat{N}}{N-hat} from
-models M0, Mh and Mb of Otis et al. (1978).
 
 If not provided, the starting values are determined automatically
 with \code{\link{autoini}}.
@@ -168,6 +156,7 @@ Statistical inference from capture data on closed animal populations.
 \keyword{ package }
 
 \seealso{
+\code{\link{proxyfn1}}
 \code{\link[ipsecr]{ipsecr.fit}},
 \code{\link[secr]{secr.fit}},
 \code{\link[secr]{capthist}},

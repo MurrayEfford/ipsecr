@@ -54,7 +54,7 @@ ipsecr.fit(capthist, proxyfn = proxyfn1, model = list(D ~ 1, g0 ~ 1, sigma ~ 1),
 
     \item{seed}{either NULL or an integer that will be used in a call to \code{set.seed}}
 
-  \item{\dots}{ other arguments passed to the maximization function }
+  \item{\dots}{ other arguments passed to proxy function }
 
 }
 
@@ -143,7 +143,10 @@ for analysing capture-recapture data from passive detector arrays.
 
 \seealso{
 
-\code{\link{predict.ipsecr}}, \code{\link{summary.ipsecr}}, \code{\link{autoini}}
+\code{\link{proxyfn1}}, 
+\code{\link{predict.ipsecr}}, 
+\code{\link{summary.ipsecr}}, 
+\code{\link{autoini}}
 
 }
 
