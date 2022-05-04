@@ -4,7 +4,7 @@ library(ipsecr)
 
 ## to avoid ASAN/UBSAN errors on CRAN, following advice of Kevin Ushey
 ## e.g. https://github.com/RcppCore/RcppParallel/issues/169
-# Sys.setenv(RCPP_PARALLEL_BACKEND = "tinythread")
+## Sys.setenv(RCPP_PARALLEL_BACKEND = "tinythread")
 
 # create small working datasets
 

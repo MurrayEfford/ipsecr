@@ -1,8 +1,8 @@
 ############################################################################################
 ## package 'ipsecr'
 ## simipsecr.R
-## uses Dsurface.R, utility.R, secrloglik.R
-## 2022-04-02
+## uses Dsurface.R, utility.R
+## 2022-04-02 UNUSED
 ############################################################################################
 
 simpop <- function (designD, beta, mask, parindx, link, fixed,
