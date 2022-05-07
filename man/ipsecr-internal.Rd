@@ -2,6 +2,7 @@
 
 \alias{proxyfn0}
 \alias{proxyfn1}
+\alias{proxyfn2}
 
 \title{Internal Functions}
 
