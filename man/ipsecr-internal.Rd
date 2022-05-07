@@ -15,6 +15,7 @@ Functions called internally by \pkg{ipsecr}.
 
 proxyfn0(capthist, N.estimator =  c("n", "null","zippin","jackknife"))
 proxyfn1(capthist, N.estimator =  c("n", "null","zippin","jackknife"))
+proxyfn2(capthist, N.estimator =  c("n", "null","zippin","jackknife"))
 
 }
 
@@ -28,13 +29,20 @@ proxyfn1(capthist, N.estimator =  c("n", "null","zippin","jackknife"))
 \details{
 
   \code{proxyfn1} is the default proxyfn used by \code{\link{ipsecr.fit}}. 
+
+  \code{proxyfn2} is the default proxyfn used by \code{\link{ipsecr.fit}} when 
+  capthist includes nontarget data. 
   
 }
 
 \value{
 
-proxy -- a numeric vector of length 3 corresponding to proxies for population size, 
-capture probability intercept and scale of detection.
+proxyfn0, proxyfn1 -- a numeric vector of length 3 corresponding to proxies for 
+population size, capture probability intercept and scale of detection.
+
+proxyfn2 -- a numeric vector of length 4 corresponding to proxies for 
+population size, capture probability intercept, scale of detection and nontarget 
+interference.
 
 }
 
