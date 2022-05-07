@@ -8,3 +8,4 @@ src/*.dll
 cran-comments.txt
 ipsecr.Rproj
 extraR
+vignettes/ipsecr-vignette_cache
