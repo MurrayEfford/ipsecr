@@ -39,6 +39,9 @@ model.
 
 \code{details$FrF2args} list of arguments defining a fractional design
 
+\code{details$ignorenontarget} = TRUE causes the function to ignore
+non-target information (the attribute 'nontarget').
+
 \code{details$ignoreusage} = TRUE causes the function to ignore
 usage (varying effort) information in the traps component. The default
 (\code{details$ignoreusage} = FALSE) is to include usage in the model.
