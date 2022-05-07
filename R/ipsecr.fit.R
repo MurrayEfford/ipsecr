@@ -88,6 +88,7 @@ ipsecr.fit <- function (
         binomN       = 0,               ## Poisson counts
         param        = 0,
         ignoreusage  = FALSE,
+        ignorenontarget = FALSE,
         debug        = FALSE,
         savecall     = TRUE,
         newdetector  = NULL,
@@ -112,6 +113,41 @@ ipsecr.fit <- function (
     details$trace <- trace
     
     #################################################
+    ## optional data check
+    #################################################
+    if (verify) {
+        memo ('Checking data', trace)
+        test <- verify(capthist, report = 1)
+        if (test$errors)
+            stop ("'verify' found errors in 'capthist' argument")
+        
+        if (!is.null(mask)) {
+            notOK <- verify(mask, report = 1)$errors
+            if (notOK)
+                stop ("'verify' found errors in 'mask' argument")
+        }
+    }
+    
+    #################################################
+    ## nontarget interference 
+    #################################################
+    
+    nontarget <- attr(capthist, 'nontarget', exact = TRUE)
+    modelnontarget <- !is.null(nontarget) && !details$ignorenontarget
+    ## check
+    if (modelnontarget) {
+        # this duplicates a check in secr::verify from 4.5.5
+        ks <- apply(abs(capthist), 2:3, sum)
+        if (any(t(apply(capthist,2:3,sum)) & nontarget)) {
+            stop ("nontarget conflicts with capture at least once")
+        }
+        if (isTRUE(all.equal(proxyfn, proxyfn1))) {
+            proxyfn <- proxyfn2
+            warning("replacing default proxy function with proxyfn2 for nontarget model")
+        }
+    }
+    
+    #################################################
     ## standardize user model and parameterisation
     #################################################
     
@@ -127,15 +163,7 @@ ipsecr.fit <- function (
     ## build default model and update with user input
     #################################################
     
-    defaultmodel <- list(D=~1, g0=~1, lambda0=~1, sigma=~1, z=~1, w=~1)
-    defaultmodel <- replace (defaultmodel, names(model), model)
-    
-    #################################################
-    ## build default model and update with user input
-    #################################################
-    
-    defaultmodel <- list(D=~1, g0=~1, lambda0=~1,  
-        sigma=~1, sigmak=~1, z=~1, w=~1)
+    defaultmodel <- list(D=~1, g0=~1, lambda0=~1, sigma=~1, z=~1, w=~1, lambdak=~1)
     defaultmodel <- replace (defaultmodel, names(model), model)
     
     #################################################
@@ -143,6 +171,7 @@ ipsecr.fit <- function (
     #################################################
     
     pnames <- valid.pnames (details, FALSE, detectfn, FALSE, FALSE, 1)
+    if (modelnontarget) pnames <- c(pnames, 'lambdak')
     
     #################################################
     ## test for irrelevant parameters in user's model
@@ -170,7 +199,7 @@ ipsecr.fit <- function (
     # Link functions (model-specific)
     #################################################
     
-    defaultlink <- list(D = 'log', g0 = 'logit', lambda0 = 'log', sigma = 'log')
+    defaultlink <- list(D = 'log', g0 = 'logit', lambda0 = 'log', sigma = 'log', lambdak = 'log')
     link <- replace (defaultlink, names(link), link)
     link[!(names(link) %in% pnames)] <- NULL
     
@@ -211,7 +240,7 @@ ipsecr.fit <- function (
         Dnames <- colnames(designD)
         nDensityParameters <- length(Dnames)
     }
-    
+
     ############################################
     # Parameter mapping (general)
     ############################################
@@ -247,6 +276,10 @@ ipsecr.fit <- function (
         detectcode <- switch(detector(traps)[1], single = -1, 
             multi = 0, proximity = 1, count = 2, capped = 8, 9)
         if (detectcode == 9) stop ("unsupported detector type")
+        # optional nontarget rate
+        lambdak <- detectpar[['lambdak']][1]
+        if (is.null(lambdak)) lambdak <- -1 
+        
         temp <- CHcpp(
             as.matrix(popn), 
             as.matrix(traps), 
@@ -254,16 +287,26 @@ ipsecr.fit <- function (
             as.integer(detectfn), 
             as.integer(detectcode), 
             unlist(detectpar[parnames(detectfn)]),  # robust to order of detectpar
+            as.double(lambdak),
             0, 0, 0)
         
         if (temp$resultcode != 0) {
             stop ("simulated detection failed, code ", temp$resultcode)
         }
-        w <- array(temp$value, dim = c(noccasions, K, nrow(popn)), 
-            dimnames = list(1:noccasions, NULL, 1:nrow(popn)))
+        npop <- nrow(popn)
+        w <- array(temp$value, dim = c(noccasions, K, npop), 
+            dimnames = list(1:noccasions, NULL, 1:npop))
         w <- aperm(w, c(3,1,2))
+        if (modelnontarget) {
+            # retrieve nontarget from last row
+            nontarget <- temp$nontarget
+        }
+        else {
+            nontarget <- NULL
+        }
         w <- w[apply(w,1,sum)>0,,, drop = FALSE] 
         class(w)   <- 'capthist'
+        attr(w, 'nontarget') <- nontarget
         traps(w)   <- traps
         w
     }
@@ -282,7 +325,8 @@ ipsecr.fit <- function (
             clusterExport(clust, c(
                 "mask", "link", "fixed", "details", "traps",
                 "detectfn", "noccasions", "proxyfn",
-                "parindx", "designD", "getD", "simCH"),
+                "parindx", "designD", "getD", "simCH",
+                "modelnontarget"),
                 environment())
         }
         on.exit(stopCluster(clust))
@@ -349,6 +393,7 @@ ipsecr.fit <- function (
                 ch <- simCH(traps, popn, detectfn, detectpar, noccasions)
             }
             else if (details$CHmethod == 'sim.capthist') {   
+                if (modelnontarget) stop ("sim.capthist does not simulate nontarget detections")
                 ch <- sim.capthist(traps, popn, detectfn, detectpar, noccasions)
             }
             
@@ -420,9 +465,12 @@ ipsecr.fit <- function (
     ##########################################
     ## starting values
     ##########################################
-    
-    start <- makeStart(start, parindx, capthist, mask, detectfn, link, 
-        details, fixed)
+    ## ad hoc exclusion of lambdak 2022-05-06
+    start <- makeStart(start, parindx[names(parindx) != 'lambdak'], 
+        capthist, mask, detectfn, link, details, fixed)
+    if (modelnontarget) {
+        start <- c(start, y[4])
+    }
     
     ############################################
     # Fixed beta parameters
