@@ -141,6 +141,34 @@ fit <- ipsecr.fit(ch, detectfn = 'HHN', start = list(D = 0.8, lambda0 = 0.15, si
 summary(fit)
 ```
 
+# Non-target interference
+
+The data for single-catch and capped detectors may include a matrix indicating detectors that were disturbed or occupied by non-target species. We illustrate this by simulating disturbance at about 50% of the 235 unoccupied traps in the 'captdata' dataset. (This is an ad hoc method for generating demonstration data only).
+
+```{r nontargetdata}
+set.seed(123)
+ch <- captdata
+attr(ch, 'nontarget') <- (1-t(apply(ch,2:3,sum))) * (runif(500)>0.5)
+summary(ch)$nontarget
+```
+
+```{r nontargetdemo, eval = FALSE}
+ip.single.nontarget <- ipsecr.fit(ch, detectfn = 'HHN', proxyfn = proxyfn2)
+```
+
+```{r readnontarget, echo = FALSE, eval = FALSE}
+# previously...
+# setwd('../ipsecr/inst/example')
+# saveRDS(ip.single.nontarget, 'ip.single.nontarget.RDS')
+ip.single.nontarget <- readRDS(system.file("example", "ip.single.nontarget.RDS", 
+  package = "ipsecr"))
+```
+
+The new parameter 'lambdak' is the hazard for a disturbance process competing for detectors with the capture process:
+```{r nontargetdemoresults}
+predict(ip.single.nontarget)
+```
+
 # Tuning the algorithm
 
 Performance of the inverse prediction algorithm depends on several components of the 'details' argument of `ipsecr.fit` that may be seen as tuning parameters. 
