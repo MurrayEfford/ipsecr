@@ -152,11 +152,13 @@ attr(ch, 'nontarget') <- (1-t(apply(ch,2:3,sum))) * (runif(500)>0.5)
 summary(ch)$nontarget
 ```
 
+The attribute 'nontarget' is a matrix with one row per trap and one column per occasion. Entries are either 1 (nontarget or disturbed) or 0 (target species or undisturbed). The model for a dataset including non-target data will include the additional parameter 'lambdak' (override by setting the details argument 'ignorenontarget = TRUE')
+
 ```{r nontargetdemo, eval = FALSE}
 ip.single.nontarget <- ipsecr.fit(ch, detectfn = 'HHN', proxyfn = proxyfn2)
 ```
 
-```{r readnontarget, echo = FALSE, eval = FALSE}
+```{r readnontarget, echo = FALSE, eval = TRUE}
 # previously...
 # setwd('../ipsecr/inst/example')
 # saveRDS(ip.single.nontarget, 'ip.single.nontarget.RDS')
@@ -164,7 +166,7 @@ ip.single.nontarget <- readRDS(system.file("example", "ip.single.nontarget.RDS",
   package = "ipsecr"))
 ```
 
-The new parameter 'lambdak' is the hazard for a disturbance process competing for detectors with the capture process:
+The new parameter 'lambdak' is the hazard for a disturbance process competing for detectors with the capture process. Not that the estimate of lambda0 has risen compared to ip.single.
 ```{r nontargetdemoresults}
 predict(ip.single.nontarget)
 ```
