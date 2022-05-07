@@ -87,7 +87,7 @@ described separately - see \code{\link{details}}.
   newdetector \tab NULL \tab detector type to override detector(traps(capthist)) \cr
   contrasts \tab NULL \tab coding of factor predictors \cr
   popmethod \tab `internal' \tab `internal' or `sim.popn'\cr
-  CHmethod \tab `internal' \tab `internal' or `sim.capthist'\cr
+  CHmethod \tab `internal' \tab `internal' or `sim.capthist' or a user-provided function \cr
   factorial \tab `full' \tab `full' or `fractional' \cr
   FrF2args \tab NULL \tab \cr
 

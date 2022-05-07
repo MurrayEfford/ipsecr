@@ -107,8 +107,10 @@ ipsecr.fit <- function (
     if (details$max.nbox<2) stop("ipsecr.fit details$max.nbox >= 2")
     details$distribution <- match.arg(details$distribution, choices = c('poisson','binomial','even'))
     details$boxtype <- match.arg(details$boxtype, choices = c('absolute','relative'))
-    details$popmethod <- match.arg(details$popmethod, choices=c('internal','sim.popn'))
-    details$CHmethod <- match.arg(details$CHmethod, choices=c('internal','sim.capthist'))
+    details$popmethod <- match.arg(details$popmethod, choices = c('internal','sim.popn'))
+    if (!is.function(details$CHmethod)) {
+        details$CHmethod <- match.arg(details$CHmethod, choices = c('internal','sim.capthist'))
+    }
     # choices for factorial depend on FrF2
     details$factorial<- match.arg(details$factorial, choices=c('full','fractional'))
     details$verbose <- verbose
@@ -389,8 +391,10 @@ ipsecr.fit <- function (
             
             #------------------------------------------------
             # sample from population
-            if (details$CHmethod == 'internal') {   # C++
-                # cat('nrow(popn) ', nrow(popn), 'unlist(detectpar) ', unlist(detectpar), '\n')
+            if (is.function(details$CHmethod)) {   # user
+                ch <- details$CHmethod(traps, popn, detectfn, detectpar, noccasions)
+            }
+            else if (details$CHmethod == 'internal') {   # C++
                 ch <- simCH(traps, popn, detectfn, detectpar, noccasions)
             }
             else if (details$CHmethod == 'sim.capthist') {   

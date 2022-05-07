@@ -50,6 +50,10 @@ usage (varying effort) information in the traps component. The default
 SECR model. The default \code{details$param = 0} is the formulation in
 Borchers and Efford (2008) and later papers.
 
+\code{details$popmethod} chooses between internal C++ code and the \pkg{secr} function \code{sim.popn}.
+
+\code{details$CHmethod} chooses between internal C++ code, the \pkg{secr} function \code{sim.capthist}, and a user-provided R function with arguments 'traps', 'popn', 'detectfn', 'detectpar', and 'noccasions'.
+
 Defaults
 
 \itemize{
