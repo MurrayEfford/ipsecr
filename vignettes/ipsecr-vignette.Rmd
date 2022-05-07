@@ -28,7 +28,14 @@ The method (Efford 2004; Efford, Dawson and Robbins 2004; see also Carothers 197
 
 We use $\vec x_p$ for the vector of known parameter values at which simulations are performed and $\vec y_p$ for the vectors of proxies computed from these simulated data. The method fits a multivariate multiple regression over a set of points in parameter space ('box') and inverts that regression to estimate parameter values $\vec x$ from the observed proxy vector $\vec y$.
 
-The default proxy function `proxyfn1` works for simple models with constant density and two detection parameters.
+The default proxy function `proxyfn1` works for simple models with constant density and two detection parameters. It uses a naive non-spatial estimate of population size ($\hat N$, or simply the number detected), the corresponding non-spatial detection probability $p$, and the 'root-pooled spatial variance' measure from the function `RPSV` in **secr**:
+
+| Parameter | Proxy | Proxy scale |
+|-----------|-------|-------------|
+| Density D | number detected $n$ | log |
+| Detection intercept $g_0$ or $\lambda_0$* | $\hat p$ | cloglog |
+| Detection spatial scale $\sigma$ | RPSV | log |
+\* depends on detection function
 
 The algorithm includes these steps
 
@@ -51,9 +58,13 @@ library(ipsecr)
 setNumThreads(2)   # adjust to number of available cores
 ```
 
-```{r retrieve, eval = TRUE, echo = FALSE}
+```{r options, echo = FALSE}
+runall <- FALSE
+```
+
+```{r retrieve, eval = !runall, echo = FALSE}
 # previously...
-# save(ip.single, ip.single.0, ip.multi, secr.multi, ipx, ip.single.nontarget, 
+# save(ip.single, ip.single.0, ip.multi, secr.multi, ipx, ip.single.nontarget,
 #      file = '../ipsecr/inst/example/fittedmodels.RData')
 # library(tools)
 # resaveRdaFiles(paste0('d:/density secr 4.5/ipsecr/inst/example'),'xz')
@@ -62,7 +73,7 @@ load(system.file("example", "fittedmodels.RData", package = "ipsecr"))
 ```
 
 
-```{r examplefit, eval = FALSE}
+```{r examplefit, eval = runall}
 ip.single <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN')
 ```
 
@@ -86,7 +97,7 @@ Users are free to define their own proxyfn, and this is necessary when the model
 Changing the proxy function may have little effect on the estimates:
 
 
-```{r compareproxy0, eval = FALSE}
+```{r compareproxy0, eval = runall}
 ip.single.0 <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN', proxyfn = proxyfn0, 
   verbose = FALSE)
 ```
@@ -100,7 +111,7 @@ collate(ip.single, ip.single.0)[1,,,]
 
 **secr** fits a ML multi-catch model to data from single-catch traps. It is interesting to compare the MLE from **secr** with those from **ipsecr** which can switch between single- and multi-catch models.
 
-```{r examplemulti, eval = FALSE}
+```{r examplemulti, eval = runall}
 secr.multi <- secr.fit(captdata, buffer = 100, detectfn = 'HHN', verbose = FALSE)
 ip.multi <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN', verbose = FALSE,
   details = list(newdetector = 'multi'))
@@ -112,7 +123,7 @@ The results are as expected: inverse prediction gives very similar estimates to 
 collate(ip.single, ip.multi, secr.multi)[1,,,]
 ```
 
-```{r examplecapped, eval = FALSE, echo = FALSE, cache = TRUE}
+```{r examplecapped, eval = runall, echo = FALSE, cache = TRUE}
 # Analyse as 'capped'
 ip.capped <- ipsecr.fit(captdata, detectfn = 'HHN', details = list(newdetector = 'capped'), 
   verbose = FALSE)
@@ -120,7 +131,7 @@ secr.capped <- secr.fit(captdata, detectfn = 'HHN', details = list(newdetector =
   verbose = FALSE)
 ```
 
-```{r sparse, eval = FALSE, echo = FALSE}
+```{r sparse, eval = runall, echo = FALSE}
 # Test with sparse data
 library(ipsecr)
 set.seed(123)
@@ -135,7 +146,7 @@ summary(fit)
 
 # Non-target interference
 
-The data for single-catch and capped detectors may include a matrix indicating detectors that were disturbed or occupied by non-target species. We illustrate this by simulating disturbance at about 50% of the 235 unoccupied traps in the 'captdata' dataset. (This is an ad hoc method for generating demonstration data only).
+The data for single-catch and capped detectors may include a matrix indicating detectors that were disturbed or occupied by non-target species. We illustrate this by simulating disturbance at about 50% of the 235 unoccupied traps in the 'captdata' dataset. (This is an ad hoc method, used only for generating demonstration data).
 
 ```{r nontargetdata}
 set.seed(123)
@@ -144,16 +155,24 @@ attr(ch, 'nontarget') <- (1-t(apply(ch,2:3,sum))) * (runif(500)>0.5)
 summary(ch)$nontarget
 ```
 
-The attribute 'nontarget' is a matrix with one row per trap and one column per occasion. Entries are either 1 (nontarget or disturbed) or 0 (target species or undisturbed). The model for a dataset including non-target data will include the additional parameter 'lambdak' (override by setting the details argument 'ignorenontarget = TRUE')
+The attribute 'nontarget' is a matrix with one row per trap and one column per occasion. Entries are either 1 (nontarget or disturbed) or 0 (target species or undisturbed). For a dataset including non-target data `ipsecr.fit` automatically adds the hazard parameter 'lambdak' to represent a single disturbance process competing for detectors with each individual-specific capture process. The  non-target model may be suppressed by setting the details argument 'ignorenontarget = TRUE'.
 
-```{r nontargetdemo, eval = FALSE}
+Information on the disturbance process is given by the frequency of nontarget events in the capthist input (attribute 'nontarget'). The last element of the vector returned by the new proxy function `proxyfn2` transforms this to a hazard on the log scale (i.e. complementary log-log of proportion):
+
+```{r proxyfn2demo}
+proxyfn2(ch)
+```
+
+```{r nontargetdemo, eval = runall}
 ip.single.nontarget <- ipsecr.fit(ch, detectfn = 'HHN', proxyfn = proxyfn2)
 ```
 
-The new parameter 'lambdak' is the hazard for a disturbance process competing for detectors with the capture process. Not that the estimate of lambda0 has risen compared to ip.single.
+The estimate of lambda0 has risen compared to ip.single: 
 ```{r nontargetdemoresults}
 predict(ip.single.nontarget)
 ```
+
+Note that 'lambdak' cannot be estimated if all traps are occupied.
 
 # Tuning the algorithm
 
@@ -200,7 +219,7 @@ table(tr[trap(ch),'x'])
 
 A new proxy function is defined that uses the x-coordinate of the trap: 
 
-```{r Dsurfacefit, eval = FALSE}
+```{r Dsurfacefit, eval = runall}
 # note need to reference secr:: functions explicitly 
 proxy.x <- function (capthist, ...) {
     n <- nrow(capthist)         ## number of individuals
@@ -246,12 +265,12 @@ To better match the original it would be possible to use an identity link for D.
 The package **FrF2** may be used for fractional factorial designs (Groemping, 2014). Fractional designs are probably useful only when parameters are numerous.
 
 Fractional designs are selected by setting `details = list(factorial = 'fractional')` in `ipsecr.fit`. 
-```{r, eval = FALSE}
+```{r, eval = runall}
 ipsecr.fit(captdata, details = list(factorial = 'fractional'))
 ```
 
 The default is a 1/2 factorial design, illustrated by this code:
-```{r fractional, eval = FALSE, message = FALSE}
+```{r fractional, eval = runall, message = FALSE}
 library(FrF2)
 NP <- 3
 boxsize <- rep(0.2,3)

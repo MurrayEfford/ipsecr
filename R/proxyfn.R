@@ -1,3 +1,8 @@
+###############################################################################
+## package 'ipsecr'
+## proxyfn.R
+## 2022-05-08
+###############################################################################
 
 proxyfn0 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife")) {
     N.estimator <- tolower(N.estimator)
@@ -53,7 +58,7 @@ proxyfn1 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife
     }
     c(
         logN = log(estimates[1]), 
-        hazard = -log(1-estimates[2]), 
+        cloglogp = log(-log(1-estimates[2])), 
         logrpsv= log(RPSV(capthist, CC = TRUE))
     )
 }
@@ -96,9 +101,9 @@ proxyfn2 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife
     }
     c(
         logN = log(estimates[1]), 
-        hazard = -log(1-estimates[2]), 
+        cloglogp = log(-log(1-estimates[2])), 
         logrpsv = log(RPSV(capthist, CC = TRUE)),
-        disthazard = log(-log(1-pdisturb))
+        cloglogNT = log(-log(1-pdisturb))
     )
 }
 ##################################################
