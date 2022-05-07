@@ -96,7 +96,7 @@ Changing the proxy function may have little effect on the estimates:
 
 ```{r compareproxy0, eval = FALSE}
 ip.single.0 <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN', proxyfn = proxyfn0, 
-  trace = FALSE)
+  verbose = FALSE)
 ```
 
 ```{r compareproxy1}
@@ -109,8 +109,8 @@ collate(ip.single, ip.single.0)[1,,,]
 **secr** fits a ML multi-catch model to data from single-catch traps. It is interesting to compare the MLE from **secr** with those from **ipsecr** which can switch between single- and multi-catch models.
 
 ```{r examplemulti, eval = FALSE}
-secr.multi <- secr.fit(captdata, buffer = 100, detectfn = 'HHN', trace = FALSE)
-ip.multi <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN', trace = FALSE,
+secr.multi <- secr.fit(captdata, buffer = 100, detectfn = 'HHN', verbose = FALSE)
+ip.multi <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN', verbose = FALSE,
   details = list(newdetector = 'multi'))
 ```
 
@@ -123,9 +123,9 @@ collate(ip.single, ip.multi, secr.multi)[1,,,]
 ```{r examplecapped, eval = FALSE, echo = FALSE, cache = TRUE}
 # Analyse as 'capped'
 ip.capped <- ipsecr.fit(captdata, detectfn = 'HHN', details = list(newdetector = 'capped'), 
-  trace = FALSE)
+  verbose = FALSE)
 secr.capped <- secr.fit(captdata, detectfn = 'HHN', details = list(newdetector = 'capped'), 
-  trace = FALSE)
+  verbose = FALSE)
 ```
 
 ```{r sparse, eval = FALSE, echo = FALSE}

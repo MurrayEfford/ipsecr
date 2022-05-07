@@ -12,8 +12,8 @@
 
 .localstuff <- new.env()
 
-.localstuff$packageType <- ' pre-release'
-# .localstuff$packageType <- ''
+# .localstuff$packageType <- ' pre-release'
+ .localstuff$packageType <- ''
 
 .localstuff$validdetectors <- c('single','multi','proximity','count', 
     'polygonX', 'transectX', 'signal', 'polygon', 'transect', 
@@ -190,9 +190,9 @@ ndetector <- function (traps) {
         nrow(traps)
 }
 
-memo <- function (text, trace) {
+memo <- function (text, verbose) {
     ## could use message(text), but does not immediately flush console
-    if (trace) { cat (text, '\n')
+    if (verbose) { cat (text, '\n')
     flush.console() }
 }
 

@@ -11,7 +11,7 @@ library(ipsecr)
 ###############################################################################
 set.seed(123)
 setNumThreads(2)
-fit <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN', trace = FALSE)
+fit <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN', verbose = FALSE)
 pred <- predict(fit)
 
 test_that("correct single-catch estimate", {

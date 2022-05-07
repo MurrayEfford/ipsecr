@@ -19,7 +19,7 @@ Dawson & Robbins 2004).  A restricted range of SECR models may be fitted.
 ipsecr.fit(capthist, proxyfn = proxyfn1, model = list(D ~ 1, g0 ~ 1, sigma ~ 1),
     mask = NULL, buffer = 100, detectfn = "HN", binomN = NULL, start = NULL, 
     link = list(), fixed = list(), timecov = NULL, details = list(), 
-    verify = TRUE, trace = TRUE, ncores = NULL, seed = NULL, ...)
+    verify = TRUE, verbose = TRUE, ncores = NULL, seed = NULL, ...)
 
 }
 
@@ -49,7 +49,7 @@ ipsecr.fit(capthist, proxyfn = proxyfn1, model = list(D ~ 1, g0 ~ 1, sigma ~ 1),
 
     \item{verify}{ logical, if TRUE the input data are checked with \code{\link{verify}} }
 
-  \item{trace}{ logical, if TRUE then messages are output during execution}
+  \item{verbose}{ logical, if TRUE then messages are output during execution}
     \item{ncores}{ integer number of cores to use for parallel processing}
 
     \item{seed}{either NULL or an integer that will be used in a call to \code{set.seed}}
@@ -58,8 +58,9 @@ ipsecr.fit(capthist, proxyfn = proxyfn1, model = list(D ~ 1, g0 ~ 1, sigma ~ 1),
 
 }
 
-
 \details{
+
+The vignette should be consulted for a full exposition.
 
 \code{details} is used for various specialized settings listed below. These are
 described separately - see \code{\link{details}}.
@@ -70,7 +71,7 @@ described separately - see \code{\link{details}}.
   boxsize2 \tab 0.05  \tab as for \code{boxsize}; used from second box onwards\cr
   boxtype \tab 'absolute' \tab `absolute' or `relative' \cr
   centre \tab 3 \tab number of centre points in simulation design\cr
-  CVmax \tab  0.002 \tab tolerance for precision of points in predictor space \cr
+  devmax \tab  0.002 \tab tolerance for precision of points in predictor space \cr
   var.nsim \tab 1000 \tab number of additional simulations to estimate variance-covariance matrix \cr
   min.nsim \tab 10 \tab minimum number of simulations per point \cr
   max.nsim \tab 2000 \tab maximum number of simulations per point \cr
@@ -79,6 +80,7 @@ described separately - see \code{\link{details}}.
   distribution \tab `poisson' \tab `poisson', `binomial' or `even' \cr
   even \tab FALSE \tab 'binomial' or 'even' population distribution in main simulations\cr
   binomN \tab 0 \tab integer code for distribution of counts (unused) \cr
+  ignorenontarget \tab FALSE \tab override nontarget attribute of capthist \cr
   ignoreusage \tab FALSE \tab override usage in traps object of capthist \cr
   debug \tab FALSE \tab stop at arbitrary points in execution (varies) \cr
   savecall \tab TRUE \tab optionally suppress saving of call \cr
@@ -152,9 +154,9 @@ for analysing capture-recapture data from passive detector arrays.
 
 \examples{
 
-\dontrun{
+\donttest{
 
-ipsecrdemo <- ipsecr.fit(captdata, ncores = 1, detectfn = 14, seed = 1237)
+ipsecrdemo <- ipsecr.fit(captdata, ncores = 1, buffer = 100, detectfn = 14, seed = 1237)
 
 }
 

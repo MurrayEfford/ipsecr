@@ -18,7 +18,7 @@ ipsecr.fit <- function (
     timecov = NULL,
     details = list(), 
     verify = TRUE, 
-    trace = TRUE, 
+    verbose = TRUE, 
     ncores = NULL, 
     seed = NULL,
     ...) {
@@ -110,13 +110,13 @@ ipsecr.fit <- function (
     details$CHmethod <- match.arg(details$CHmethod, choices=c('internal','sim.capthist'))
     # choices for factorial depend on FrF2
     # details$factorial<- match.arg(details$factorial, choices=c('full','fractional'))
-    details$trace <- trace
+    details$verbose <- verbose
     
     #################################################
     ## optional data check
     #################################################
     if (verify) {
-        memo ('Checking data', trace)
+        memo ('Checking data', verbose)
         test <- verify(capthist, report = 1)
         if (test$errors)
             stop ("'verify' found errors in 'capthist' argument")
@@ -206,7 +206,7 @@ ipsecr.fit <- function (
     ##############################################
     # Prepare detection design matrices and lookup
     ##############################################
-    # memo ('Preparing detection design matrices', trace)
+    # memo ('Preparing detection design matrices', verbose)
     design <- secr.design.MS (capthist, model, timecov, NULL, NULL, NULL,
         NULL, ignoreusage = details$ignoreusage, naive = FALSE,
         CL = FALSE, contrasts = details$contrasts)
@@ -228,7 +228,7 @@ ipsecr.fit <- function (
         nDensityParameters <- integer(0)
     }
     else {
-        memo ('Preparing density design matrix', trace)
+        memo ('Preparing density design matrix', verbose)
         temp <- D.designdata( mask, model$D, 1, 1, NULL)
         # if (any(smooths(model$D))) {
         #     smoothsetup$D <- gamsetup(model$D, temp)
@@ -316,7 +316,7 @@ ipsecr.fit <- function (
     ###########################################
     
     if (ncores > 1) {
-        memo ('Preparing cluster for parallel processing', trace)
+        memo ('Preparing cluster for parallel processing', verbose)
         if(.Platform$OS.type == "unix") {
             clust <- makeCluster(ncores, type = "FORK")
         }
@@ -504,7 +504,7 @@ ipsecr.fit <- function (
     beta <- start
     
     for (m in 1:details$max.nbox) {
-        if (trace) {
+        if (verbose) {
             cat('\nFitting box', m, '...  \n')
         }
         boxsize <- if (m == 1) boxsize1 else boxsize2
@@ -519,7 +519,7 @@ ipsecr.fit <- function (
         vertices <- data.frame(vertices)
         names(vertices) <- betanames
         rownames(vertices) <- c('min','max')
-        if (trace) {
+        if (verbose) {
             print(vertices)
             cat('\n')
             flush.console()
@@ -592,7 +592,7 @@ ipsecr.fit <- function (
         if (any(dev > details$devmax)) {
             crit <- switch(details$boxtype, absolute = 'SE', relative = 'RSE')
             memo(paste0("simulations for box ", m, " did not reach target for proxy ", 
-                crit, " ", details$devmax), trace)
+                crit, " ", details$devmax), verbose)
         }
         
         if (code>2) {
@@ -625,7 +625,7 @@ ipsecr.fit <- function (
     ####################################################################
     
     if (details$var.nsim>1 && code == 1) {
-        if (trace) {
+        if (verbose) {
             cat('Simulating for variance ...\n')
             flush.console()
             cat('\n')
@@ -642,7 +642,7 @@ ipsecr.fit <- function (
             newsim <- t(apply(vardesign,1,simfn, distribution = details$distribution, ...))
         }
         OK <- apply(!apply(newsim,1, is.na), 2, all)
-        memo(paste(sum(OK), " variance simulations successful\n"), trace)
+        memo(paste(sum(OK), " variance simulations successful\n"), verbose)
         if (sum(OK) != details$var.nsim) {
             warning(paste(details$var.nsim-sum(OK), "of", details$var.nsim, "variance simulations failed"))
         }
@@ -703,7 +703,7 @@ ipsecr.fit <- function (
     )
     class(output) <- 'ipsecr'
     memo(paste('Completed in ', round(output$proctime,2), ' seconds at ',
-        format(Sys.time(), "%H:%M:%S %d %b %Y")), trace)
+        format(Sys.time(), "%H:%M:%S %d %b %Y")), verbose)
     output
 }
 ##################################################

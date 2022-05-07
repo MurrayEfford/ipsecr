@@ -164,7 +164,7 @@ Statistical inference from capture data on closed animal populations.
 }
 \examples{
 
-\dontrun{
+\donttest{
 
 ip <- ipsecr.fit(captdata)
 
