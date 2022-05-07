@@ -1,8 +1,11 @@
-Changes in version 1.0.2 (2022-05-06)
+Changes in version 1.0.2 (2022-05-07)
 
 New features or changed behaviour of old functions
-    o   none
+    o   model for non-target interference (experimental)
     
+Bugs fixed
+    o   ipsecr.fit(..., verify = TRUE) ignored
+
 Changes in version 1.0.1 (2022-05-05)
 
 New features or changed behaviour of old functions
