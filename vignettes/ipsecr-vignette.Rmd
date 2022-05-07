@@ -53,20 +53,12 @@ setNumThreads(2)   # adjust to number of available cores
 
 ```{r retrieve, eval = TRUE, echo = FALSE}
 # previously...
-# 
-# setwd('../ipsecr/inst/example')
-# saveRDS(ip.single,   'ip.single.RDS')
-# saveRDS(ip.single.0, 'ip.single.0.RDS')
-# saveRDS(ip.multi,    'ip.multi.RDS')
-# saveRDS(secr.multi,  'secr.multi.RDS')
-# saveRDS(ipx,         'ipx.RDS')
+# save(ip.single, ip.single.0, ip.multi, secr.multi, ipx, ip.single.nontarget, 
+#      file = '../ipsecr/inst/example/fittedmodels.RData')
+# library(tools)
+# resaveRdaFiles(paste0('d:/density secr 4.5/ipsecr/inst/example'),'xz')
 
-# retrieve saved fits from example folder to save time
-ip.single   <- readRDS(system.file("example", "ip.single.RDS", package = "ipsecr"))
-ip.single.0 <- readRDS(system.file("example", "ip.single.0.RDS", package = "ipsecr"))
-ip.multi    <- readRDS(system.file("example", "ip.multi.RDS", package = "ipsecr"))
-secr.multi  <- readRDS(system.file("example", "secr.multi.RDS", package = "ipsecr"))
-ipx         <- readRDS(system.file("example", "ipx.RDS", package = "ipsecr"))
+load(system.file("example", "fittedmodels.RData", package = "ipsecr"))
 ```
 
 
@@ -156,14 +148,6 @@ The attribute 'nontarget' is a matrix with one row per trap and one column per o
 
 ```{r nontargetdemo, eval = FALSE}
 ip.single.nontarget <- ipsecr.fit(ch, detectfn = 'HHN', proxyfn = proxyfn2)
-```
-
-```{r readnontarget, echo = FALSE, eval = TRUE}
-# previously...
-# setwd('../ipsecr/inst/example')
-# saveRDS(ip.single.nontarget, 'ip.single.nontarget.RDS')
-ip.single.nontarget <- readRDS(system.file("example", "ip.single.nontarget.RDS", 
-  package = "ipsecr"))
 ```
 
 The new parameter 'lambdak' is the hazard for a disturbance process competing for detectors with the capture process. Not that the estimate of lambda0 has risen compared to ip.single.
