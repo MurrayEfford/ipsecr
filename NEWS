@@ -6,6 +6,11 @@ New features or changed behaviour of old functions
 Bugs fixed
     o   ipsecr.fit(..., verify = TRUE) ignored
 
+Other
+    o   references in DESCRIPTION
+    o   \donttest replaces \dontrun
+    o   ipsecr.fit() 'trace' renamed 'verbose'
+
 Changes in version 1.0.1 (2022-05-05)
 
 New features or changed behaviour of old functions
