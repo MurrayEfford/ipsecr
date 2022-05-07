@@ -71,6 +71,7 @@ ipsecr.fit <- function (
     }
     
     #################################################
+    
     #################################################
     defaultdetails <- list(
         boxsize      = 0.2, 
@@ -109,7 +110,7 @@ ipsecr.fit <- function (
     details$popmethod <- match.arg(details$popmethod, choices=c('internal','sim.popn'))
     details$CHmethod <- match.arg(details$CHmethod, choices=c('internal','sim.capthist'))
     # choices for factorial depend on FrF2
-    # details$factorial<- match.arg(details$factorial, choices=c('full','fractional'))
+    details$factorial<- match.arg(details$factorial, choices=c('full','fractional'))
     details$verbose <- verbose
     
     #################################################
