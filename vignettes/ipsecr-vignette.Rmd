@@ -18,7 +18,7 @@ header-includes:
 
 This document provides an overview of **ipsecr** 1.0, an R package for spatially explicit capture--recapture analysis (SECR) that uses simulation and inverse prediction instead of maximum likelihood, as in **secr** (Efford 2022), or MCMC, as in various Bayesian approaches. The parent package **secr** included the function `ip.secr`; **ipsecr** extends the capability of that function in its central function `ipsecr.fit` whose arguments are closely modelled on `secr.fit` from **secr**. 
 
-Simulation and inverse prediction allows some models to be fitted that strictly cannot be fitted by other methods. Single-catch traps provide a the commonest example.
+Simulation and inverse prediction allows some models to be fitted that strictly cannot be fitted by other methods. Single-catch traps are a common example.
 
 There are limitations: **ipsecr** 1.0 is limited to single-session data and does not yet allow variation in detection parameters (e.g., $\lambda_0$, $\sigma$).
 
@@ -36,6 +36,52 @@ The default proxy function `proxyfn1` works for simple models with constant dens
 | Detection intercept $g_0$ or $\lambda_0$* | $\hat p$ | cloglog |
 | Detection spatial scale $\sigma$ | RPSV | log |
 \* depends on detection function
+
+The monotonic relationship is demonstrated by simulation in the following figure.
+
+```{r monotonic, eval = TRUE, echo = FALSE, cache = TRUE, fig.height = 3, fig.width = 7, results = 'hide', message = FALSE, warning = FALSE}
+onecombo <- function (D, lambda0, sigma, nrepl = 50) {
+  out <- matrix(nrow = nrepl, ncol=3)
+  for (r in 1:nrepl) {
+  pop <- sim.popn(D = D, core = tr, buffer = 120)
+    ch <- sim.capthist(traps = tr, popn = pop, detectfn = 'HHN', 
+      detectpar = list(lambda0=lambda0, sigma=sigma), noccasions = 5)
+    out[r,] <- proxyfn1(ch)
+  }
+  out
+}
+Dval <- seq(3,7,0.5)
+lambda0val <- seq(0.1,0.3,0.025)
+sigmaval <- seq(20,40,2.5)
+library(ipsecr)
+tr <- traps(captdata)
+
+Dlist <- lapply(Dval, onecombo, lambda0 = 0.2, sigma = 30)
+lamlist <- lapply(lambda0val, onecombo, D = 5, sigma = 30)
+siglist <- lapply(sigmaval, onecombo, D = 5, lambda0 = 0.2)
+Dproxy <- sapply(Dlist, '[',,1)
+lamproxy <- sapply(lamlist, '[',,2)
+sigproxy <- sapply(siglist, '[',,3)
+
+par(mfrow=c(1,3))
+
+plot(0,0,type='n', xlim=c(2.8,8), ylim=c(3,4.8),
+  xlab = 'Density / ha', ylab = 'log(n)', log='x')
+apply(Dproxy,1,points, x=Dval)
+points(Dval, apply(Dproxy,2,mean), pch = 16, type='b', col='red')
+
+plot(0,0,type='n', xlim=c(0.09,0.35), ylim=c(-1,0.1),
+  xlab = 'lambda0', ylab = 'cloglog(p)', log='x')
+apply(lamproxy, 1 ,points, x=lambda0val)
+points(lambda0val, apply(lamproxy,2,mean), pch = 16, type='b', col='red')
+
+plot(0,0,type='n', xlim = c(18,46), ylim=c(2.5, 3.7),
+  xlab = 'sigma m', ylab = 'log(RPSV)', log='x')
+apply(sigproxy,1,points, x=sigmaval)
+points(sigmaval, apply(sigproxy,2,mean), pch = 16, type='b', col='red')
+```
+
+**Fig.** Monotonic relationships between parameters (x-axis, log scale) and their default proxies (y-axis). 100 single-catch traps at 20-m spacing on a square grid. 50 simulations for each level, with other parameters held at their central value. Red line follows mean.
 
 The algorithm includes these steps
 
@@ -73,13 +119,13 @@ load(system.file("example", "fittedmodels.RData", package = "ipsecr"))
 ```
 
 
-```{r examplefit, eval = runall}
+```{r ip.single, eval = runall, cache = TRUE}
 ip.single <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN')
 ```
 
 The fitted model is of class 'ipsecr' for which there are the usual methods matching those in **secr** (`print`, `coef`, `predict`, `summary` etc.) as detailed [below](#methods)).
 
-```{r output}
+```{r ip.single.output}
 predict(ip.single)
 ```
 
@@ -97,7 +143,7 @@ Users are free to define their own proxyfn, and this is necessary when the model
 Changing the proxy function may have little effect on the estimates:
 
 
-```{r compareproxy0, eval = runall}
+```{r compareproxy0, eval = runall, cache = TRUE}
 ip.single.0 <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN', proxyfn = proxyfn0, 
   verbose = FALSE)
 ```
@@ -111,15 +157,15 @@ collate(ip.single, ip.single.0)[1,,,]
 
 **secr** fits a ML multi-catch model to data from single-catch traps. It is interesting to compare the MLE from **secr** with those from **ipsecr** which can switch between single- and multi-catch models.
 
-```{r examplemulti, eval = runall}
-secr.multi <- secr.fit(captdata, buffer = 100, detectfn = 'HHN', verbose = FALSE)
+```{r examplemulti, eval = runall, cache = TRUE}
+secr.multi <- secr.fit(captdata, buffer = 100, detectfn = 'HHN', trace = FALSE)
 ip.multi <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN', verbose = FALSE,
   details = list(newdetector = 'multi'))
 ```
 
 The results are as expected: inverse prediction gives very similar estimates to ML for the multi-catch model, and both differ from the inverse prediction single-catch model with respect to the estimate of the detection parameter lambda0.
 
-```{r compare}
+```{r comparemulti}
 collate(ip.single, ip.multi, secr.multi)[1,,,]
 ```
 
@@ -128,10 +174,10 @@ collate(ip.single, ip.multi, secr.multi)[1,,,]
 ip.capped <- ipsecr.fit(captdata, detectfn = 'HHN', details = list(newdetector = 'capped'), 
   verbose = FALSE)
 secr.capped <- secr.fit(captdata, detectfn = 'HHN', details = list(newdetector = 'capped'), 
-  verbose = FALSE)
+  trace = FALSE)
 ```
 
-```{r sparse, eval = runall, echo = FALSE}
+```{r sparse, eval = runall, echo = FALSE, cache = TRUE}
 # Test with sparse data
 library(ipsecr)
 set.seed(123)
@@ -140,13 +186,13 @@ ch <- sim.capthist(grid, popn=list(D=1, buffer=100),detectfn='HHN', noccasions =
     detectpar = list(lambda0 = 0.1, sigma = 20))
 summary(ch)
 fit <- ipsecr.fit(ch, detectfn = 'HHN', start = list(D = 0.8, lambda0 = 0.15, sigma = 15),
-    details = list(max.nsim = 1000, devmax= 0.05), ncores = 1)
+    details = list(max.nsim = 1000, dev.max= 0.05), ncores = 1)
 summary(fit)
 ```
 
 # Non-target interference
 
-The data for single-catch and capped detectors may include a matrix indicating detectors that were disturbed or occupied by non-target species. We illustrate this by simulating disturbance at about 50% of the 235 unoccupied traps in the 'captdata' dataset. (This is an ad hoc method, used only for generating demonstration data).
+The data for single-catch and capped detectors may include a $k \times s$ matrix indicating whether a detector ($k$) was disturbed or occupied by non-target species on each occasion ($s$). We illustrate this by simulating disturbance at about 50% of the 235 unoccupied traps in the 'captdata' dataset. (This is an ad hoc method, used only for generating demonstration data).
 
 ```{r nontargetdata}
 set.seed(123)
@@ -163,7 +209,7 @@ Information on the disturbance process is given by the frequency of nontarget ev
 proxyfn2(ch)
 ```
 
-```{r nontargetdemo, eval = runall}
+```{r nontargetdemo, eval = runall, cache = TRUE}
 ip.single.nontarget <- ipsecr.fit(ch, detectfn = 'HHN', proxyfn = proxyfn2)
 ```
 
@@ -182,20 +228,20 @@ By default, the size of the box in parameter space is set to ± 'boxsize' units 
 
 It is usual to start with a wide box and to use a narrower box for subsequent simulations, on the assumption that the first box has selected a region of parameter space very close to the solution.
 
-The stopping criterion 'devmax' is used to exit the simulation loop early when sufficient precision has been achieved for all parameters. If `boxtype = 'absolute'` then the criterion is the standard error on the link scale. If `boxtype = 'relative'` then the criterion is the relative standard error (RSE or CV) on the link scale.
+The stopping criterion 'dev.max' is used to exit the simulation loop early when sufficient precision has been achieved for all parameters. If `boxtype = 'absolute'` then the criterion is the standard error on the link scale. If `boxtype = 'relative'` then the criterion is the relative standard error (RSE or CV) on the link scale.
 
 | Tuning parameter | Default | Description |
 |--------------|--------- |----------------------------------|
 | boxtype      | 'absolute' | 'absolute' or 'relative'  |
-| boxsize     | 0.2 | size of first box | 
-| boxsize2     | 0.05 | boxsize for boxes after the first | 
-| centre       | 3 | number of centre points |
-| devmax       | 0.002 | stopping criterion | 
-| min.nsim     | 20 | minimum number of simulations per vertex |
-| max.nsim     | 2000 | maximum number of simulations per vertex | 
-| max.nbox     | 5 |  maximum number of boxes | 
-| max.ntries   | 2 |  maximum number of attempts to achieve valid simulation |
-| var.nsim     | 2000 | number of simulations for variance-covariance matrix |
+| boxsize      | 0.2        | size of first box | 
+| boxsize2     | 0.05       | boxsize for boxes after the first | 
+| centre       | 3          | number of centre points |
+| dev.max      | 0.002      | stopping criterion | 
+| min.nsim     | 20         | minimum number of simulations per vertex |
+| max.nsim     | 2000       | maximum number of simulations per vertex | 
+| max.nbox     | 5          | maximum number of boxes | 
+| max.ntries   | 2          | maximum number of attempts to achieve valid simulation |
+| var.nsim     | 2000       | number of simulations for variance-covariance matrix |
 
 # Fitting a density gradient
 
@@ -219,7 +265,7 @@ table(tr[trap(ch),'x'])
 
 A new proxy function is defined that uses the x-coordinate of the trap: 
 
-```{r Dsurfacefit, eval = runall}
+```{r Dsurfacefit, eval = runall, cache = TRUE}
 # note need to reference secr:: functions explicitly 
 proxy.x <- function (capthist, ...) {
     n <- nrow(capthist)         ## number of individuals
@@ -265,12 +311,12 @@ To better match the original it would be possible to use an identity link for D.
 The package **FrF2** may be used for fractional factorial designs (Groemping, 2014). Fractional designs are probably useful only when parameters are numerous.
 
 Fractional designs are selected by setting `details = list(factorial = 'fractional')` in `ipsecr.fit`. 
-```{r, eval = runall}
+```{r fractional0, eval = runall, cache = TRUE}
 ipsecr.fit(captdata, details = list(factorial = 'fractional'))
 ```
 
 The default is a 1/2 factorial design, illustrated by this code:
-```{r fractional, eval = runall, message = FALSE}
+```{r fractional1, eval = runall, message = FALSE, cache = TRUE}
 library(FrF2)
 NP <- 3
 boxsize <- rep(0.2,3)
