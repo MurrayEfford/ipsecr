@@ -4,13 +4,15 @@
 
 \docType{package}
 
-\title{Spatially Explicit Capture--Recapture Models }
+\title{Spatially Explicit Capture--Recapture by Inverse Prediction }
 
 \description{
 
   Functions to estimate the density and size of a spatially
   distributed animal population sampled with an array of passive
-  detectors, such as traps.
+  detectors, such as traps. \pkg{ipsecr} addresses `difficult' models that 
+  strictly cannot be fitted by maximum likelihood in the larger parent package 
+  \pkg{secr} (Efford 2022). The classic example concerns data from single-catch traps.
 
 }
 
@@ -20,7 +22,7 @@
 Package: \tab ipsecr\cr
 Type: \tab Package\cr
 Version: \tab 1.0.2\cr
-Date: \tab 2022-05-06\cr
+Date: \tab 2022-05-08\cr
 License: \tab GNU General Public License Version 2 or later\cr
 }
 
@@ -32,7 +34,7 @@ animals. Individual histories are stored in an object of class
 `capthist' that includes the relevant `traps' object.
 
 Models for population density (animals per hectare) and detection are
-defined in \pkg{ipsecr} using symbolic formula notation. Density models
+defined in \pkg{ipsecr} using symbolic formula notation (but only constant models are allowed for detection parameters in \pkg{ipsecr} 1.0) Density models
 may include spatial trend. Habitat is distinguished from
 nonhabitat with an object of class `mask'.
 
@@ -57,42 +59,24 @@ documentation or new features consistent with the overall design.
 
 `Inverse prediction' uses methods from multivariate calibration (Brown
 1982). The goal is to estimate population density (D) and the parameters
-of a detection function (usually g0 and sigma) by `matching' statistics
+of a detection function (usually g0 or lambda0 and sigma) by `matching' statistics
 from \code{proxyfn(capthist)} (the target vector) and statistics
 from simulations of a 2-D population using the postulated detection
 model. Statistics (see Note) are defined by the proxy function,
 which should return a vector equal in length to the number of parameters
-(np = 3). Simulations of the 2-D population use \code{\link{sim.popn}}.
-The simulated population is sampled with \code{\link{sim.capthist}}
-according to the detector type (e.g., `single' or `multi') and detector
-layout specified in traps(capthist), including allowance for varying
-effort if the layout has a \code{\link{usage}} attribute.
+(default np = 3). Simulations of the 2-D population use either internal C++ code or \code{\link{sim.popn}}.
 
-\dots may be used to control aspects of the simulation by passing named
-arguments (other than D) to \code{sim.popn}. The most important arguments of
-\code{sim.popn} to keep an eye on are `buffer' and `Ndist'. `buffer'
-defines the region over which animals are simulated (unless \code{mask}
-is specified) - the region should be large enough to encompass all
-animals that might be caught. `Ndist' controls the number of individuals
-simulated within the buffered or masked area. The default is `poisson'.
-Use `Ndist = fixed' to fix the number in the buffered or masked area
-\eqn{A} at \eqn{N = DA}. This conditioning reduces the estimated
-standard error of \eqn{\hat{D}}{D-hat}, but conditioning is not always
-justified - seek advice from a statistician if you are unsure.
+The simulated population is sampled with internal C++ code, \code{\link{sim.capthist}}, or a user-specified function. Simulations match the detector type (e.g., `single' or `multi') and detector layout specified in traps(capthist), including allowance for varying effort if the layout has a \code{\link{usage}} attribute.
 
 The simulated 2-D distribution of animals is Poisson by default.
 
-Simulations are conducted on a factorial experimental design in
+Simulations are usually conducted on a factorial experimental design in
 parameter space - i.e. at the vertices of a cuboid `box' centred on the
 working values of the parameters, plus an optional number of centre
-points. The size of the `box' is specified as a fraction of the working
-values, so for example the limits on the density axis are D*(1--boxsize)
-and D*(1+boxsize) where D* is the working value of D. For g0, this
-computation uses the odds transformation (g0/(1--g0)). \code{boxsize}
-may be a vector defining different scaling on each parameter dimension.
+points. 
 
-A multivariate linear model is fitted to predict each set of simulated
-statistics from the known parameter values. The number of simulations at
+A multivariate linear model is fitted to predict each vector of simulated
+proxies from the known parameter values. The number of simulations at
 each design point is increased until a specified precision is reached, 
 up to the limit max.nsim.
 
@@ -133,6 +117,9 @@ Statistical Society, Series B} \bold{44}, 287--321.
 Efford, M. G. (2004) Density estimation in live-trapping studies.
 \emph{Oikos} \bold{106}, 598--610.
 
+Efford, M. G. (2022) secr: Spatially explicit capture--recapture models. 
+  R package version 4.5.4. https://CRAN.R-project.org/package=secr/
+
 Efford, M. G., Borchers D. L. and Byrom, A. E. (2009) Density estimation
 by spatially explicit capture--recapture: likelihood-based methods. In:
 D. L. Thompson, E. G. Cooch and M. J. Conroy (eds) \emph{Modeling
@@ -167,6 +154,7 @@ Statistical inference from capture data on closed animal populations.
 \donttest{
 
 ip <- ipsecr.fit(captdata)
+predict(ip)
 
 }
 

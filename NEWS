@@ -1,7 +1,9 @@
-Changes in version 1.0.2 (2022-05-07)
+Changes in version 1.0.2 (2022-05-08)
 
 New features or changed behaviour of old functions
     o   model for non-target interference (experimental)
+    o   ipsecr.fit() user function option for CHmethod
+    o   ipsecr.fit() default proxyfn's use cloglog for probabilities
     
 Bugs fixed
     o   ipsecr.fit(..., verify = TRUE) ignored

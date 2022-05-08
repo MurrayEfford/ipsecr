@@ -1,7 +1,7 @@
 ###############################################################################
 ## package 'ipsecr'
 ## ipsecr.fit.R
-## 2022-04-01,18,19
+## 2022-04-01,18,19, 2022-05-08
 ###############################################################################
 
 ipsecr.fit <- function (
@@ -78,7 +78,7 @@ ipsecr.fit <- function (
         boxsize2     = 0.05, 
         boxtype      = 'absolute',
         centre       = 3,
-        devmax       = 0.002, 
+        dev.max      = 0.002, 
         var.nsim     = 2000,
         min.nsim     = 20,
         max.nsim     = 2000, 
@@ -223,7 +223,6 @@ ipsecr.fit <- function (
     ############################################
     
     D.modelled <- is.null(fixed$D)
-    # smoothsetup <- list(D = NULL, noneuc = NULL)
     if (!D.modelled) {
         designD <- matrix(nrow = 0, ncol = 0)
         grouplevels <- 1    ## was NULL
@@ -233,10 +232,6 @@ ipsecr.fit <- function (
     else {
         memo ('Preparing density design matrix', verbose)
         temp <- D.designdata( mask, model$D, 1, 1, NULL)
-        # if (any(smooths(model$D))) {
-        #     smoothsetup$D <- gamsetup(model$D, temp)
-        #     ## otherwise, smoothsetup$D remains NULL
-        # }
         designD <- general.model.matrix(model$D, data = temp, gamsmth = NULL,
             contrasts = details$contrasts)
         attr(designD, 'dimD') <- attr(temp, 'dimD')
@@ -471,6 +466,7 @@ ipsecr.fit <- function (
     ## starting values
     ##########################################
     ## ad hoc exclusion of lambdak 2022-05-06
+    details$trace <- verbose  # as used by makeStart
     start <- makeStart(start, parindx[names(parindx) != 'lambdak'], 
         capthist, mask, detectfn, link, details, fixed)
     if (modelnontarget) {
@@ -591,20 +587,20 @@ ipsecr.fit <- function (
                 dev <- sapply(sum.sim.lm, function(x) x$sigma) / y / sqrt(nrow(sim))
             }
             # break if have achieved target precision
-            if (!is.null(dev) && !any(is.na(dev)) && all(dev <= details$devmax)) break
+            if (!is.null(dev) && !any(is.na(dev)) && all(dev <= details$dev.max)) break
         }
         
-        if (any(dev > details$devmax)) {
+        if (any(dev > details$dev.max)) {
             crit <- switch(details$boxtype, absolute = 'SE', relative = 'RSE')
             memo(paste0("simulations for box ", m, " did not reach target for proxy ", 
-                crit, " ", details$devmax), verbose)
+                crit, " ", details$dev.max), verbose)
         }
         
         if (code>2) {
             beta <- rep(NA, NP)
             if (code == 3) warning ("no valid simulations")
             # if (code == 4) warning ("exceeded maximum allowable replicates ",
-            #     "without achieving 'devmax'")
+            #     "without achieving precision better than 'dev.max'")
             # if (code == 5) warning ("ipsecr.fit: invalid lm")
         }
         else {

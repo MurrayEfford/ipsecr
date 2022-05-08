@@ -71,7 +71,7 @@ described separately - see \code{\link{details}}.
   boxsize2 \tab 0.05  \tab as for \code{boxsize}; used from second box onwards\cr
   boxtype \tab 'absolute' \tab `absolute' or `relative' \cr
   centre \tab 3 \tab number of centre points in simulation design\cr
-  devmax \tab  0.002 \tab tolerance for precision of points in predictor space \cr
+  dev.max \tab  0.002 \tab tolerance for precision of points in predictor space \cr
   var.nsim \tab 1000 \tab number of additional simulations to estimate variance-covariance matrix \cr
   min.nsim \tab 10 \tab minimum number of simulations per point \cr
   max.nsim \tab 2000 \tab maximum number of simulations per point \cr
