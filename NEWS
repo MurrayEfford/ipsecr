@@ -1,3 +1,8 @@
+Changes in version 1.0.3 (2022-05-09)
+
+New features or changed behaviour of old functions
+    o   none
+
 Changes in version 1.0.2 (2022-05-08)
 
 New features or changed behaviour of old functions
@@ -9,7 +14,7 @@ Bugs fixed
     o   ipsecr.fit(..., verify = TRUE) ignored
 
 Other
-    o   references in DESCRIPTION
+    o   reference in DESCRIPTION
     o   \donttest replaces \dontrun
     o   ipsecr.fit() 'trace' renamed 'verbose'
 
