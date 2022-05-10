@@ -139,11 +139,6 @@ ipsecr.fit <- function (
     modelnontarget <- !is.null(nontarget) && !details$ignorenontarget
     ## check
     if (modelnontarget) {
-        # this duplicates a check in secr::verify from 4.5.5
-        ks <- apply(abs(capthist), 2:3, sum)
-        if (any(t(apply(capthist,2:3,sum)) & nontarget)) {
-            stop ("nontarget conflicts with capture at least once")
-        }
         if (isTRUE(all.equal(proxyfn, proxyfn1))) {
             proxyfn <- proxyfn2
             warning("replacing default proxy function with proxyfn2 for nontarget model")
