@@ -125,13 +125,13 @@ Rcpp::List CHcpp (
     int    count = 0;
     double runif;
     double Tski = 1.0;  
-    bool   before;
+    // bool   before;
     
     std::vector<int> caughtbefore(N * K, 0);
     
     // return values
-    Rcpp::IntegerVector caught(N1);         // caught in session 
-    Rcpp::IntegerVector value (N1*S*K);     // return value array
+    Rcpp::IntegerVector caught(N);         // caught in session 
+    Rcpp::IntegerVector value (N*S*K);     // return value array
     Rcpp::IntegerMatrix nontarget (K, S);   // return value array
     
     for (n = 0; n<N; n++) {
@@ -162,16 +162,19 @@ Rcpp::List CHcpp (
     int    finished;
     int    OK;
     double event_time;
-    std::vector<int> occupied(K);
+    std::vector<int> occupied(K);        // single, multi
     std::vector<double> intrap(N);
-    std::vector<trap_animal> tran(N * K);
+    std::vector<trap_animal> tran(N1 * K);
     
     //========================================================
-    // 'multi-catch and capped only' declarations 
-    std::vector<double> h(N1 * K);        
-    std::vector<double> hsum(R::imax2(N1,K)); 
-    std::vector<double> cump(K+1,0);     // multi-catch only 
-    std::vector<double> cumk(N1+1,0);     // capped only 
+    // 'multi-catch' declarations 
+    double tmp;
+    int trap;
+    
+    //========================================================
+    // 'multi' and 'proximity' declarations 
+    std::vector<double> inttime(K,1.0);
+    double dettime = 1.0;
     
     //========================================================
     // MAIN LINE 
@@ -262,9 +265,9 @@ Rcpp::List CHcpp (
             
             for (i=0; i<N; i++) {
                 if (intrap[i]>0) {
-                    if (caught[i]==0) {                    // first capture of this animal 
+                    if (caught[i]==0) {                 // first capture
                         nc++;
-                        caught[i] = nc;                    // nc-th animal to be captured 
+                        caught[i] = nc;                 // nc-th animal to be captured 
                     }
                     value[i3(s, intrap[i]-1, caught[i]-1, S, K)] = 1;  
                 }
@@ -274,108 +277,69 @@ Rcpp::List CHcpp (
         // -------------------------------------------------------------------------- 
         // multi-catch trap; only one site per occasion 
         else if (detect == 0) {
+            for (k=0; k<K; k++) {
+                if (lambdak>0 && fabs(Tsk(k,s))>1e-10) {
+                    // random time of interference
+                    inttime[k] = R::rexp(1/(lambdak * Tsk(k,s)));  // scale not rate
+                }
+                else {
+                    inttime[k] = 1;
+                }
+                occupied[k] = 0;
+            }
             for (i=0; i<N; i++) {
-                hsum[i] = 0;
+                dettime = 1.0;
                 for (k=0; k<K; k++) {
                     Tski = Tsk(k,s);
                     if (fabs(Tski) > 1e-10) {
-                        // before = bswitch (btype, N, i, k, caughtbefore);
-                        // if (before)
-                        //     h[k * N + i] = Tski * -log(1-gik(i,k));
-                        // else
-                        h[k * N + i] = Tski * hik(i,k);
-                        hsum[i] += h[k * N + i];
+                        tmp = R::rexp(1/(Tski * hik(i,k)));
+                        if (tmp<dettime && tmp<inttime[k]) {
+                            dettime = tmp;
+                            trap = k;
+                        }
                     }
                 }
-                
-                for (k=0; k<K; k++) {
-                    cump[k+1] = cump[k] + h[k * N + i]/hsum[i];
-                }
-                if (R::runif(0,1) < (1-exp(-hsum[i]))) {
-                    if (caught[i]==0)  {        // first capture of this animal 
+                if (dettime<1.0) {
+                    if (caught[i]==0)  {        // first capture
                         nc++;
                         caught[i] = nc;
                     }
-                    // find trap with probability proportional to p
-                    // searches cumulative distribution of p  
-                    runif = R::runif(0,1);
-                    k = 0;
-                    // while ((runif > cump[k]) && (k<K)) k++;   // bug fix 2019-10-04
-                    while ((runif > cump[k+1]) && (k<K)) k++;
-                    value[i3(s, k, caught[i]-1, S, K)] = 1;  
+                    value[i3(s, trap, caught[i]-1, S, K)] = 1;
+                    occupied[trap] = 1;
                 }
             }
-        }
-        
-        // -------------------------------------------------------------------------- 
-        // capped proximity detectors; only one detection per site per occasion 
-        else if (detect == 8) {
             for (k=0; k<K; k++) {
-                Tski = Tsk(k,s);
-                if (fabs(Tski) > 1e-10) {
-                    hsum[k] = 0;
-                    for (i=0; i<N1; i++) {
-                        // currently no behavioural response 2022-04-21
-                        // before = bswitch (btype, N, i, k, caughtbefore);
-                        // if (before)
-                        //     h[k * N + i] = Tski * hik(i,k);
-                        // else
-                        h[k * N1 + i] = Tski * hik(i,k);
-                        hsum[k] += h[k * N1 + i];
-                    }
-                }
+                if (inttime[k] < 1 && !occupied[k]) nontarget(k,s) = 1;
             }
             
-            // work in progress
+        }
+        
+        // the 'proximity' group of detectors: 1 proximity, 2 count, 8 capped
+        else if (detect == 1 || detect == 2 || detect== 8) {
+            for (k=0; k<K; k++) {
+                if (lambdak>0 && fabs(Tsk(k,s))>1e-10) {
+                    // random time of interference
+                    inttime[k] = R::rexp(1/(lambdak * Tsk(k,s)));  // scale rather than rate
+                    if (inttime[k] < 1) nontarget(k,s) = 1;
+                }
+                else {
+                    inttime[k] = 1;
+                }
+                occupied[k] = 0;   // for capped detectors
+            }
             for (k=0; k<K; k++) {
                 Tski = Tsk(k,s);
                 if (fabs(Tski) > 1e-10) {
-                    for(i=0; i<N1; i++) {  // includes nontarget
-                        cumk[i+1] = cumk[i] + h[k * N1 + i]/hsum[k];
-                    }
-                    if (R::runif(0,1) < (1-exp(-hsum[k]))) {
-                        // find animal with probability proportional to p
-                        // searches cumulative distribution of p  
-                        runif = R::runif(0,1);
-                        i = 0;
-                        while ((runif > cumk[i+1]) && (i<N1)) i++;
-                        if (i<N) {
-                            // Rprintf("trapped animal i %4d \n", i);
-                            if (caught[i]==0)  {        // first capture of this animal 
-                                nc++;
-                                caught[i] = nc;
-                            }
-                            value[i3(s, k, caught[i]-1, S, K)] = 1;  
-                        }
-                        else {
-                            nontarget(k,s) = 1;
-                        }
-                    }
-                }
-            }
-        }    
-        // -------------------------------------------------------------------------------- 
-        // the 'proximity' group of detectors 1:2 - proximity, count 
-        else if ((detect >= 1) && (detect <= 2)) {
-            for (i=0; i<N; i++) {
-                for (k=0; k<K; k++) {
-                    Tski = Tsk(k,s);
-                    if (fabs(Tski) > 1e-10) {
-                        // before = bswitch (btype, N, i, k, caughtbefore);
-                        // if (before)
-                        //     p = gik(i,k);
-                        // else
+                    for (i=0; i<N; i++) {
                         h0 = hik(i,k);
-                        // if (p < -0.1) { 
-                        //     return(nullresult);
-                        // }  
                         if (h0>0) {
-                            if (detect == 1) {
-                                if (fabs(Tski-1) > 1e-10) {
-                                    h0 = h0 * Tski;
-                                }
-                                p = 1 - std::exp(-h0);
-                                count = R::runif(0,1) < p;  // binary proximity 
+                            if (detect == 1 || detect== 8) {    // binary proximity 
+                                // random time of detection
+                                dettime = R::rexp(1/ (h0*Tski));
+                                count = dettime < 1 && dettime < inttime[k] && 
+                                    !(detect == 8 && occupied[k]);
+                                if (count>0) occupied[k] = 1;
+                                    
                             }
                             else if (detect == 2) {             // count proximity 
                                 p = 1 - std::exp(-h0);
@@ -383,9 +347,18 @@ Rcpp::List CHcpp (
                                     count = rcount(round(Tski), p, 1);
                                 else
                                     count = rcount(binomN[s], p, Tski);
+                                if (count > 0 && lambdak>0) {
+                                    for (i=0; i<count; i++) {
+                                        // random time of detection
+                                        // NOT QUITE RIGHT BECAUSE ALREADY TIME<1
+                                        dettime = R::rexp(1/h0);
+                                        // discount detections after interference 
+                                        if (dettime > inttime[k]) count--;
+                                    }
+                                }                                
                             }
                             if (count>0) {
-                                if (caught[i]==0) {              // first capture of this animal 
+                                if (caught[i]==0) {           // first capture  
                                     nc++;
                                     caught[i] = nc;
                                 }
@@ -397,38 +370,38 @@ Rcpp::List CHcpp (
             }
         }
         
-        
-        if ((btype > 0) && (s < (S-1))) {
-            // update record of 'previous-capture' status 
-            if (btype == 1) {
-                for (i=0; i<N; i++) {
-                    if (Markov) 
-                        caughtbefore[i] = 0;
-                    for (k=0; k<K; k++)
-                        caughtbefore[i] = R::imax2 (value[i3(s, k, i, S, K)], caughtbefore[i]);
-                }
-            }
-            else if (btype == 2) {
-                for (i=0; i<N; i++) {
-                    for (k=0; k<K; k++) {
-                        ik = k * (N-1) + i;
-                        if (Markov) 
-                            caughtbefore[ik] = value[i3(s, k, i, S, K)];
-                        else 
-                            caughtbefore[ik] = R::imax2 (value[i3(s, k, i, S, K)], 
-                                caughtbefore[ik]);
-                    }
-                }
-            }
-            else {
-                for (k=0;k<K;k++) {
-                    if (Markov) 
-                        caughtbefore[k] = 0;
-                    for (i=0; i<N; i++) 
-                        caughtbefore[k] = R::imax2 (value[i3(s, k, i, S, K)], caughtbefore[k]);
-                }
-            }
-        }
+        // unused code anticipating includion of learned response
+        // if ((btype > 0) && (s < (S-1))) {
+        //     // update record of 'previous-capture' status 
+        //     if (btype == 1) {
+        //         for (i=0; i<N; i++) {
+        //             if (Markov) 
+        //                 caughtbefore[i] = 0;
+        //             for (k=0; k<K; k++)
+        //                 caughtbefore[i] = R::imax2 (value[i3(s, k, i, S, K)], caughtbefore[i]);
+        //         }
+        //     }
+        //     else if (btype == 2) {
+        //         for (i=0; i<N; i++) {
+        //             for (k=0; k<K; k++) {
+        //                 ik = k * (N-1) + i;
+        //                 if (Markov) 
+        //                     caughtbefore[ik] = value[i3(s, k, i, S, K)];
+        //                 else 
+        //                     caughtbefore[ik] = R::imax2 (value[i3(s, k, i, S, K)], 
+        //                         caughtbefore[ik]);
+        //             }
+        //         }
+        //     }
+        //     else {
+        //         for (k=0;k<K;k++) {
+        //             if (Markov) 
+        //                 caughtbefore[k] = 0;
+        //             for (i=0; i<N; i++) 
+        //                 caughtbefore[k] = R::imax2 (value[i3(s, k, i, S, K)], caughtbefore[k]);
+        //         }
+        //     }
+        // }
         
     }   // loop over s 
     
