@@ -2,16 +2,6 @@
 
 //==============================================================================
 
-// https://stackoverflow.com/questions/24618370/using-rmultinom-with-rcpp
-Rcpp::IntegerVector oneMultinomCall(Rcpp::NumericVector probs, int N) {
-    int k = probs.size();
-    Rcpp::IntegerVector ans(k);
-    rmultinom(N, probs.begin(), k, ans.begin());
-    return(ans);
-}
-
-//===============================================================================
-
 // [[Rcpp::export]]
 Rcpp::NumericMatrix popcpp (
         const Rcpp::NumericMatrix &mask,  // x-y coord

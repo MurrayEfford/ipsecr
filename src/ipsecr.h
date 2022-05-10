@@ -103,4 +103,7 @@ int bswitch (
     const int k, 
     const std::vector<int> &caughtbefore);
 
+Rcpp::IntegerVector oneMultinomCall(Rcpp::NumericVector probs, int N);
+    
 #endif  // __ipsecr_h_INCLUDED__
+

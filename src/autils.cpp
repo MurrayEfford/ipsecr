@@ -425,3 +425,16 @@ int par3 (int fn) {
     else
         return(0);
 }
+//--------------------------------------------------------------------------
+
+// https://stackoverflow.com/questions/24618370/using-rmultinom-with-rcpp
+Rcpp::IntegerVector oneMultinomCall(Rcpp::NumericVector probs, int N) {
+    int k = probs.size();
+    Rcpp::IntegerVector ans(k);
+    rmultinom(N, probs.begin(), k, ans.begin());
+    return(ans);
+}
+
+//===============================================================================
+
+
