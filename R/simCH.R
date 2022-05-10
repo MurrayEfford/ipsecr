@@ -37,7 +37,7 @@ simCH <- function (traps, popn, detectfn, detectpar, noccasions) {
     w <- array(temp$value, dim = c(noccasions, K, npop), 
         dimnames = list(1:noccasions, NULL, 1:npop))
     w <- aperm(w, c(3,1,2))
-    if (modelnontarget) {
+    if (lambdak > 0) {
         # retrieve nontarget from last row
         nontarget <- temp$nontarget
     }
