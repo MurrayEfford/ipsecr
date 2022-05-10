@@ -1,7 +1,10 @@
-Changes in version 1.0.3 (2022-05-09)
+Changes in version 1.0.3 (2022-05-10)
 
 New features or changed behaviour of old functions
     o   none
+
+Other
+    o   simCH() exported
 
 Changes in version 1.0.2 (2022-05-08)
 

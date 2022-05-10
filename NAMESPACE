@@ -40,6 +40,7 @@ export (ipsecr.fit)
 export (proxyfn0)
 export (proxyfn1)
 export (proxyfn2)
+export (simCH)
 
 S3method(print, ipsecr)
 S3method(summary, ipsecr)
@@ -59,4 +60,4 @@ importFrom (Rcpp, evalCpp)
 
 useDynLib (ipsecr)
 ## DEBUGGING ONLY (cpp functions not documented)
-## exportPattern("*cpp")
+exportPattern("*cpp")
