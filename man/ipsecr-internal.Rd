@@ -43,7 +43,7 @@ simCH(traps, popn, detectfn, detectpar, noccasions)
   \code{proxyfn2} is the default proxyfn used by \code{\link{ipsecr.fit}} when 
   capthist includes nontarget data. 
   
-  \code{simCH} is used by \code{\link{ipsecr.fit}} for CHmethod 'internal'. It is faster and simpler than \code{\link{secr::sim.capthist}}.
+  \code{simCH} is used by \code{\link{ipsecr.fit}} for CHmethod 'internal'. It is faster and simpler than the \pkg{secr} function \code{\link{sim.capthist}}.
   
 }
 
