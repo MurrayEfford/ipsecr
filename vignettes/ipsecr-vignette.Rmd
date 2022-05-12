@@ -192,7 +192,18 @@ summary(fit)
 
 # Non-target interference
 
-The data for single-catch and capped detectors may include a $k \times s$ matrix indicating whether a detector ($k$) was disturbed or occupied by non-target species on each occasion ($s$). We illustrate this by simulating disturbance at about 50% of the 235 unoccupied traps in the 'captdata' dataset. (This is an ad hoc method, used only for generating demonstration data).
+The capthist data object may include a binary $k \times s$ matrix indicating whether detector $k$ was disturbed or occupied by non-target species on each occasion $s$. 
+
+Disturbance at single-catch and capped detectors is usually taken to be exclusive of captures: an occupied trap cannot later catch a non-target animal, and vice versa. Multi-catch traps or binary proximity detectors may be disturbed after having registered detections, and both detections and interference are recorded (disturbance is independent of prior detector status, and has the effect of truncating the sampling interval). Variations may be specified with the details argument 'nontargettype' that takes one of the values 'exclusive', 'truncated', 'erased' or 'independent'.
+
+| Type | Allowed detectors | Explanation |
+|--------|------------|-------------------------------------------|
+| 'exclusive' | single, capped | detector may be occupied or interfered with, but not both |
+| 'truncated' | all | sampling interval ends at time of interference (default for all detectors except single and capped )|
+| 'erased' | all |  interference erases any previous detections at a site in the particular interval|
+| 'independent' | all | interference has no effect on detections, but is recorded and modelled | 
+
+We illustrate the fitting of a model with non-target captures by simulating disturbance at about 50% of the 235 unoccupied traps in the 'captdata' dataset. (This is an ad hoc method, used only for generating demonstration data).
 
 ```{r nontargetdata}
 set.seed(123)
@@ -201,7 +212,7 @@ attr(ch, 'nontarget') <- (1-t(apply(ch,2:3,sum))) * (runif(500)>0.5)
 summary(ch)$nontarget
 ```
 
-The attribute 'nontarget' is a matrix with one row per trap and one column per occasion. Entries are either 1 (nontarget or disturbed) or 0 (target species or undisturbed). For a dataset including non-target data `ipsecr.fit` automatically adds the hazard parameter 'lambdak' to represent a single disturbance process competing for detectors with each individual-specific capture process. The  non-target model may be suppressed by setting the details argument 'ignorenontarget = TRUE'.
+The attribute 'nontarget' is a matrix with one row per trap and one column per occasion. Entries are either 1 (nontarget or disturbed) or 0 (target species or undisturbed). For a dataset including non-target data `ipsecr.fit` automatically adds the hazard parameter 'lambdak' to represent a single ubiquitous disturbance process competing (in the 'exclusive' case) for detectors with each individual-specific capture process. The  non-target model may be suppressed by setting the details argument 'ignorenontarget = TRUE'.
 
 Information on the disturbance process is given by the frequency of nontarget events in the capthist input (attribute 'nontarget'). The last element of the vector returned by the new proxy function `proxyfn2` transforms this to a hazard on the log scale (i.e. complementary log-log of proportion):
 
