@@ -19,7 +19,7 @@ proxyfn0(capthist, N.estimator =  c("n", "null","zippin","jackknife"))
 proxyfn1(capthist, N.estimator =  c("n", "null","zippin","jackknife"))
 proxyfn2(capthist, N.estimator =  c("n", "null","zippin","jackknife"))
 
-simCH(traps, popn, detectfn, detectpar, noccasions)
+simCH(traps, popn, detectfn, detectpar, noccasions, details = list())
 
 }
 
@@ -33,6 +33,7 @@ simCH(traps, popn, detectfn, detectpar, noccasions)
   \item{detectfn}{integer code for detection function (see \link{detectfn})}
   \item{detectpar}{named list of parameter values }
   \item{noccasions}{integer number of sampling occasions}
+  \item{details}{list with optional additional named arguments}
  
 }
 

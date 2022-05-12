@@ -90,6 +90,7 @@ ipsecr.fit <- function (
         param        = 0,
         ignoreusage  = FALSE,
         ignorenontarget = FALSE,
+        nontargettype = 'exclusive',
         debug        = FALSE,
         savecall     = TRUE,
         newdetector  = NULL,
@@ -114,6 +115,18 @@ ipsecr.fit <- function (
     # choices for factorial depend on FrF2
     details$factorial<- match.arg(details$factorial, choices=c('full','fractional'))
     details$verbose <- verbose
+    
+    #################################################
+    # nontarget model 
+    #################################################
+
+    validnontargettype <- c('exclusive', 'truncated','erased','independent')
+    details$nontargettype <- match.arg(details$nontargettype, choices = validnontargettype)
+    if (detector(traps(capthist)) %in% c('multi', 'proximity', 'count')) {
+        if (details$nontargettype == 'exclusive') {
+            details$nontargettype <- 'truncated'   # downgrade for these detectors
+        }
+    }
     
     #################################################
     ## optional data check
@@ -334,10 +347,10 @@ ipsecr.fit <- function (
             #------------------------------------------------
             # sample from population
             if (is.function(details$CHmethod)) {   # user
-                ch <- details$CHmethod(traps, popn, detectfn, detectpar, noccasions)
+                ch <- details$CHmethod(traps, popn, detectfn, detectpar, noccasions, details)
             }
             else if (details$CHmethod == 'internal') {   # C++
-                ch <- simCH(traps, popn, detectfn, detectpar, noccasions)
+                ch <- simCH(traps, popn, detectfn, detectpar, noccasions, details)
             }
             else if (details$CHmethod == 'sim.capthist') {   
                 if (modelnontarget) stop ("sim.capthist does not simulate nontarget detections")

@@ -11,22 +11,23 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // CHcpp
-Rcpp::List CHcpp(const Rcpp::NumericMatrix& animals, const Rcpp::NumericMatrix& traps, const Rcpp::NumericMatrix& Tsk, int detectfn, int detect, const Rcpp::NumericVector& gsb, const double lambdak, const int btype, const int Markov, const Rcpp::IntegerVector& binomN);
-RcppExport SEXP _ipsecr_CHcpp(SEXP animalsSEXP, SEXP trapsSEXP, SEXP TskSEXP, SEXP detectfnSEXP, SEXP detectSEXP, SEXP gsbSEXP, SEXP lambdakSEXP, SEXP btypeSEXP, SEXP MarkovSEXP, SEXP binomNSEXP) {
+Rcpp::List CHcpp(const Rcpp::NumericMatrix& animals, const Rcpp::NumericMatrix& traps, const Rcpp::NumericMatrix& Tsk, const Rcpp::NumericVector& gsb, const int detectfn, const int detect, const double lambdak, const int interferencecode, const int btype, const int Markov, const Rcpp::IntegerVector& binomN);
+RcppExport SEXP _ipsecr_CHcpp(SEXP animalsSEXP, SEXP trapsSEXP, SEXP TskSEXP, SEXP gsbSEXP, SEXP detectfnSEXP, SEXP detectSEXP, SEXP lambdakSEXP, SEXP interferencecodeSEXP, SEXP btypeSEXP, SEXP MarkovSEXP, SEXP binomNSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type animals(animalsSEXP);
     Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type traps(trapsSEXP);
     Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type Tsk(TskSEXP);
-    Rcpp::traits::input_parameter< int >::type detectfn(detectfnSEXP);
-    Rcpp::traits::input_parameter< int >::type detect(detectSEXP);
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type gsb(gsbSEXP);
+    Rcpp::traits::input_parameter< const int >::type detectfn(detectfnSEXP);
+    Rcpp::traits::input_parameter< const int >::type detect(detectSEXP);
     Rcpp::traits::input_parameter< const double >::type lambdak(lambdakSEXP);
+    Rcpp::traits::input_parameter< const int >::type interferencecode(interferencecodeSEXP);
     Rcpp::traits::input_parameter< const int >::type btype(btypeSEXP);
     Rcpp::traits::input_parameter< const int >::type Markov(MarkovSEXP);
     Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type binomN(binomNSEXP);
-    rcpp_result_gen = Rcpp::wrap(CHcpp(animals, traps, Tsk, detectfn, detect, gsb, lambdak, btype, Markov, binomN));
+    rcpp_result_gen = Rcpp::wrap(CHcpp(animals, traps, Tsk, gsb, detectfn, detect, lambdak, interferencecode, btype, Markov, binomN));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -58,7 +59,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_ipsecr_CHcpp", (DL_FUNC) &_ipsecr_CHcpp, 10},
+    {"_ipsecr_CHcpp", (DL_FUNC) &_ipsecr_CHcpp, 11},
     {"_ipsecr_popcpp", (DL_FUNC) &_ipsecr_popcpp, 4},
     {"_ipsecr_popevencpp", (DL_FUNC) &_ipsecr_popevencpp, 2},
     {NULL, NULL, 0}
