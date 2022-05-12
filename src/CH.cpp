@@ -297,7 +297,7 @@ Rcpp::List CHcpp (
         }
         
         // -------------------------------------------------------------------------- 
-
+        
         // multi-catch trap; only one site per occasion 
         if (detect == 0) {
             for (i=0; i<N; i++) {
@@ -335,11 +335,12 @@ Rcpp::List CHcpp (
                             if (detect == 1 || detect== 8) {    // binary proximity 
                                 // random time of detection
                                 dettime = R::rexp(1/ (h0*Tski));
-                                count = dettime < 1 && 
-                                    (dettime < inttime[k] || nontargetcode>2) && 
-                                    !(detect == 8 && occupied[k]);
-                                if (count>0) occupied[k] = 1;
-                                    
+                                count = (dettime < 1) && 
+                                    (dettime < inttime[k] || nontargetcode > 2) && 
+                                    !(detect == 8 && nontargetcode == 1 && occupied[k]);
+                                if (count>0) {
+                                    occupied[k] = 1;
+                                }
                             }
                             else if (detect == 2) {             // count proximity 
                                 p = 1 - std::exp(-h0);
@@ -370,22 +371,32 @@ Rcpp::List CHcpp (
             }
         }
         
-        // non-exclusive interference
-        if (lambdak>0 && nontargetcode > 1) {
-            for (k=0; k<K; k++) {
-                if (inttime[k] < 1) {
-                    nontarget(k,s) = 1;
-                    if (nontargetcode == 3) {
-                        // any detections erased
-                        for (i=0; i<nc; i++) {
-                            CH[i3(s, k, i, S, K)] = 0;
-                        }  
+        if (lambdak>0) {
+            // non-exclusive interference
+            if (nontargetcode > 1) {
+                for (k=0; k<K; k++) {
+                    if (inttime[k] < 1) {
+                        nontarget(k,s) = 1;
+                        if (nontargetcode == 3) {
+                            // any detections erased
+                            for (i=0; i<nc; i++) {
+                                CH[i3(s, k, i, S, K)] = 0;
+                            }  
+                        }
+                    }
+                }
+            }
+            // capped detectors, exclusive interference
+            else if (nontargetcode==1 && detect== 8) {
+                for (k=0; k<K; k++) {
+                    if (inttime[k] < 1 && !occupied[k]) {
+                        nontarget(k,s) = 1;
                     }
                 }
             }
         }
-            
-            // unused code anticipating includion of learned response
+        
+        // unused code anticipating inclusion of learned response
         // if ((btype > 0) && (s < (S-1))) {
         //     // update record of 'previous-capture' status 
         //     if (btype == 1) {
