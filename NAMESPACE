@@ -60,4 +60,4 @@ importFrom (Rcpp, evalCpp)
 
 useDynLib (ipsecr)
 ## DEBUGGING ONLY (cpp functions not documented)
-exportPattern("*cpp")
+## exportPattern("*cpp")

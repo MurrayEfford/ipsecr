@@ -565,11 +565,19 @@ ipsecr.fit <- function (
         }
         else {
             B <- coef(sim.lm)[-1,]
-            B <- solve(t(B))  ## invert
-            lambda <- coef(sim.lm)[1,]   ## intercepts
-            beta <- as.numeric(B %*% matrix((y - lambda), ncol = 1))
-            ## only break on second or later box if differ boxsize
-            if (all(sapply(1:NP, within)) && (all(boxsize == boxsize2) || (m>1))) break
+            # B <- solve(t(B))  ## invert
+            # B <- try(solve(t(B)))  ## invert
+            B <- try(MASS::ginv(t(B)))   ## 2022-05-14
+            if (inherits(B, 'try-error')) {
+                code <- 5
+                beta <- rep(NA, NP)
+            }
+            else {
+                lambda <- coef(sim.lm)[1,]   ## intercepts
+                beta <- as.numeric(B %*% matrix((y - lambda), ncol = 1))
+                ## only break on second or later box if differ boxsize
+                if (all(sapply(1:NP, within)) && (all(boxsize == boxsize2) || (m>1))) break
+            }
         }
     }    # end of loop over boxes
     ####################################################################

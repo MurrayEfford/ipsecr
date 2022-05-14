@@ -1,10 +1,11 @@
-Changes in version 1.0.3 (2022-05-10)
+Changes in version 1.0.3 (2022-05-14)
 
 New features or changed behaviour of old functions
-    o   none
+    o   non-target interference for all detector types
 
 Other
     o   simCH() exported
+    o   replace solve by MASS::ginv for robustness
 
 Changes in version 1.0.2 (2022-05-08)
 
