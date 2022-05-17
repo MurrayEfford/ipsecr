@@ -566,8 +566,7 @@ ipsecr.fit <- function (
         else {
             B <- coef(sim.lm)[-1,]
             # B <- solve(t(B))  ## invert
-            # B <- try(solve(t(B)))  ## invert
-            B <- try(MASS::ginv(t(B)))   ## 2022-05-14
+            B <- try(MASS::ginv(t(B)), silent = TRUE)   ## 2022-05-15
             if (inherits(B, 'try-error')) {
                 code <- 5
                 beta <- rep(NA, NP)
