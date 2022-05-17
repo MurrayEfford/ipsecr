@@ -295,15 +295,18 @@ Rcpp::List CHcpp (
                 for (k=0; k<K; k++) {
                     Tski = Tsk(k,s);
                     if (fabs(Tski) > 1e-10) {
-                        tmptime = R::rexp(1/(Tski * hik(i,k)));
-                        // allow for interference to truncate detections
-                        if (tmptime<dettime && (tmptime<inttime[k] || nontargetcode>2)) {
-                            dettime = tmptime;
-                            tnum = k;
+                        h0 = hik(i,k);
+                        if (h0>0) {
+                            tmptime = R::rexp(1/(h0 * Tski));
+                            if (tmptime < dettime && 
+                                (tmptime < inttime[k] || nontargetcode > 2)) {
+                                dettime = tmptime;
+                                tnum = k;
+                            }
                         }
                     }
                 }
-                if (dettime<1.0) {
+                if (dettime < 1.0) {
                     CH[i3(i, s, tnum, N, S)] = 1;
                 }
             }
@@ -317,16 +320,14 @@ Rcpp::List CHcpp (
                     for (i=0; i<N; i++) {
                         h0 = hik(i,k);
                         if (h0>0) {
-                            // random time of detection
                             tmptime = R::rexp(1 / (h0*Tski));
-                            // first
-                            if (tmptime<dettime) {
+                            if (tmptime < dettime) {
                                 anum = i;
                                 dettime = tmptime;
                             }
                         }
                     }
-                    if ((dettime < 1) && 
+                    if ((dettime < 1.0) && 
                         (dettime < inttime[k] || nontargetcode > 2)) {
                         CH[i3(anum, s, k, N, S)] = 1;
                     }
