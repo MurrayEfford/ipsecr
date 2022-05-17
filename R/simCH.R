@@ -7,7 +7,6 @@
 # function simCH is used by ipsecr.fit for CHmethod 'internal'
 
 simCH <- function (traps, popn, detectfn, detectpar, noccasions, details = list()) {
-    
     K <- nrow(traps)
     usge <- usage(traps)
     if (is.null(usge)) {
@@ -51,18 +50,19 @@ simCH <- function (traps, popn, detectfn, detectpar, noccasions, details = list(
         stop ("simulated detection failed, code ", temp$resultcode)
     }
     npop <- nrow(popn)
-    w <- array(temp$CH, dim = c(noccasions, K, npop), 
-        dimnames = list(1:noccasions, NULL, 1:npop))
-    w <- aperm(w, c(3,1,2))
+    # w <- array(temp$CH, dim = c(noccasions, K, npop), 
+    #     dimnames = list(1:noccasions, NULL, rownames(pop)))
+    # w <- aperm(w, c(3,1,2))
+    w <- array(temp$CH, dim = c(npop, noccasions, K),
+        dimnames = list(rownames(pop), 1:noccasions, NULL))
+    w <- w[apply(w,1,sum)>0,,, drop = FALSE] 
+    class(w)   <- 'capthist'
     if (lambdak > 0) {
-        # retrieve nontarget from last row
         nontarget <- temp$nontarget
     }
     else {
         nontarget <- NULL
     }
-    w <- w[apply(w,1,sum)>0,,, drop = FALSE] 
-    class(w)   <- 'capthist'
     attr(w, 'nontarget') <- nontarget
     traps(w)   <- traps
     w

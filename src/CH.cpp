@@ -121,17 +121,15 @@ Rcpp::List CHcpp (
     Rcpp::NumericMatrix hik (N1,K);
     
     double p;
-    int    ik;
     int    nc = 0;
     int    count = 0;
-    double runif;
     double Tski = 1.0;  
+    // int    ik;
     // bool   before;
     
     std::vector<int> caughtbefore(N * K, 0);
     
     // return values
-    Rcpp::IntegerVector caught(N);         // caught in session 
     Rcpp::IntegerVector CH (N*S*K);        // return value array
     Rcpp::IntegerMatrix nontarget (K, S);  // return nontarget array
     
@@ -171,21 +169,17 @@ Rcpp::List CHcpp (
     double maxt;
     
     //========================================================
-    // 'multi-catch' declarations 
-    double tmp;
-    int trap;
-    
-    //========================================================
-    // 'multi' and 'proximity' declarations 
+    // 'multi' and 'proximity' and 'capped' declarations 
     std::vector<double> inttime(K,1.0);
     double dettime = 1.0;
+    double tmptime;
     
     //========================================================
     // MAIN LINE 
     
     Rcpp::List nullresult = Rcpp::List::create(
-        Rcpp::Named("n") = 0,
-        Rcpp::Named("caught") = caught,
+        // Rcpp::Named("n") = 0,
+        // Rcpp::Named("caught") = caught,
         Rcpp::Named("CH") = CH,
         Rcpp::Named("nontarget") = nontarget,
         Rcpp::Named("resultcode") = 2);
@@ -287,11 +281,7 @@ Rcpp::List CHcpp (
             
             for (i=0; i<N; i++) {
                 if (intrap[i]>0) {
-                    if (caught[i]==0) {                 // first capture
-                        nc++;
-                        caught[i] = nc;                 // nc-th animal to be captured 
-                    }
-                    CH[i3(s, intrap[i]-1, caught[i]-1, S, K)] = 1;  
+                    CH[i3(i,s,intrap[i]-1, N, S)] = 1;  
                 }
             }
         }
@@ -305,26 +295,47 @@ Rcpp::List CHcpp (
                 for (k=0; k<K; k++) {
                     Tski = Tsk(k,s);
                     if (fabs(Tski) > 1e-10) {
-                        tmp = R::rexp(1/(Tski * hik(i,k)));
+                        tmptime = R::rexp(1/(Tski * hik(i,k)));
                         // allow for interference to truncate detections
-                        if (tmp<dettime && (tmp<inttime[k] || nontargetcode>2)) {
-                            dettime = tmp;
-                            trap = k;
+                        if (tmptime<dettime && (tmptime<inttime[k] || nontargetcode>2)) {
+                            dettime = tmptime;
+                            tnum = k;
                         }
                     }
                 }
                 if (dettime<1.0) {
-                    if (caught[i]==0)  {        // first capture
-                        nc++;
-                        caught[i] = nc;
-                    }
-                    CH[i3(s, trap, caught[i]-1, S, K)] = 1;
+                    CH[i3(i, s, tnum, N, S)] = 1;
                 }
             }
         }
-        
-        // the 'proximity' group of detectors: 1 proximity, 2 count, 8 capped
-        else if (detect == 1 || detect == 2 || detect== 8) {
+        // binary capped
+        else if (detect== 8) {
+            for (k=0; k<K; k++) {
+                dettime = 1.0;
+                Tski = Tsk(k,s);
+                if (fabs(Tski) > 1e-10) {
+                    for (i=0; i<N; i++) {
+                        h0 = hik(i,k);
+                        if (h0>0) {
+                            // random time of detection
+                            tmptime = R::rexp(1 / (h0*Tski));
+                            // first
+                            if (tmptime<dettime) {
+                                anum = i;
+                                dettime = tmptime;
+                            }
+                        }
+                    }
+                    if ((dettime < 1) && 
+                        (dettime < inttime[k] || nontargetcode > 2)) {
+                        CH[i3(anum, s, k, N, S)] = 1;
+                    }
+                }
+            }
+        }
+    
+        // the 'proximity' group of detectors: 1 proximity, 2 count
+        else if (detect == 1 || detect == 2) {
             for (k=0; k<K; k++) {
                 occupied[k] = 0;
                 Tski = Tsk(k,s);
@@ -332,12 +343,11 @@ Rcpp::List CHcpp (
                     for (i=0; i<N; i++) {
                         h0 = hik(i,k);
                         if (h0>0) {
-                            if (detect == 1 || detect== 8) {    // binary proximity 
+                            if (detect == 1) {    // binary proximity 
                                 // random time of detection
                                 dettime = R::rexp(1/ (h0*Tski));
                                 count = (dettime < 1) && 
-                                    (dettime < inttime[k] || nontargetcode > 2) && 
-                                    !(detect == 8 && nontargetcode == 1 && occupied[k]);
+                                    (dettime < inttime[k] || nontargetcode > 2);
                                 if (count>0) {
                                     occupied[k] = 1;
                                 }
@@ -359,11 +369,7 @@ Rcpp::List CHcpp (
                                 }                                
                             }
                             if (count>0) {
-                                if (caught[i]==0) {           // first capture  
-                                    nc++;
-                                    caught[i] = nc;
-                                }
-                                CH[i3(s, k, caught[i]-1, S, K)] = count;
+                                CH[i3(i, s, k, N, S)] = count;
                             }
                         }
                     }
@@ -432,8 +438,8 @@ Rcpp::List CHcpp (
     }   // loop over s 
     
     return (Rcpp::List::create(
-            Rcpp::Named("n") = nc, 
-            Rcpp::Named("caught") = caught,
+            // Rcpp::Named("n") = nc, 
+            // Rcpp::Named("caught") = caught,
             Rcpp::Named("CH") = CH,
             Rcpp::Named("nontarget") = nontarget,
             Rcpp::Named("resultcode") = 0));
