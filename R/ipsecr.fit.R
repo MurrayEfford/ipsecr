@@ -356,7 +356,6 @@ ipsecr.fit <- function (
                 if (modelnontarget) stop ("sim.capthist does not simulate nontarget detections")
                 ch <- sim.capthist(traps, popn, detectfn, detectpar, noccasions)
             }
-            
             # check valid
             if (nrow(ch)==0) {
                 warning ("ipsecr.fit: no captures in simulation", call. = FALSE)
