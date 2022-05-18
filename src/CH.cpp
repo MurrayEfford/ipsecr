@@ -95,7 +95,7 @@ Rcpp::List CHcpp (
         const Rcpp::NumericMatrix &Tsk,     // usage
         const Rcpp::NumericVector &gsb,
         const int                 detectfn,
-        const int                 detect,
+        const int                 detectorcode,
         const double              lambdak,
         const int                 nontargetcode,
         const int                 btype,    // code for behavioural response  0 none etc. 
@@ -103,11 +103,12 @@ Rcpp::List CHcpp (
         const Rcpp::IntegerVector &binomN   // number of trials for 'count' detector modelled with binomial 
 ) {
     
-    //  detect may take values -
+    //  detectorcode may take values -
     // -1  single-catch traps
     //  0  multi-catch traps
     //  1  binary proximity detectors
     //  2  count  proximity detectors
+    //  8  capped binary proximity detectors
     
     int N = animals.nrow();
     // not to be called with N < 1
@@ -186,7 +187,7 @@ Rcpp::List CHcpp (
     
     Rcpp::RNGScope scope;             // Rcpp initialise and finalise random seed 
     
-    if ((detect < -1) || (detect > 2 && detect != 8)) {
+    if ((detectorcode < -1) || (detectorcode > 2 && detectorcode != 8)) {
         return(nullresult);
     }
     
@@ -211,7 +212,7 @@ Rcpp::List CHcpp (
         
         // --------------------------------------------------------------------- 
         // single-catch traps 
-        if (detect == -1) {
+        if (detectorcode == -1) {
             // initialise day 
             tr_an_indx = 0;
             nanimals = N;                          // only real animals
@@ -289,7 +290,7 @@ Rcpp::List CHcpp (
         // -------------------------------------------------------------------------- 
         
         // multi-catch trap; only one site per occasion 
-        if (detect == 0) {
+        if (detectorcode == 0) {
             for (i=0; i<N; i++) {
                 dettime = 1.0;
                 for (k=0; k<K; k++) {
@@ -312,8 +313,9 @@ Rcpp::List CHcpp (
             }
         }
         // binary capped
-        else if (detect== 8) {
+        else if (detectorcode == 8) {
             for (k=0; k<K; k++) {
+                occupied[k] = 0;
                 dettime = 1.0;
                 Tski = Tsk(k,s);
                 if (fabs(Tski) > 1e-10) {
@@ -329,6 +331,7 @@ Rcpp::List CHcpp (
                     }
                     if ((dettime < 1.0) && 
                         (dettime < inttime[k] || nontargetcode > 2)) {
+                        occupied[k] = 1;
                         CH[i3(anum, s, k, N, S)] = 1;
                     }
                 }
@@ -336,7 +339,7 @@ Rcpp::List CHcpp (
         }
     
         // the 'proximity' group of detectors: 1 proximity, 2 count
-        else if (detect == 1 || detect == 2) {
+        else if (detectorcode == 1 || detectorcode == 2) {
             for (k=0; k<K; k++) {
                 occupied[k] = 0;
                 Tski = Tsk(k,s);
@@ -344,7 +347,7 @@ Rcpp::List CHcpp (
                     for (i=0; i<N; i++) {
                         h0 = hik(i,k);
                         if (h0>0) {
-                            if (detect == 1) {    // binary proximity 
+                            if (detectorcode == 1) {    // binary proximity 
                                 // random time of detection
                                 dettime = R::rexp(1/ (h0*Tski));
                                 count = (dettime < 1) && 
@@ -353,7 +356,7 @@ Rcpp::List CHcpp (
                                     occupied[k] = 1;
                                 }
                             }
-                            else if (detect == 2) {             // count proximity 
+                            else if (detectorcode == 2) {             // count proximity 
                                 p = 1 - std::exp(-h0);
                                 if (binomN[s] == 1)
                                     count = rcount(round(Tski), p, 1);
@@ -394,7 +397,7 @@ Rcpp::List CHcpp (
                 }
             }
             // capped detectors, exclusive interference
-            else if (nontargetcode==1 && detect== 8) {
+            else if (nontargetcode==1 && detectorcode== 8) {
                 for (k=0; k<K; k++) {
                     if (inttime[k] < 1 && !occupied[k]) {
                         nontarget(k,s) = 1;
