@@ -2,6 +2,7 @@
 ## 2022-05-08 new proxyfn1
 
 library(ipsecr)
+# library(testthat)
 
 ## Not needed as RcppParallel not used, but keep as a reminder
 ## to avoid ASAN/UBSAN errors on CRAN, following advice of Kevin Ushey
@@ -24,5 +25,4 @@ test_that("correct single-catch SE", {
     expect_equal(pred[,'SE.estimate'], c(0.5954782, 0.0658304, 1.4052508), 
         tolerance = 1e-4, check.attributes = FALSE)
 })
-
 ###############################################################################
