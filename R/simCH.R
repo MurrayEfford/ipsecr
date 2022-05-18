@@ -50,7 +50,7 @@ simCH <- function (traps, popn, detectfn, detectpar, noccasions, details = list(
         stop ("simulated detection failed, code ", temp$resultcode)
     }
     w <- array(temp$CH, dim = c(nrow(popn), noccasions, K),
-        dimnames = list(rownames(popn), 1:noccasions, NULL))
+        dimnames = list(1:nrow(popn), 1:noccasions, NULL))
     w <- w[apply(w,1,sum)>0,,, drop = FALSE] 
     class(w)   <- 'capthist'
     if (lambdak > 0) {
