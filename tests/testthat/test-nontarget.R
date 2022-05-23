@@ -98,7 +98,7 @@ nt <- as.numeric(summ$nontarget)[1:5]
 nd <- as.numeric(summ$counts['detections',1:5])
 
 test_that("capped nontarget simulations", {
-    expect_equal(nt, c(23, 28, 26, 18, 29), 
+    expect_equal(nt, c(22, 18, 22, 14, 24), 
         tolerance = 1e-4, check.attributes = FALSE)
 })
 test_that("capped simulated detections in presence of interference", {
