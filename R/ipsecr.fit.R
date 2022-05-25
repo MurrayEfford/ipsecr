@@ -122,7 +122,7 @@ ipsecr.fit <- function (
 
     validnontargettype <- c('exclusive', 'truncated','erased','independent')
     details$nontargettype <- match.arg(details$nontargettype, choices = validnontargettype)
-    if (detector(traps(capthist)) %in% c('multi', 'proximity', 'count')) {
+    if (any(detector(traps(capthist)) %in% c('multi', 'proximity', 'count'))) {
         if (details$nontargettype == 'exclusive') {
             details$nontargettype <- 'truncated'   # downgrade for these detectors
         }
