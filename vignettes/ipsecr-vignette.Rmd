@@ -39,7 +39,7 @@ The default proxy function `proxyfn1` works for simple models with constant dens
 
 The monotonic relationship is demonstrated by simulation in the following figure.
 
-```{r monotonic, eval = TRUE, echo = FALSE, cache = TRUE, fig.height = 3, fig.width = 7, results = 'hide', message = FALSE, warning = FALSE}
+```{r monotonic, eval = TRUE, echo = FALSE, cache = TRUE, results = 'hide', message = FALSE, warning = FALSE}
 onecombo <- function (D, lambda0, sigma, nrepl = 50) {
   out <- matrix(nrow = nrepl, ncol=3)
   for (r in 1:nrepl) {
@@ -62,8 +62,10 @@ siglist <- lapply(sigmaval, onecombo, D = 5, lambda0 = 0.2)
 Dproxy <- sapply(Dlist, '[',,1)
 lamproxy <- sapply(lamlist, '[',,2)
 sigproxy <- sapply(siglist, '[',,3)
+```
 
-par(mfrow=c(1,3))
+```{r monotonicplot, eval = TRUE, echo = FALSE, cache = TRUE, fig.height = 3, fig.width = 7, results = 'hide', warning = FALSE}
+oldpar <- par(mfrow = c(1,3))
 
 plot(0,0,type='n', xlim=c(2.8,8), ylim=c(3,4.8),
   xlab = 'Density / ha', ylab = 'log(n)', log='x')
@@ -79,6 +81,7 @@ plot(0,0,type='n', xlim = c(18,46), ylim=c(2.5, 3.7),
   xlab = 'sigma m', ylab = 'log(RPSV)', log='x')
 apply(sigproxy,1,points, x=sigmaval)
 points(sigmaval, apply(sigproxy,2,mean), pch = 16, type='b', col='red')
+par(oldpar)
 ```
 
 **Fig.** Monotonic relationships between parameters (x-axis, log scale) and their default proxies (y-axis). 100 single-catch traps at 20-m spacing on a square grid. 50 simulations for each level, with other parameters held at their central value. Red line follows mean.
@@ -88,7 +91,7 @@ The algorithm includes these steps
 1. Compute proxy function from data
 2. Simulate data for parameters at the vertices* of a box around plausible estimates
 3. Compute proxy function for each simulation to generate predictor matrix 
-4. Fit a multivariate multiple regression model with proxies at each vertex as the dependent variable
+4. Fit a multivariate multiple regression model with proxies at each vertex as the dependent variables
 5. Invert regression model to estimate vector of parameters from the data proxies (1)
 6. If the estimated parameters do not all lie inside box, adjust the box and repeat from (2)
 7. Simulate at the estimates to obtain variance-covariance matrix 
@@ -109,12 +112,7 @@ runall <- FALSE
 ```
 
 ```{r retrieve, eval = !runall, echo = FALSE}
-# previously...
-# save(ip.single, ip.single.0, ip.multi, secr.multi, ipx, ip.single.nontarget,
-#      file = '../ipsecr/inst/example/fittedmodels.RData')
-# library(tools)
-# resaveRdaFiles(paste0('d:/density secr 4.5/ipsecr/inst/example'),'xz')
-
+# previously saved models ... see chunk 'saveall' at end
 load(system.file("example", "fittedmodels.RData", package = "ipsecr"))
 ```
 
@@ -306,13 +304,14 @@ plotMaskEdge(ipx$mask, add=T)
 The fitted relationship is linear on the log scale, whereas it was simulated as linear on the natural scale.
 
 ```{r fitx0, fig.width = 6, fig.height = 4}
-par(mar = c(4,6,4,4))
+oldpar <- par(mar = c(4,6,4,4))
 xval <- seq(270,730,10)
 pred <- predict(ipx, newdata = data.frame(x0 = xval/100))
 plot(0,0, type='n', xlim= c(270,730), ylim = c(0,40), xlab = 'x', ylab = 'Density')
 lines(xval, sapply(pred, '[', 'D','estimate'), col = 'red', lwd=2)
 abline(-265/20,0.05)
 rug(unique(tr$x))   # trap locations
+par(oldpar)
 ```
 
 To better match the original it would be possible to use an identity link for D.
@@ -344,6 +343,12 @@ designbeta
 ```
 
 For other designs you may specify the desired arguments of FrF2 as a list e.g., `details = list(factorial = 'fractional', FrF2args = list(nruns = 4, nfactors = 3, ncenter = 3))`. 
+
+```{r saveall, echo = FALSE, eval = runall}
+save(ip.single, ip.single.0, ip.multi, secr.multi, ipx, ip.single.nontarget,
+      file = 'd:/density secr 4.5/ipsecr/inst/example/fittedmodels.RData')
+tools::resaveRdaFiles(paste0('d:/density secr 4.5/ipsecr/inst/example'),'xz')
+```
 
 # Functionality shared with **secr** {#methods}
 

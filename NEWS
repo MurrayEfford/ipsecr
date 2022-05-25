@@ -1,6 +1,14 @@
 Changes in version 1.0.3 (2022-05-23)
 
 New features or changed behaviour of old functions
+    o   none
+
+Other
+    o   trivial change for CRAN - revert par() in vignette chunks
+
+Changes in version 1.0.3 (2022-05-23)
+
+New features or changed behaviour of old functions
     o   non-target interference for all detector types
 
 Bugs fixed
