@@ -18,8 +18,9 @@ Dawson & Robbins 2004).  A restricted range of SECR models may be fitted.
 
 ipsecr.fit(capthist, proxyfn = proxyfn1, model = list(D ~ 1, g0 ~ 1, sigma ~ 1),
     mask = NULL, buffer = 100, detectfn = "HN", binomN = NULL, start = NULL, 
-    link = list(), fixed = list(), timecov = NULL, details = list(), 
-    verify = TRUE, verbose = TRUE, ncores = NULL, seed = NULL, ...)
+    link = list(), fixed = list(), timecov = NULL, sessioncov = NULL, 
+    details = list(), verify = TRUE, verbose = TRUE, ncores = NULL, 
+    seed = NULL, ...)
 
 }
 
@@ -44,6 +45,8 @@ ipsecr.fit(capthist, proxyfn = proxyfn1, model = list(D ~ 1, g0 ~ 1, sigma ~ 1),
       giving the scalar value to which the parameter is to be fixed }
 
   \item{timecov}{ optional dataframe of values of time (occasion-specific) covariate(s). NOT USED }
+
+  \item{sessioncov}{ optional dataframe of values of session-specific covariate(s). NOT USED }
 
     \item{details}{ list of additional settings, to control estimation (see Details) }
 

@@ -16,6 +16,7 @@ ipsecr.fit <- function (
     link = list(),
     fixed = list(),
     timecov = NULL,
+    sessioncov = NULL,
     details = list(), 
     verify = TRUE, 
     verbose = TRUE, 
@@ -29,6 +30,8 @@ ipsecr.fit <- function (
     
     if (ms(capthist)) {
         stop ("'ipsecr.fit' not implemented for multi-session 'capthist'")
+        sessionlevels <- session(capthist)
+        nsess <- length(capthist)
     }
     
     ptm  <- proc.time()
@@ -218,11 +221,11 @@ ipsecr.fit <- function (
     # Prepare detection design matrices and lookup
     ##############################################
     # memo ('Preparing detection design matrices', verbose)
-    design <- secr.design.MS (capthist, model, timecov, NULL, NULL, NULL,
+    design <- secr.design.MS (capthist, model, timecov, sessioncov, NULL, NULL,
         NULL, ignoreusage = details$ignoreusage, naive = FALSE,
         CL = FALSE, contrasts = details$contrasts)
     design0 <- design   # for now
-    # design0 <- secr.design.MS (capthist, model, timecov, NULL, NULL, NULL,
+    # design0 <- secr.design.MS (capthist, model, timecov, sessioncov, NULL, NULL,
     #     NULL, ignoreusage = details$ignoreusage, naive = TRUE,
     #     CL = FALSE, contrasts = details$contrasts)
     
@@ -302,7 +305,7 @@ ipsecr.fit <- function (
     simfn <- function (beta, distribution = 'binomial', ...) {
         attempts <- 0
         allOK <- FALSE
-        D <- getD(designD, beta, mask, parindx, link, fixed)
+        D <- getD(designD, beta, mask, parindx, link, fixed, sessionlevels)
         N <- sum(D) * attr(mask, 'area')
         Ndist <- switch(distribution, poisson = 'poisson', binomial = 'fixed', even = 'fixed')    
         N <- switch(tolower(Ndist), poisson = rpois(1, N), fixed = round(N), NA)
@@ -645,6 +648,7 @@ ipsecr.fit <- function (
         mask = mask,
         detectfn = detectfn,
         timecov = timecov,
+        sessioncov = sessioncov,
         start = start,
         link = link,
         fixed = fixed,
