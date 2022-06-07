@@ -12,9 +12,11 @@ makeNewData.ipsecr <- function (object, all.levels = FALSE, ...) {
     mask <- object$mask
     vars <- object$vars
     timecov <- object$timecov
-
+    sessioncov <- object$sessioncov
+    
     nocc <- ncol (capthist)
-
+    sessions <- session(capthist)
+    
     onesession <- function(session) {
         findvars <- function (basevars, cov) {
             ## function to add covariates to a list
@@ -42,7 +44,8 @@ makeNewData.ipsecr <- function (object, all.levels = FALSE, ...) {
         
         sessvars <- vars
         
-        basevars <- list(session = 1)
+        # basevars <- list(session = 1)
+        basevars <- list(session = factor(sessions[session], levels=sessions))
         
         for (v in sessvars) {
             if (v=='x')  basevars$x <- 0     # mean attr(mask,'meanSD')[1,'x']
@@ -77,7 +80,9 @@ makeNewData.ipsecr <- function (object, all.levels = FALSE, ...) {
         expand.grid(basevars)
     }
     
-    newdata <- onesession(1)
+    # newdata <- onesession(1)
+    newdata <- lapply(1:length(sessions), onesession)
+    newdata <- do.call(rbind, newdata)
     newdata
     
 }

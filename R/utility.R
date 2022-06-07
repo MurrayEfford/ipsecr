@@ -12,8 +12,8 @@
 
 .localstuff <- new.env()
 
-# .localstuff$packageType <- ' pre-release'
-.localstuff$packageType <- ''
+.localstuff$packageType <- ' pre-release'
+## .localstuff$packageType <- ''
 
 .localstuff$validdetectors <- c('single','multi','proximity','count', 
     'polygonX', 'transectX', 'signal', 'polygon', 'transect', 
@@ -156,40 +156,6 @@ valid.pnames <- function (details, CL, detectfn, alltelem, sighting, nmix) {
 }
 #-------------------------------------------------------------------------------
 
-expanddet <- function(CH) {
-    trps <- traps(CH)
-    if (is.null(trps))
-        return ('nonspatial')
-    else {
-        det <- detector(trps)
-        if (length(det)<ncol(CH))
-            rep(det[1], ncol(CH))
-        else det
-    }
-}
-
-ndetectpar <- function (detectfn) {
-    length(parnames(detectfn))
-}
-
-replacedefaults <- function (default, user) replace(default, names(user), user)
-
-discreteN <- function (n, N) {
-    tN <- trunc(N)
-    if (N != tN) tN + sample (x = c(1,0), prob = c(N-tN, 1-(N-tN)),
-        replace = T, size = n)
-    else rep(tN,n)
-}
-
-ndetector <- function (traps) {
-    if (is.null(traps))
-        return(1)
-    else if (all(detector(traps) %in% .localstuff$polydetectors))
-        length(levels(polyID(traps)))
-    else
-        nrow(traps)
-}
-
 memo <- function (text, verbose) {
     ## could use message(text), but does not immediately flush console
     if (verbose) { cat (text, '\n')
@@ -228,7 +194,6 @@ lnbinomial <- function (x,size,prob) {
       x * log(prob) + (size-x) * log (1-prob)
 }
 ############################################################################################
-## moved from methods.r 2012-10-28
 
 model.string <- function (model, userDfn) {
     if (!is.null(userDfn)) {
@@ -585,8 +550,6 @@ mlogit <- function (x) {
 
 ############################################################################################
 
-###############################################################################
-
 ## expand beta parameter vector using template of 'fixed beta'
 ## fixed beta fb input is missing (NA) for estimated beta parameters
 fullbeta <- function (beta, fb) {
@@ -827,77 +790,6 @@ updatemodel <- function (model, detectfn, detectfns, oldvar, newvar, warn = FALS
 }
 ############################################################################################
 
-## Manually remove some mask points
-# simplified 2022-02-03
-
-deleteMaskPoints <- function (mask, onebyone = TRUE, add = FALSE, poly = NULL,
-                              poly.habitat = FALSE, ...) {
-    ## interface does not work properly in RStudio
-
-    if (ms(mask)) {         ## a list of mask objects
-        if (inherits(poly, 'list') & (!is.data.frame(poly)))
-            stop ("lists of polygons not implemented in 'make.mask'")
-        temp <- lapply (mask, deleteMaskPoints, onebyone = onebyone, add = add,
-                        poly = poly, poly.habitat = poly.habitat, ...)
-        class (temp) <- c('mask', 'list')
-        temp
-    }
-    else {
-        plot(mask, add = add, ...)
-        if (!is.null(poly)) {
-            if (poly.habitat)
-                pointstodrop <- (1:nrow(mask))[!pointsInPolygon(mask, poly)]
-            else
-                pointstodrop <- (1:nrow(mask))[pointsInPolygon(mask, poly)]
-        }
-        else if (onebyone) {
-            cat ('Click to select points; right-click to stop\n')
-            flush.console()
-            xy <- locator(type = 'p', pch=1, col='red')
-            pointstodrop <- if (length(xy$x)==0)
-                numeric(0)
-            else
-                nearesttrap(xy, mask)
-        }
-        else {
-            cat ('Click to select polygon vertices; right-click to stop\n')
-            flush.console()
-            xy <- locator(type = 'l', col='red')
-            xy <- as.data.frame(xy)
-            xy <- rbind(xy, xy[1,])
-            if (poly.habitat)
-                pointstodrop <- (1:nrow(mask))[!pointsInPolygon(mask, xy)]
-            else
-                pointstodrop <- (1:nrow(mask))[pointsInPolygon(mask, xy)]
-        }
-        npts <- length(pointstodrop)
-        if (npts>0) {
-            points(mask[pointstodrop,], pch = 16, col = 'red')
-            if(.Platform$OS.type == "windows") {
-                pl <- if (npts>1) 's' else ''
-                msg <- paste ('Delete ', npts, ' red point',pl, '?', sep='')
-                response <-  utils::winDialog(type = "okcancel", msg)
-            } else {
-                response <- 'OK'
-            }
-            if (response == 'OK') {
-                mask <- subset(mask, -pointstodrop)
-            if (npts==1)
-                message("1 point deleted")
-            else
-                message(npts, " points deleted")
-            }
-        else
-            message ("point(s) not deleted")
-        }
-        else
-            message ("no points to delete")
-        plot(mask, col='green')
-        mask
-    }
-}
-############################################################################################
-
 # number of beta parameters
 nparameters <- function (object) {
     Npar <- max(unlist(object$parindx))
@@ -1014,12 +906,19 @@ individualcovariates <- function (PIA) {
 ##############################################################################
 
 # modified from secr
-getD <- function (designD, beta, mask, parindx, link, fixed) {
-  if (!is.function(designD)) {
+getD <- function (designD, beta, mask, parindx, link, fixed, nsessions) {
+  if (is.function(designD)) {
+    stop ("designD cannot be a function in ipsecr")
+  }
+  else {
     if ((is.null(designD) || nrow(designD)==0) && (is.null(fixed[['D']]))) return(NULL)
   }
-  nmask <- nrow(mask)
-  D <- numeric(nmask)
+  if (nsessions>1)
+    nmask <- max(sapply(mask, nrow))
+  else
+    nmask <- nrow(mask)
+  D <- matrix(nrow = nmask, ncol = nsessions)
+  
   if (!is.null(fixed[['D']])) {
     D[] <- fixed[['D']]
   }
@@ -1030,6 +929,7 @@ getD <- function (designD, beta, mask, parindx, link, fixed) {
     # silently truncate D at zero
     D[D<0] <- 0
   }
+  dimnames(D)[[2]] <- paste0('D', 1:nsessions)
   D
 }
 ##############################################################################

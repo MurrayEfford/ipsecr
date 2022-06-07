@@ -14,7 +14,7 @@ predict.ipsecr <- function (object, newdata = NULL, type = c("response", "link")
     if (is.null(newdata)) {
       newdata <- makeNewData (object, ...)
     }
-    
+
     parindices <- object$parindx
     models <- object$model
     realnames <- names(models)

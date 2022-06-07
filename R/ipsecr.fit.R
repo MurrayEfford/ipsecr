@@ -1,7 +1,7 @@
 ###############################################################################
 ## package 'ipsecr'
 ## ipsecr.fit.R
-## 2022-04-01,18,19, 2022-05-08
+## 2022-04-01,18,19, 2022-05-08, 2022-06-07
 ###############################################################################
 
 ipsecr.fit <- function (
@@ -28,12 +28,7 @@ ipsecr.fit <- function (
     ## boxsize may be vector of length NP
     ## proxyfn1 is default defined separately
     
-    if (ms(capthist)) {
-        stop ("'ipsecr.fit' not implemented for multi-session 'capthist'")
-        sessionlevels <- session(capthist)
-        nsess <- length(capthist)
-    }
-    
+
     ptm  <- proc.time()
     starttime <- format(Sys.time(), "%H:%M:%S %d %b %Y")
     cl <- match.call(expand.dots = TRUE)
@@ -42,23 +37,37 @@ ipsecr.fit <- function (
     code <- 0  # exit code
     
     #################################################
-    # optionally replace detector type
-    if (!is.null(details$newdetector)) {
-        warning("replacement detector type specified by user")
-        detector(traps(capthist)) <- details$newdetector       
-    }
-    #################################################
-    
-    
-    #################################################
     ## inputs
     #################################################
     
     traps <- traps(capthist)
-    noccasions <- ncol(capthist)
+    #------------------------------------------
+    # optionally replace detector type
+    if (!is.null(details$newdetector)) {
+        warning("replacement detector type specified by user")
+        detector(traps) <- details$newdetector       
+    }
+    #------------------------------------------
     ncores <- setNumThreads(ncores)
     if (is.null(mask)) {
         mask <- make.mask(traps, buffer = buffer, nx = 64)
+    }
+    sessionlevels <- session(capthist)
+    if (ms(capthist)) {
+        nsessions <- length(capthist)
+        noccasions <- sapply(capthist, ncol)
+        if (!is.null(mask) && !ms(mask)) {
+            ## inefficiently replicate mask for each session!
+            mask <- lapply(sessionlevels, function(x) mask)
+            class (mask) <- c('mask', 'list')
+            names(mask) <- sessionlevels
+        }
+        cellarea <- sapply(mask, attr, 'area')
+    }
+    else {
+        nsessions <- 1
+        noccasions <- ncol(capthist)
+        cellarea <- attr(mask, 'area')
     }
     
     #################################################
@@ -125,7 +134,7 @@ ipsecr.fit <- function (
 
     validnontargettype <- c('exclusive', 'truncated','erased','independent')
     details$nontargettype <- match.arg(details$nontargettype, choices = validnontargettype)
-    if (any(detector(traps(capthist)) %in% c('multi', 'proximity', 'count'))) {
+    if (any(detector(traps) %in% c('multi', 'proximity', 'count'))) {
         if (details$nontargettype == 'exclusive') {
             details$nontargettype <- 'truncated'   # downgrade for these detectors
         }
@@ -242,7 +251,7 @@ ipsecr.fit <- function (
     }
     else {
         memo ('Preparing density design matrix', verbose)
-        temp <- D.designdata( mask, model$D, 1, 1, NULL)
+        temp <- D.designdata( mask, model$D, 1, sessionlevels, sessioncov)
         designD <- general.model.matrix(model$D, data = temp, gamsmth = NULL,
             contrasts = details$contrasts)
         attr(designD, 'dimD') <- attr(temp, 'dimD')
@@ -272,62 +281,47 @@ ipsecr.fit <- function (
         stop ("invalid boxsize vector")
     else boxsize2 <- details$boxsize2
 
-    ###########################################
-    # cluster for parallel processing
-    ###########################################
-    
-    if (ncores > 1) {
-        memo ('Preparing cluster for parallel processing', verbose)
-        if(.Platform$OS.type == "unix") {
-            clust <- makeCluster(ncores, type = "FORK")
-        }
-        else {
-            clust <- makeCluster(ncores, type = "PSOCK")
-            clusterExport(clust, c(
-                "mask", "link", "fixed", "details", "traps",
-                "detectfn", "noccasions", "proxyfn",
-                "parindx", "designD", "getD", "simCH",
-                "modelnontarget"),
-                environment())
-        }
-        on.exit(stopCluster(clust))
-        clusterSetRNGStream(clust, seed)
-    }
-    else {
-        clust <- NULL
-        set.seed(seed)
-    }
-    
     #---------------------------------------------------------------------------
     # to simulate one realization
     #---------------------------------------------------------------------------
     
     simfn <- function (beta, distribution = 'binomial', ...) {
+        NP <- length(beta)
         attempts <- 0
         allOK <- FALSE
-        D <- getD(designD, beta, mask, parindx, link, fixed, sessionlevels)
-        N <- sum(D) * attr(mask, 'area')
+        D <- getD(designD, beta, mask, parindx, link, fixed, nsessions)
+        N <- apply(D,2,sum) * cellarea
+        # cat('step 1 \n', apply(D,2,sum) , '\n', cellarea, '\n', distribution, '\n', N, '\n')        
         Ndist <- switch(distribution, poisson = 'poisson', binomial = 'fixed', even = 'fixed')    
         N <- switch(tolower(Ndist), poisson = rpois(1, N), fixed = round(N), NA)
+        
         # cannot simulate zero animals, so return NA for predicted
-        if (is.na(N) || N<=0 || N>details$Nmax) return(rep(NA, NP))
+
+        if (is.na(N) || any(N<=0) || any(N>details$Nmax)) return(rep(NA, NP))
         
         if (details$popmethod == 'internal') {
-            prob <- D/sum(D)
+            prob <- sweep(D, STATS = apply(D,2,sum), FUN = '/', MARGIN = 2)
         }
-        else if (details$popmethod == 'sim.popn') {
-            covariates(mask) <- data.frame(D = D)
-        }
+        # else if (details$popmethod == 'sim.popn') {
+        #     # covariates(mask) <- as.data.frame(D)
+        # }
         
         # detectpar is list of named parameters of detectfn
         # not yet modelled using design, design0: assumes 1:1
         betalist <- lapply(parindx[-1], function(x) unname(beta[x]))
         detectpar <- mapply(untransform, betalist, link[-1], SIMPLIFY = FALSE)
-        
+
         repeat {
+            
             #------------------------------------------------
             # generate population
-            if (details$popmethod == 'internal') {   # C++
+            if (is.function(details$popmethod)) {   # user
+                popn <- details$popmethod(mask, prob, N)
+            }
+            else if (details$popmethod == 'internal') {   # C++
+                if (nsessions>1) {
+                    stop("internal not ready for multisession")
+                }
                 if (distribution == 'even') {
                     bounds <- apply(mask,2,range)
                     popn <- popevencpp(as.matrix(bounds), as.integer(N))
@@ -339,14 +333,15 @@ ipsecr.fit <- function (
                 }
             }
             else if (details$popmethod == "sim.popn") {
-                popn <- sim.popn (D = 'D', core = mask, model2D = 'IHP', Ndist = Ndist)
+                popn <- sim.popn (D = as.data.frame(D), core = mask, 
+                    model2D = 'IHP', Ndist = Ndist, nsessions = nsessions)
             }
             # abort if no animals to sample
             if (length(popn)<2) {
                 warning ("ipsecr.fit: no animals in simulated population", call. = FALSE)
                 return(rep(NA, NP))
             }
-            
+
             #------------------------------------------------
             # sample from population
             if (is.function(details$CHmethod)) {   # user
@@ -357,17 +352,20 @@ ipsecr.fit <- function (
             }
             else if (details$CHmethod == 'sim.capthist') {   
                 if (modelnontarget) stop ("sim.capthist does not simulate nontarget detections")
-                ch <- sim.capthist(traps, popn, detectfn, detectpar, noccasions)
+                ch <- sim.capthist(traps, popn, detectfn, detectpar, noccasions, nsessions, 
+                    renumber = FALSE)
             }
             # check valid
-            if (nrow(ch)==0) {
+            n <- if (nsessions == 1) nrow(ch) else sapply(ch,nrow)
+            r <- if (nsessions == 1) sum(abs(ch)>0) else sapply(ch, function(x) sum(abs(x)>0))
+            if (any(n==0)) {
                 warning ("ipsecr.fit: no captures in simulation", call. = FALSE)
             }
             else {
-                if ((sum(abs(ch)>0) - nrow(ch)) < 1)
+                if (any((r - n) < 1))
                     warning ("ipsecr.fit: no re-captures in simulation", call. = FALSE)
             }
-            
+
             #------------------------------------------------
             # predict values
             predicted <- try (proxyfn (ch, ...))
@@ -395,7 +393,7 @@ ipsecr.fit <- function (
                 break
         }
         #----------------------------------------------------
-        
+
         if (!allOK) {
             warning ("ipsecr.fit: no successful simulation after ", details$max.ntries,
                 " attempts", call. = FALSE)
@@ -423,7 +421,7 @@ ipsecr.fit <- function (
     if (length(y) != NP)
         stop ("need one proxy for each parameter ",
             paste(pnames, collapse=" "))
-    
+
     ##########################################
     ## starting values
     ##########################################
@@ -458,7 +456,35 @@ ipsecr.fit <- function (
     ## coefficients for D precede all others
     betanames <- c(paste('D', Dnames, sep='.'), betanames)
     betanames <- sub('..(Intercept))','',betanames)
+
+    ###########################################
+    # cluster for parallel processing
+    ###########################################
     
+    if (ncores > 1) {
+        memo ('Preparing cluster for parallel processing', verbose)
+        if(.Platform$OS.type == "unix") {
+            # clust <- makeCluster(ncores, type = "FORK", outfile = "clusterlogfile.txt")
+            clust <- makeCluster(ncores, type = "FORK")
+        }
+        else {
+            # clust <- makeCluster(ncores, type = "PSOCK", outfile = "clusterlogfile.txt")
+            clust <- makeCluster(ncores, type = "PSOCK")
+            clusterExport(clust, c(
+                "mask", "link", "fixed", "details", "traps",
+                "detectfn", "noccasions", "nsessions", "proxyfn",
+                "parindx", "designD", "getD", "simCH",
+                "modelnontarget", "cellarea"), 
+                environment())
+        }
+        on.exit(stopCluster(clust))
+        clusterSetRNGStream(clust, seed)
+    }
+    else {
+        clust <- NULL
+        set.seed(seed)
+    }
+
     ####################################################################
     ## Loop over boxes
     ## keep trying until estimates within box or number exceeds max.nbox
@@ -495,7 +521,7 @@ ipsecr.fit <- function (
             designbeta <- rbind(designbeta, centrepoints)
         }
         else {
-            if (!requireNamespace('FrF2'))
+            if (!requireNamespace('FrF2', quietly = TRUE))
                 stop ('package FrF2 required for fractional factorial')
             if (is.null(details$FrF2args)) {
                 details$FrF2args <- list(nruns=2^(NP-1), nfactors=NP, ncenter = details$centre)
@@ -513,6 +539,14 @@ ipsecr.fit <- function (
         }
         
         designpoints <- nrow(designbeta)
+        
+        # check number of simulations
+        if (2 * designpoints * details$min.nsim > details$max.nsim) {
+            stop("max.nsim = ", details$max.nsim, 
+                " does not allow two boxes with designpoints = ", designpoints, 
+                " and min.nsim = ", details$min.nsim)
+        }
+        
         sim <- NULL
         alldesignbeta <- NULL
         tempdistn <- if (details$even) 'even' else 'binomial'
@@ -523,11 +557,13 @@ ipsecr.fit <- function (
             dev <- 0   # criterion for precision (SE, RSE) before set
             if (ncores > 1) {
                 list(...) # evaluate any promises cf boot
-                newsim <- parRapply(clust, basedesign, simfn, distribution = tempdistn, ...)
+                newsim <- parRapply(clust, basedesign, simfn, 
+                    distribution = tempdistn, ...)
                 newsim <- t(matrix(newsim, ncol = nrow(basedesign)))
             }
             else {
-                newsim <- t(apply(basedesign,1,simfn, distribution = tempdistn, ...))
+                newsim <- t(apply(basedesign, 1, simfn, 
+                    distribution = tempdistn, ...))
             }
             OK <- apply(!apply(newsim,1, is.na), 2, all)
             if (sum(OK) == 0) {
@@ -536,9 +572,6 @@ ipsecr.fit <- function (
             }
             sim <- rbind(sim, newsim[OK,])
             alldesignbeta <- rbind(alldesignbeta,basedesign[OK,])
-            if ((nrow(alldesignbeta) > details$max.nsim)) {
-                break
-            }
             sim.lm <- lm ( sim ~ alldesignbeta )   # proxy ~ link(param)
             sum.sim.lm <- summary(sim.lm)
             code <- 0
@@ -548,6 +581,8 @@ ipsecr.fit <- function (
             else {
                 dev <- sapply(sum.sim.lm, function(x) x$sigma) / y / sqrt(nrow(sim))
             }
+            # break if have exceeded allowed simulations
+            if ((nrow(alldesignbeta) > details$max.nsim)) break
             # break if have achieved target precision
             if (!is.null(dev) && !any(is.na(dev)) && all(dev <= details$dev.max)) break
         }
@@ -605,11 +640,13 @@ ipsecr.fit <- function (
         colnames(vardesign) <- betanames
         if (ncores > 1) {
             list(...) # evaluate any promises cf boot
-            newsim <- parRapply(clust, vardesign, simfn, distribution = details$distribution, ...)
+            newsim <- parRapply(clust, vardesign, simfn, 
+                distribution = details$distribution, ...)
             newsim <- t(matrix(newsim, ncol = nrow(vardesign)))
         }
         else {
-            newsim <- t(apply(vardesign,1,simfn, distribution = details$distribution, ...))
+            newsim <- t(apply(vardesign,1,simfn, 
+                distribution = details$distribution, ...))
         }
         OK <- apply(!apply(newsim,1, is.na), 2, all)
         memo(paste(sum(OK), " variance simulations successful\n"), verbose)
