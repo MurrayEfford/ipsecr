@@ -78,6 +78,7 @@ described separately - see \code{\link{details}}.
   var.nsim \tab 1000 \tab number of additional simulations to estimate variance-covariance matrix \cr
   min.nsim \tab 10 \tab minimum number of simulations per point \cr
   max.nsim \tab 2000 \tab maximum number of simulations per point \cr
+  min.nbox \tab 2 \tab minimum number of attempts to `frame' solution \cr
   max.nbox \tab 5 \tab maximum number of attempts to `frame' solution \cr
   max.ntries \tab 2 \tab maximum number of attempts at each simulation \cr
   distribution \tab `poisson' \tab `poisson', `binomial' or `even' \cr

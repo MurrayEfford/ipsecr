@@ -64,6 +64,7 @@ Defaults
   \item{max.nsim}{ maximum number of simulations per point }
   \item{dev.max}{ tolerance for precision of points in predictor space }
   \item{var.nsim}{ number of additional simulations to estimate variance-covariance matrix }
+  \item{min.nbox}{ minimum number of attempts to `frame' solution }
   \item{max.nbox}{ maximum number of attempts to `frame' solution }
   \item{max.ntries}{ maximum number of attempts at each simulation }
   }

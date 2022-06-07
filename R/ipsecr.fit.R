@@ -94,6 +94,7 @@ ipsecr.fit <- function (
         var.nsim     = 2000,
         min.nsim     = 20,
         max.nsim     = 2000, 
+        min.nbox     = 2, 
         max.nbox     = 5, 
         max.ntries   = 2,
         distribution = 'poisson',
@@ -612,7 +613,8 @@ ipsecr.fit <- function (
                 lambda <- coef(sim.lm)[1,]   ## intercepts
                 beta <- as.numeric(B %*% matrix((y - lambda), ncol = 1))
                 ## only break on second or later box if differ boxsize
-                if (all(sapply(1:NP, within)) && (all(boxsize == boxsize2) || (m>1))) break
+                # if (all(sapply(1:NP, within)) && (all(boxsize == boxsize2) || (m>1))) break
+                if (all(sapply(1:NP, within)) && (m >= details$min.nbox)) break
             }
         }
     }    # end of loop over boxes
