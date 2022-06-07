@@ -1,10 +1,12 @@
-Changes in version 1.0.5 (2022-06-06)
+Changes in version 1.1.0 (2022-06-07)
 
 New features or changed behaviour of old functions
-    o   none
+    o   'session'-level models
+    o   ipsecr.fit() acquires argument 'sessioncov'
 
 Other
-    o   'session' level models
+    o   check adequate max.nsim
+    o   requireNamespace FrF2 quietly
 
 Changes in version 1.0.4 (2022-05-23)
 
