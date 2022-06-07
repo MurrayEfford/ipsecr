@@ -10,20 +10,24 @@ print.ipsecr <- function (x, newdata = NULL, alpha = 0.05, deriv = FALSE, call =
     print(summary(traps(x$capthist)), terse=TRUE)
     
     cat ('\n')
-    
     ###################
     ## Data description
     
-    det <- detector(traps(x$capthist))
-    n  <- nrow(x$capthist)     # number caught
-    if (length(dim(x$capthist))>2)
-        ncapt <- sum(abs(x$capthist))
-    else
-        ncapt <- sum(abs(x$capthist)>0)
-    cat ('N animals       : ', n, '\n')
-    cat ('N detections    : ', ncapt, '\n')
-    cat ('N occasions     : ', ncol(x$capthist), '\n')
-    
+    if (ms(x$capthist)) {
+        print (summary(x$capthist, terse = TRUE))
+        det <- detector(traps(x$capthist)[[1]])
+    } 
+    else {
+        det <- detector(traps(x$capthist))
+        n  <- nrow(x$capthist)     # number caught
+        if (length(dim(x$capthist))>2)
+            ncapt <- sum(abs(x$capthist))
+        else
+            ncapt <- sum(abs(x$capthist)>0)
+        cat ('N animals       : ', n, '\n')
+        cat ('N detections    : ', ncapt, '\n')
+        cat ('N occasions     : ', ncol(x$capthist), '\n')
+    }
     if (any(det %in% .localstuff$countdetectors)) {
         cat ('Count model     :  ')
         if (x$details$binomN == 0) cat ('Poisson \n')
@@ -32,10 +36,9 @@ print.ipsecr <- function (x, newdata = NULL, alpha = 0.05, deriv = FALSE, call =
         else if (x$details$binomN > 1) cat('Binomial', x$details$binomN, '\n')
     }
     
-    if (length(maskarea(x$mask))==0)
-        cat ('Mask length     : ', masklength(x$mask), 'km \n')
-    else
+    if (!ms(x$capthist)) {
         cat ('Mask area       : ', maskarea(x$mask), 'ha \n')
+    }
     
     ####################
     ## Model description
