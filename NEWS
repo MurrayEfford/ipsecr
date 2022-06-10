@@ -1,12 +1,14 @@
-Changes in version 1.1.0 (2022-06-07)
+Changes in version 1.1.0 (2022-06-11)
 
 New features or changed behaviour of old functions
     o   'session'-level models
     o   ipsecr.fit() acquires argument 'sessioncov'
+    o   builtin proxyfn 'proxy.ms' for multi-session data
 
 Other
     o   check adequate max.nsim
     o   requireNamespace FrF2 quietly
+    o   rename proxyfn2 to proxy.nt
 
 Changes in version 1.0.4 (2022-05-23)
 

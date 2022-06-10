@@ -4,7 +4,7 @@
 ## 2022-05-08
 ###############################################################################
 
-proxyfn0 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife")) {
+proxyfn0 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife"), ...) {
     N.estimator <- tolower(N.estimator)
     N.estimator <- match.arg(N.estimator)
     ## capthist single-session only; ignoring losses
@@ -32,7 +32,7 @@ proxyfn0 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife
 }
 ##################################################
 
-proxyfn1 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife")) {
+proxyfn1 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife"), ...) {
     N.estimator <- tolower(N.estimator)
     N.estimator <- match.arg(N.estimator)
     ## capthist single-session only; ignoring losses
@@ -64,7 +64,7 @@ proxyfn1 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife
 }
 ##################################################
 
-proxyfn2 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife")) {
+proxy.nt <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife"), ...) {
     N.estimator <- tolower(N.estimator)
     N.estimator <- match.arg(N.estimator)
     ## capthist single-session only; ignoring losses
@@ -74,10 +74,10 @@ proxyfn2 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife
     ni <- apply(ch, 2, sum)     ## individuals on each occasion
     nontarget <- attr(capthist, 'nontarget', exact = TRUE)
     if (is.null(nontarget)) {
-        stop ("proxyfn2 requires nontarget")
+        stop ("proxy.nt requires nontarget")
     }
     if (nrow(nontarget)!= dim(capthist)[3] || ncol(nontarget) != nocc) {
-        stop ("invalid nontarget data in proxyfn2")
+        stop ("invalid nontarget data in proxy.nt")
     }
     pdisturb <- mean(nontarget)
     if (pdisturb>=1) {
@@ -107,3 +107,36 @@ proxyfn2 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife
     )
 }
 ##################################################
+
+proxy.ms <- function (capthist, model, ...) {
+    if (!inherits(capthist, 'list')) stop ("proxy.s expects a multi-session capthist")
+    n <- sapply(capthist, nrow) ## number of individuals per session
+    ni <- function (chi) {
+        ch <- abs(chi) > 0
+        sum(apply(ch, 2, sum))
+    }
+    nocc <- sapply(capthist, ncol)      ## number of occasions
+    nsess <- length(n)
+    p <- sapply(capthist, ni) / n / nocc
+    rpsv <- unlist(secr::RPSV(capthist, CC = TRUE))
+    D0 <- log(n[1])
+    if (model$D == ~1) {  # constant density
+        Dterms <- NULL
+    }
+    else if (model$D == ~session) {   # session-specific density
+        Dterms <- log(n[-1]/n[1])
+    }
+    else if (model$D == ~Session) {   # log-linear trend in density
+        Dlm <- coef(lm(log(n)~I(0:(nsess-1))))
+        D0 <- Dlm[1]
+        Dterms <- Dlm[2]
+    }
+    else stop ("proxyfn.ms does not accept model ", model$D)
+    c(
+        D0,
+        Dterms,
+        logp = log(-log(1-mean(p))),
+        logRPSV = log(mean(rpsv))
+    )
+}
+

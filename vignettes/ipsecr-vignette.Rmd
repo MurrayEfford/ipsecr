@@ -212,14 +212,14 @@ summary(ch)$nontarget
 
 The attribute 'nontarget' is a matrix with one row per trap and one column per occasion. Entries are either 1 (nontarget or disturbed) or 0 (target species or undisturbed). For a dataset including non-target data `ipsecr.fit` automatically adds the hazard parameter 'lambdak' to represent a single ubiquitous disturbance process competing (in the 'exclusive' case) for detectors with each individual-specific capture process. The  non-target model may be suppressed by setting the details argument 'ignorenontarget = TRUE'.
 
-Information on the disturbance process is given by the frequency of nontarget events in the capthist input (attribute 'nontarget'). The last element of the vector returned by the new proxy function `proxyfn2` transforms this to a hazard on the log scale (i.e. complementary log-log of proportion):
+Information on the disturbance process is given by the frequency of nontarget events in the capthist input (attribute 'nontarget'). The last element of the vector returned by the new proxy function `proxy.nt` transforms this to a hazard on the log scale (i.e. complementary log-log of proportion):
 
 ```{r proxyfn2demo}
-proxyfn2(ch)
+proxy.nt(ch)
 ```
 
 ```{r nontargetdemo, eval = runall, cache = TRUE}
-ip.single.nontarget <- ipsecr.fit(ch, detectfn = 'HHN', proxyfn = proxyfn2)
+ip.single.nontarget <- ipsecr.fit(ch, detectfn = 'HHN', proxyfn = proxy.nt)
 ```
 
 The estimate of lambda0 has risen compared to ip.single: 

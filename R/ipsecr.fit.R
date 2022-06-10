@@ -171,8 +171,8 @@ ipsecr.fit <- function (
     ## check
     if (modelnontarget) {
         if (isTRUE(all.equal(proxyfn, proxyfn1))) {
-            proxyfn <- proxyfn2
-            warning("replacing default proxy function with proxyfn2 for nontarget model")
+            proxyfn <- proxy.nt
+            warning("replacing default proxy function with proxy.nt for nontarget model")
         }
     }
     
@@ -374,7 +374,7 @@ ipsecr.fit <- function (
 
             #------------------------------------------------
             # predict values
-            predicted <- try (proxyfn (ch, ...))
+            predicted <- try (proxyfn (ch, model = model, ...))
             if (inherits(predicted, 'try-error')) {
                 predicted <- rep(NA, NP)
             }
@@ -423,7 +423,7 @@ ipsecr.fit <- function (
     ##########################################
     ## target values of predictor
     ##########################################
-    y <- proxyfn(capthist, ...)
+    y <- proxyfn(capthist, model = model, ...)
     if (length(y) != NP)
         stop ("need one proxy for each parameter ",
             paste(pnames, collapse=" "))
@@ -479,7 +479,7 @@ ipsecr.fit <- function (
             clusterExport(clust, c(
                 "mask", "link", "fixed", "details", "traps",
                 "detectfn", "noccasions", "nsessions", "proxyfn",
-                "parindx", "designD", "getD", "simCH",
+                "model", "parindx", "designD", "getD", "simCH",
                 "modelnontarget", "cellarea"), 
                 environment())
         }

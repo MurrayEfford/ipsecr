@@ -2,7 +2,7 @@
 
 \alias{proxyfn0}
 \alias{proxyfn1}
-\alias{proxyfn2}
+\alias{proxy.nt}
 \alias{simCH}
 
 \title{Internal Functions}
@@ -15,9 +15,10 @@ Functions called internally by \pkg{ipsecr}.
 
 \usage{
 
-proxyfn0(capthist, N.estimator =  c("n", "null","zippin","jackknife"))
-proxyfn1(capthist, N.estimator =  c("n", "null","zippin","jackknife"))
-proxyfn2(capthist, N.estimator =  c("n", "null","zippin","jackknife"))
+proxyfn0(capthist, N.estimator =  c("n", "null","zippin","jackknife"), ...)
+proxyfn1(capthist, N.estimator =  c("n", "null","zippin","jackknife"), ...)
+proxy.nt(capthist, N.estimator =  c("n", "null","zippin","jackknife"), ...)
+proxy.ms(capthist, model, ...)
 
 simCH(traps, popn, detectfn, detectpar, noccasions, details = list())
 
@@ -27,6 +28,7 @@ simCH(traps, popn, detectfn, detectpar, noccasions, details = list())
 
   \item{capthist}{secr capthist object}
   \item{N.estimator}{character name of closed-population estimator}
+  \item{model}{named list of model formulae (see \code{\link{ipsecr.fit}})}
  
   \item{traps}{detector locations as \pkg{secr} traps object}
   \item{popn}{animal locations as \pkg{secr} popn object}
@@ -41,8 +43,10 @@ simCH(traps, popn, detectfn, detectpar, noccasions, details = list())
 
   \code{proxyfn1} is the default proxyfn used by \code{\link{ipsecr.fit}}. 
 
-  \code{proxyfn2} is the default proxyfn used by \code{\link{ipsecr.fit}} when 
+  \code{proxy.nt} is the default proxyfn used by \code{\link{ipsecr.fit}} when 
   capthist includes nontarget data. 
+  
+  \code{proxy.ms} can be used to fit multi-session models. 
   
   \code{simCH} is used by \code{\link{ipsecr.fit}} for CHmethod 'internal'. It is faster and simpler than the \pkg{secr} function \code{\link{sim.capthist}}.
   
@@ -53,9 +57,11 @@ simCH(traps, popn, detectfn, detectpar, noccasions, details = list())
 proxyfn0, proxyfn1 -- a numeric vector of length 3 corresponding to proxies for 
 population size, capture probability intercept and scale of detection.
 
-proxyfn2 -- a numeric vector of length 4 corresponding to proxies for 
+proxy.nt -- a numeric vector of length 4 corresponding to proxies for 
 population size, capture probability intercept, scale of detection and nontarget 
 interference.
+
+proxy.ms -- a numeric vector of length >= 3 corresponding to proxies for multi-session density models.
 
 simCH -- a single-session capthist object.
 
