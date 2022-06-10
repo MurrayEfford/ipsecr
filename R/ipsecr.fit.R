@@ -35,7 +35,7 @@ ipsecr.fit <- function (
     cl <- paste(names(cl)[-1],cl[-1], sep=' = ', collapse=', ' )
     cl <- paste('ipsecr.fit(', cl, ')')
     code <- 0  # exit code
-    
+
     #################################################
     ## inputs
     #################################################
@@ -56,6 +56,12 @@ ipsecr.fit <- function (
     if (ms(capthist)) {
         nsessions <- length(capthist)
         noccasions <- sapply(capthist, ncol)
+        if (details$popmethod == 'internal') {
+            stop ("'internal' method does not simulate multi-session populations")
+        }
+        if (details$popmethod == 'sim.pop' && packageVersion('secr') < '4.5.6') {
+            stop ("simulation of multi-session population with sim.pop requires secr >= 4.5.6")
+        }
         if (!is.null(mask) && !ms(mask)) {
             ## inefficiently replicate mask for each session!
             mask <- lapply(sessionlevels, function(x) mask)
