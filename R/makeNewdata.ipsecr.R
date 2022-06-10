@@ -83,6 +83,9 @@ makeNewData.ipsecr <- function (object, all.levels = FALSE, ...) {
     # newdata <- onesession(1)
     newdata <- lapply(1:length(sessions), onesession)
     newdata <- do.call(rbind, newdata)
+    if ('Session' %in% vars) {
+        newdata$Session <- as.numeric(newdata$session) - 1   
+    }
     newdata
     
 }
