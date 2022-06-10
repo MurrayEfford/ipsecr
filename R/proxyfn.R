@@ -2,6 +2,7 @@
 ## package 'ipsecr'
 ## proxyfn.R
 ## 2022-05-08
+## 2022-06-11 proxy.ms
 ###############################################################################
 
 proxyfn0 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife"), ...) {
@@ -109,7 +110,7 @@ proxy.nt <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife
 ##################################################
 
 proxy.ms <- function (capthist, model, ...) {
-    if (!inherits(capthist, 'list')) stop ("proxy.s expects a multi-session capthist")
+    if (!inherits(capthist, 'list')) stop ("proxy.ms expects a multi-session capthist")
     n <- sapply(capthist, nrow) ## number of individuals per session
     ni <- function (chi) {
         ch <- abs(chi) > 0
@@ -139,4 +140,5 @@ proxy.ms <- function (capthist, model, ...) {
         logRPSV = log(mean(rpsv))
     )
 }
+##################################################
 
