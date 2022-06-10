@@ -27,7 +27,6 @@ ipsecr.fit <- function (
     ## ... passed to proxyfn
     ## boxsize may be vector of length NP
     ## proxyfn1 is default defined separately
-    
 
     ptm  <- proc.time()
     starttime <- format(Sys.time(), "%H:%M:%S %d %b %Y")
@@ -57,7 +56,7 @@ ipsecr.fit <- function (
         nsessions <- length(capthist)
         noccasions <- sapply(capthist, ncol)
         if (details$popmethod == 'internal') {
-            stop ("'internal' method does not simulate multi-session populations")
+            stop ("'internal' method does not simulate multi-session populations; try 'sim.popn'")
         }
         if (details$popmethod == 'sim.pop' && packageVersion('secr') < '4.5.6') {
             stop ("simulation of multi-session population with sim.pop requires secr >= 4.5.6")
@@ -686,18 +685,19 @@ ipsecr.fit <- function (
     dimnames(vcov) <- list(betanames, betanames)
     
     desc <- packageDescription("ipsecr")  ## for version number
-    
+
     output <- list(
         call = cl,
         capthist = capthist,
+        proxyfn = proxyfn,
+        model = model,
         mask = mask,
         detectfn = detectfn,
-        timecov = timecov,
-        sessioncov = sessioncov,
         start = start,
         link = link,
         fixed = fixed,
-        model = model,
+        timecov = timecov,
+        sessioncov = sessioncov,
         details = details,
         designD = designD,        
         design = design,
