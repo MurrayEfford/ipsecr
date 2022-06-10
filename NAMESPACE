@@ -39,7 +39,8 @@ importFrom (nlme,
 export (ipsecr.fit)
 export (proxyfn0)
 export (proxyfn1)
-export (proxyfn.nt)
+export (proxy.nt)
+export (proxy.ms)
 export (simCH)
 
 S3method(print, ipsecr)
