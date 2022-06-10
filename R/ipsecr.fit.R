@@ -61,6 +61,10 @@ ipsecr.fit <- function (
         if (details$popmethod == 'sim.pop' && packageVersion('secr') < '4.5.6') {
             stop ("simulation of multi-session population with sim.pop requires secr >= 4.5.6")
         }
+        if (isTRUE(all.equal(proxyfn, proxyfn1))) {
+            proxyfn <- proxy.ms
+            warning("replacing default proxy function with proxy.ms for multi-session data")
+        }
         if (!is.null(mask) && !ms(mask)) {
             ## inefficiently replicate mask for each session!
             mask <- lapply(sessionlevels, function(x) mask)
@@ -170,6 +174,7 @@ ipsecr.fit <- function (
     modelnontarget <- !is.null(nontarget) && !details$ignorenontarget
     ## check
     if (modelnontarget) {
+        if (nsessions>1) stop ("nontarget model not implemented for multi-session data")
         if (isTRUE(all.equal(proxyfn, proxyfn1))) {
             proxyfn <- proxy.nt
             warning("replacing default proxy function with proxy.nt for nontarget model")
