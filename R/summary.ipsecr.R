@@ -1,7 +1,7 @@
 ## summary.ipsecr.R
-## 2022-04-01
+## 2022-04-01, 2022-06-14
 
-summary.ipsecr <- function (object, newdata = NULL, alpha = 0.05, deriv = FALSE, ...) {
+summary.ipsecr <- function (object, newdata = NULL, alpha = 0.05, ...) {
     
     out <- vector('list')
     

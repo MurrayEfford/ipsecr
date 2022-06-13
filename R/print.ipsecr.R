@@ -1,10 +1,10 @@
-print.ipsecr <- function (x, newdata = NULL, alpha = 0.05, deriv = FALSE, call = TRUE, ...) {
+print.ipsecr <- function (x, newdata = NULL, alpha = 0.05, call = TRUE, ...) {
     
     if (!is.null(x$call) & call) {
         cat ('\n')
         print(x$call)
     }
-    cat ('ipsecr ', x$version, ', ', x$starttime, '\n', sep='')
+    cat ('ipsecr ', x$version, ', ', x$starttime, ', ', x$proctime, '\n', sep='')
     cat ('\n')
     
     print(summary(traps(x$capthist)), terse=TRUE)
@@ -51,9 +51,16 @@ print.ipsecr <- function (x, newdata = NULL, alpha = 0.05, deriv = FALSE, call =
     cat ('Detection fn    : ', detectionfunctionname(x$detectfn), '\n')
     cat ('Distribution    : ', x$details$distribution, '\n')
     cat ('N parameters    : ', Npar, '\n')
+    
+    cat ('\n')
+    cat ('Design points   : ', nrow(x$designbeta), '\n')
+    cat ('Simulations per box', '\n')
+    for (i in 1:length(x$ip.nsim)) {
+        cat (i, x$ip.nsim[i], '\n')
+    }
+
     cat ('\n')
     cat ('Beta parameters (coefficients)', '\n')
-    
     print(coef(x), ...)
     
     cat ('\n')

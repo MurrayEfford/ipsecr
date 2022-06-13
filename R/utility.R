@@ -906,12 +906,12 @@ individualcovariates <- function (PIA) {
 ##############################################################################
 
 # modified from secr
-getD <- function (designD, beta, mask, parindx, link, fixed, nsessions) {
+getD <- function (parm = 'D', designD, beta, mask, parindx, link, fixed, nsessions) {
   if (is.function(designD)) {
     stop ("designD cannot be a function in ipsecr")
   }
   else {
-    if ((is.null(designD) || nrow(designD)==0) && (is.null(fixed[['D']]))) return(NULL)
+    if ((is.null(designD) || nrow(designD)==0) && (is.null(fixed[[parm]]))) return(NULL)
   }
   if (nsessions>1)
     nmask <- max(sapply(mask, nrow))
@@ -919,17 +919,17 @@ getD <- function (designD, beta, mask, parindx, link, fixed, nsessions) {
     nmask <- nrow(mask)
   D <- matrix(nrow = nmask, ncol = nsessions)
   
-  if (!is.null(fixed[['D']])) {
-    D[] <- fixed[['D']]
+  if (!is.null(fixed[[parm]])) {
+    D[] <- fixed[[parm]]
   }
   else {
-    beta <- beta[parindx[['D']]]
+    beta <- beta[parindx[[parm]]]
     D[] <- designD %*% beta
-    D[] <- untransform (D, link[['D']])
+    D[] <- untransform (D, link[[parm]])
     # silently truncate D at zero
     D[D<0] <- 0
   }
-  dimnames(D)[[2]] <- paste0('D', 1:nsessions)
+  dimnames(D)[[2]] <- paste0(parm, 1:nsessions)
   D
 }
 ##############################################################################

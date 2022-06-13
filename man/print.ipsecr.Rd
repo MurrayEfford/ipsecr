@@ -12,8 +12,8 @@
 }
 
 \usage{
-\method{print}{ipsecr} (x, newdata = NULL, alpha = 0.05, deriv = FALSE, call = TRUE, ...)
-\method{summary}{ipsecr} (object, newdata = NULL, alpha = 0.05, deriv = FALSE, ...)
+\method{print}{ipsecr} (x, newdata = NULL, alpha = 0.05, call = TRUE, ...)
+\method{summary}{ipsecr} (object, newdata = NULL, alpha = 0.05, ...)
 }
 
 \arguments{
@@ -21,7 +21,6 @@
   \item{object}{ \code{ipsecr} object output from \code{ipsecr.fit} }
   \item{newdata}{ optional dataframe of values at which to evaluate model }
   \item{alpha}{ alpha level }
-  \item{deriv}{ logical for calculation of derived D and esa }
   \item{call}{ logical; if TRUE the call is printed }
   \item{...}{ other arguments (not used) }
 }
@@ -54,18 +53,15 @@ Mask area       \tab \cr
 Model          \tab model formula for each `real' parameter \cr
 Fixed (real)   \tab fixed real parameters \cr
 Detection fn   \tab detection function type (halfnormal or hazard-rate) \cr
+Distribution    \tab spatial model (details$distribution) \cr
 N parameters   \tab number of parameters estimated  \cr
-Log likelihood \tab log likelihood \cr
-AIC            \tab Akaike's information criterion \cr
-AICc           \tab AIC with small sample adjustment (Burnham and Anderson 2002) \cr
+
+Design points   \tab number of vertices and centre points \cr
+Simulations per box \tab total number \cr
 Beta parameters \tab coef of the fitted model, SE and confidence intervals \cr
 vcov            \tab variance-covariance matrix of beta parameters  \cr
 Real parameters \tab fitted (real) parameters evaluated at base levels of covariates \cr
-Derived parameters \tab derived estimates of density and mean effective sampling area (optional) \cr
 }
-
-Derived parameters (see \code{\link{derived}}) are computed only if
-\code{deriv = TRUE}.
 
 }
 
