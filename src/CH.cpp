@@ -94,9 +94,9 @@ Rcpp::List CHcpp (
         const Rcpp::NumericMatrix &traps,   // x-y coord
         const Rcpp::NumericMatrix &Tsk,     // usage
         const Rcpp::NumericVector &gsb,
+        const Rcpp::NumericVector &NT,
         const int                 detectfn,
         const int                 detectorcode,
-        const double              lambdak,
         const int                 nontargetcode,
         const int                 btype,    // code for behavioural response  0 none etc. 
         const int                 Markov,   // learned vs transient behavioural response 0 learned 1 Markov 
@@ -113,7 +113,7 @@ Rcpp::List CHcpp (
     int N = animals.nrow();
     // not to be called with N < 1
     if (N<1) Rcpp::stop ("no animals in population");
-    int N1 = N + (lambdak>0 && nontargetcode==1);   // increment for exclusive nontargets
+    int N1 = N + (nontargetcode==1);   // increment for exclusive nontargets
     int K = Tsk.nrow();
     int S = Tsk.ncol();
     int i,k,n,s;
@@ -149,7 +149,7 @@ Rcpp::List CHcpp (
     // used only for single-catch traps
     if (N1>N) {
         for (k=0; k<K; k++) {
-            hik(N1-1,k) = lambdak;
+            hik(N1-1,k) = NT[k];
         }
     }
     
@@ -198,11 +198,11 @@ Rcpp::List CHcpp (
         
         // --------------------------------------------------------------------- 
         // interference events 
-        if (lambdak>0) {
+        if (nontargetcode > 0) {
             for (k=0; k<K; k++) {
-                if (fabs(Tsk(k,s))>1e-10) {
+                if (fabs(Tsk(k,s))>1e-10 && NT[k]>0) {
                     // random time of interference
-                    inttime[k] = R::rexp(1/(lambdak * Tsk(k,s)));  // scale not rate
+                    inttime[k] = R::rexp(1/(NT[k] * Tsk(k,s)));  // scale not rate
                 }
                 else {
                     inttime[k] = 1;
@@ -236,7 +236,7 @@ Rcpp::List CHcpp (
                             h0 = Tski * h0;
                         }
                         event_time = randomtime(1-exp(-h0));
-                        if (lambdak>0 && nontargetcode==2)
+                        if (nontargetcode == 2)
                             maxt = inttime[k];
                         else
                             maxt = 1.0;
@@ -362,7 +362,7 @@ Rcpp::List CHcpp (
                                     count = rcount(round(Tski), p, 1);
                                 else
                                     count = rcount(binomN[s], p, Tski);
-                                if (count > 0 && lambdak>0) {
+                                if (count > 0 && nontargetcode>0) {
                                     for (i=0; i<count; i++) {
                                         // random time of detection
                                         // NOT QUITE RIGHT BECAUSE ALREADY TIME<1
@@ -381,7 +381,7 @@ Rcpp::List CHcpp (
             }
         }
         
-        if (lambdak>0) {
+        if (nontargetcode>0) {
             // non-exclusive interference
             if (nontargetcode > 1) {
                 for (k=0; k<K; k++) {
