@@ -57,8 +57,8 @@ Borchers and Efford (2008) and later papers.
 Defaults
 
 \itemize{
-  \item{boxsize}{ scalar or vector of length np for size of design as fraction of central parameter value}
-  \item{boxsize2}{ as for \code{boxsize}; used from second box onwards}
+  \item{boxsize1}{ scalar or vector of length np for size of design as fraction of central parameter value}
+  \item{boxsize2}{ as for \code{boxsize1}; used from second box onwards}
   \item{centre}{ number of centre points in simulation design}
   \item{min.nsim}{ minimum number of simulations per point }
   \item{max.nsim}{ maximum number of simulations per point }
