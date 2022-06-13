@@ -10,8 +10,8 @@ importFrom (graphics, .filled.contour, abline, arrows, contour, hist,
     segments, strheight, strwidth, symbols, text, legend, axis)
 importFrom (grDevices, chull, contourLines, grey, palette, 
     terrain.colors, topo.colors, rainbow)
-importFrom (stats, AIC, approx, approxfun, as.formula, chisq.test, coef,
-    cutree, deviance, df.residual, dist, dpois,  formula, hclust,
+importFrom (stats, AIC, approx, approxfun, as.formula, binomial, chisq.test, coef,
+    cutree, deviance, df.residual, dist, dpois,  formula, glm, hclust,
     integrate, lm, logLik, median, model.matrix, nlm, nls, optim,
     optimise, optimize, pchisq, pgamma, plnorm, pnorm, poisson,
     predict, qchisq, qnorm, rbeta, rbinom, rexp, rgamma, rlnorm, 
@@ -39,8 +39,8 @@ importFrom (nlme,
 export (ipsecr.fit)
 export (proxyfn0)
 export (proxyfn1)
-export (proxy.nt)
 export (proxy.ms)
+export (simpop)
 export (simCH)
 
 S3method(print, ipsecr)
@@ -55,9 +55,6 @@ S3method(region.N, ipsecr)
 S3method(makeNewData, ipsecr)
 
 importFrom (Rcpp, evalCpp)
-
-## importFrom (RcppParallel, 
-##     RcppParallelLibs)
 
 useDynLib (ipsecr)
 ## DEBUGGING ONLY (cpp functions not documented)
