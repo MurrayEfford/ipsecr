@@ -12,7 +12,8 @@ chs <- simCH(
     traps = trs, 
     popn = pop, 
     detectfn = 14, 
-    detectpar = list(lambda0 = 0.2, sigma = 20, lambdak = 0.5),
+    detectpar = list(lambda0 = 0.2, sigma = 20),
+    NT = 0.5,
     noccasions = 5, 
     details = list(nontargettype='exclusive'))
 summ <- summary(chs)
@@ -38,7 +39,8 @@ chm <- simCH(
     traps = trm, 
     popn = pop, 
     detectfn = 14, 
-    detectpar = list(lambda0 = 0.2, sigma = 20, lambdak = 0.5),
+    detectpar = list(lambda0 = 0.2, sigma = 20),
+    NT = 0.5, 
     noccasions = 5, 
     details = list(nontargettype='truncated'))
 summ <- summary(chm)
@@ -64,7 +66,8 @@ chp <- simCH(
     traps = trp, 
     popn = pop, 
     detectfn = 14, 
-    detectpar = list(lambda0 = 0.2, sigma = 20, lambdak = 0.5),
+    detectpar = list(lambda0 = 0.2, sigma = 20),
+    NT = 0.5,
     noccasions = 5, 
     details = list(nontargettype = 'truncated'))
 summ <- summary(chp)
@@ -90,7 +93,8 @@ chc <- simCH(
     traps = trc, 
     popn = pop, 
     detectfn = 14, 
-    detectpar = list(lambda0 = 0.2, sigma = 20, lambdak = 0.5),
+    detectpar = list(lambda0 = 0.2, sigma = 20),
+    NT = 0.5,
     noccasions = 5, 
     details = list(nontargettype = 'exclusive'))
 summ <- summary(chc)
