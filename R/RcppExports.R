@@ -5,6 +5,10 @@ CHcpp <- function(animals, traps, Tsk, gsb, NT, detectfn, detectorcode, nontarge
     .Call('_ipsecr_CHcpp', PACKAGE = 'ipsecr', animals, traps, Tsk, gsb, NT, detectfn, detectorcode, nontargetcode, btype, Markov, binomN)
 }
 
+rpsvcpp <- function(sk, traps) {
+    .Call('_ipsecr_rpsvcpp', PACKAGE = 'ipsecr', sk, traps)
+}
+
 popcpp <- function(mask, prob, maskspacing, N) {
     .Call('_ipsecr_popcpp', PACKAGE = 'ipsecr', mask, prob, maskspacing, N)
 }

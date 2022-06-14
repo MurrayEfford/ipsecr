@@ -31,6 +31,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rpsvcpp
+Rcpp::NumericVector rpsvcpp(const Rcpp::IntegerMatrix& sk, const Rcpp::NumericMatrix& traps);
+RcppExport SEXP _ipsecr_rpsvcpp(SEXP skSEXP, SEXP trapsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::IntegerMatrix& >::type sk(skSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type traps(trapsSEXP);
+    rcpp_result_gen = Rcpp::wrap(rpsvcpp(sk, traps));
+    return rcpp_result_gen;
+END_RCPP
+}
 // popcpp
 Rcpp::NumericMatrix popcpp(const Rcpp::NumericMatrix& mask, Rcpp::NumericVector& prob, double& maskspacing, int& N);
 RcppExport SEXP _ipsecr_popcpp(SEXP maskSEXP, SEXP probSEXP, SEXP maskspacingSEXP, SEXP NSEXP) {
@@ -60,6 +72,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ipsecr_CHcpp", (DL_FUNC) &_ipsecr_CHcpp, 11},
+    {"_ipsecr_rpsvcpp", (DL_FUNC) &_ipsecr_rpsvcpp, 2},
     {"_ipsecr_popcpp", (DL_FUNC) &_ipsecr_popcpp, 4},
     {"_ipsecr_popevencpp", (DL_FUNC) &_ipsecr_popevencpp, 2},
     {NULL, NULL, 0}

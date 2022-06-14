@@ -970,3 +970,25 @@ mapbeta <- function (parindx0, parindx1, beta0, betaindex)
 }
 ############################################################################################
 
+# RPSV(..., CC=TRUE)
+
+rpsv <- function (capthist)
+{
+  if (inherits (capthist, 'list')) {
+    lapply(capthist, rpsv)   ## recursive
+  }
+  else {
+    if (nrow(capthist) < 1) return(NA)
+    trm <- as.matrix(traps(capthist))
+    temp <- apply(abs(capthist), 1, rpsvcpp, trm)
+    temp <- matrix(unlist(temp), nrow = 3)
+    temp <- apply(temp,1,sum, na.rm = TRUE)
+    if (any(is.na(temp) | temp<0)) {
+      temp <- NA  
+    }
+    else {
+      temp <- sqrt((temp[2]+temp[3]) / (2 * temp[1]))
+    }
+    temp
+  }
+}
