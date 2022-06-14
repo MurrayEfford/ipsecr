@@ -1,12 +1,13 @@
 ###############################################################################
 ## package 'ipsecr'
 ## ipsecr.fit.R
-## 2022-04-01,18,19, 2022-05-08, 2022-06-07
+## 2022-04-01,18,19, 2022-05-08, 2022-06-11
+## 2022-06-13 lambdak renamed NT
 ###############################################################################
 
 ipsecr.fit <- function (
     capthist, 
-    proxyfn = proxyfn1, 
+    proxyfn = proxy.ms, 
     model = list(D~1, g0~1, sigma~1), 
     mask = NULL,
     buffer = 100, 
@@ -25,8 +26,7 @@ ipsecr.fit <- function (
     ...) {
     
     ## ... passed to proxyfn
-    ## boxsize may be vector of length NP
-    ## proxyfn1 is default defined separately
+    ## proxy.ms is default defined separately
 
     ptm  <- proc.time()
     starttime <- format(Sys.time(), "%H:%M:%S %d %b %Y")
@@ -39,44 +39,23 @@ ipsecr.fit <- function (
     ## inputs
     #################################################
     
-    traps <- traps(capthist)
+    trps <- traps(capthist)
     #------------------------------------------
     # optionally replace detector type
     if (!is.null(details$newdetector)) {
         warning("replacement detector type specified by user")
-        detector(traps) <- details$newdetector       
+        detectortype <- details$newdetector       
+        if (ms(trps)) for (j in 1:length(trps)) detector(trps[[j]]) <- detectortype
+        else  detector(trps) <- detectortype
+    }
+    else {
+        if (ms(trps)) detectortype <- unlist(sapply(trps, detector))[1]   ## assume all same
+        else detectortype <- detector(trps)[1]
     }
     #------------------------------------------
     ncores <- setNumThreads(ncores)
     if (is.null(mask)) {
-        mask <- make.mask(traps, buffer = buffer, nx = 64)
-    }
-    sessionlevels <- session(capthist)
-    if (ms(capthist)) {
-        nsessions <- length(capthist)
-        noccasions <- sapply(capthist, ncol)
-        if (details$popmethod == 'internal') {
-            stop ("'internal' method does not simulate multi-session populations; try 'sim.popn'")
-        }
-        if (details$popmethod == 'sim.pop' && packageVersion('secr') < '4.5.6') {
-            stop ("simulation of multi-session population with sim.pop requires secr >= 4.5.6")
-        }
-        if (isTRUE(all.equal(proxyfn, proxyfn1))) {
-            proxyfn <- proxy.ms
-            warning("replacing default proxy function with proxy.ms for multi-session data")
-        }
-        if (!is.null(mask) && !ms(mask)) {
-            ## inefficiently replicate mask for each session!
-            mask <- lapply(sessionlevels, function(x) mask)
-            class (mask) <- c('mask', 'list')
-            names(mask) <- sessionlevels
-        }
-        cellarea <- sapply(mask, attr, 'area')
-    }
-    else {
-        nsessions <- 1
-        noccasions <- ncol(capthist)
-        cellarea <- attr(mask, 'area')
+        mask <- make.mask(trps, buffer = buffer, nx = 64)
     }
     
     #################################################
@@ -95,7 +74,7 @@ ipsecr.fit <- function (
     
     #################################################
     defaultdetails <- list(
-        boxsize      = 0.2, 
+        boxsize1     = 0.2, 
         boxsize2     = 0.05, 
         boxtype      = 'absolute',
         centre       = 3,
@@ -130,7 +109,9 @@ ipsecr.fit <- function (
     if (details$max.nbox<2) stop("ipsecr.fit details$max.nbox >= 2")
     details$distribution <- match.arg(details$distribution, choices = c('poisson','binomial','even'))
     details$boxtype <- match.arg(details$boxtype, choices = c('absolute','relative'))
-    details$popmethod <- match.arg(details$popmethod, choices = c('internal','sim.popn'))
+    if (!is.function(details$popmethod)) {
+        details$popmethod <- match.arg(details$popmethod, choices = c('internal','sim.popn'))
+    }
     if (!is.function(details$CHmethod)) {
         details$CHmethod <- match.arg(details$CHmethod, choices = c('internal','sim.capthist'))
     }
@@ -144,11 +125,38 @@ ipsecr.fit <- function (
 
     validnontargettype <- c('exclusive', 'truncated','erased','independent')
     details$nontargettype <- match.arg(details$nontargettype, choices = validnontargettype)
-    if (any(detector(traps) %in% c('multi', 'proximity', 'count'))) {
+    if (detectortype %in% c('multi', 'proximity', 'count')) {
         if (details$nontargettype == 'exclusive') {
             details$nontargettype <- 'truncated'   # downgrade for these detectors
         }
     }
+    
+    sessionlevels <- session(capthist)
+    if (ms(capthist)) {
+        nsessions <- length(capthist)
+        noccasions <- sapply(capthist, ncol)
+        if (details$popmethod == 'sim.pop' && packageVersion('secr') < '4.5.6') {
+            stop ("simulation of multi-session population with sim.pop requires secr >= 4.5.6")
+        }
+        if (!is.null(mask) && !ms(mask)) {
+            ## inefficiently replicate mask for each session!
+            mask <- lapply(sessionlevels, function(x) mask)
+            class (mask) <- c('mask', 'list')
+            names(mask) <- sessionlevels
+        }
+        cellarea <- sapply(mask, attr, 'area')
+        trapmeanSD <- lapply(trps, getMeanSD)
+        nontarget <- sapply(capthist, attr, 'nontarget', exact = TRUE)
+    }
+    else {
+        nsessions <- 1
+        noccasions <- ncol(capthist)
+        cellarea <- attr(mask, 'area')
+        trapmeanSD <- getMeanSD(trps)
+        nontarget <- attr(capthist, 'nontarget', exact = TRUE)
+    }
+    
+    
     
     #################################################
     ## optional data check
@@ -170,15 +178,14 @@ ipsecr.fit <- function (
     ## nontarget interference 
     #################################################
     
-    nontarget <- attr(capthist, 'nontarget', exact = TRUE)
-    modelnontarget <- !is.null(nontarget) && !details$ignorenontarget
+    modelnontarget <- length(unlist(nontarget))>0 && !details$ignorenontarget
     ## check
     if (modelnontarget) {
-        if (nsessions>1) stop ("nontarget model not implemented for multi-session data")
-        if (isTRUE(all.equal(proxyfn, proxyfn1))) {
-            proxyfn <- proxy.nt
-            warning("replacing default proxy function with proxy.nt for nontarget model")
-        }
+        trapdesigndata <- D.designdata(trps, model$NT, 1, 
+            sessionlevels, sessioncov, trapmeanSD)
+    }
+    else {
+        trapdesigndata <- NULL
     }
     
     #################################################
@@ -197,7 +204,7 @@ ipsecr.fit <- function (
     ## build default model and update with user input
     #################################################
     
-    defaultmodel <- list(D=~1, g0=~1, lambda0=~1, sigma=~1, z=~1, w=~1, lambdak=~1)
+    defaultmodel <- list(D=~1, g0=~1, lambda0=~1, sigma=~1, z=~1, w=~1, NT=~1)
     defaultmodel <- replace (defaultmodel, names(model), model)
     
     #################################################
@@ -205,7 +212,7 @@ ipsecr.fit <- function (
     #################################################
     
     pnames <- valid.pnames (details, FALSE, detectfn, FALSE, FALSE, 1)
-    if (modelnontarget) pnames <- c(pnames, 'lambdak')
+    if (modelnontarget) pnames <- c(pnames, 'NT')
     
     #################################################
     ## test for irrelevant parameters in user's model
@@ -233,7 +240,7 @@ ipsecr.fit <- function (
     # Link functions (model-specific)
     #################################################
     
-    defaultlink <- list(D = 'log', g0 = 'logit', lambda0 = 'log', sigma = 'log', lambdak = 'log')
+    defaultlink <- list(D = 'log', g0 = 'logit', lambda0 = 'log', sigma = 'log', NT = 'log')
     link <- replace (defaultlink, names(link), link)
     link[!(names(link) %in% pnames)] <- NULL
     
@@ -256,7 +263,6 @@ ipsecr.fit <- function (
     D.modelled <- is.null(fixed$D)
     if (!D.modelled) {
         designD <- matrix(nrow = 0, ncol = 0)
-        grouplevels <- 1    ## was NULL
         attr(designD, 'dimD') <- NA
         nDensityParameters <- integer(0)
     }
@@ -268,13 +274,43 @@ ipsecr.fit <- function (
         attr(designD, 'dimD') <- attr(temp, 'dimD')
         Dnames <- colnames(designD)
         nDensityParameters <- length(Dnames)
+        # extends NT design data already in trapdesigndata 
+        temp <- D.designdata(trps, model$D, 1, sessionlevels, sessioncov, trapmeanSD)
+        if (is.null(trapdesigndata ))
+            trapdesigndata <- temp
+        else
+            trapdesigndata <- cbind(trapdesigndata, temp)
     }
-
+    ############################################
+    # Prepare nontarget (NT) design matrix
+    ############################################
+    NT.modelled <- is.null(fixed$NT) && modelnontarget
+    if (!NT.modelled) {
+        designNT <- matrix(nrow = 0, ncol = 0)
+        attr(designNT, 'dimD') <- NA
+        nNTParameters <- integer(0)
+    }
+    else {
+        memo ('Preparing NT design matrix', verbose)
+        temp <- D.designdata( trps, model$NT, 1, sessionlevels, sessioncov, trapmeanSD)
+        designNT <- general.model.matrix(model$NT, data = temp, gamsmth = NULL,
+            contrasts = details$contrasts)
+        attr(designNT, 'dimD') <- attr(temp, 'dimD')
+        NTnames <- colnames(designNT)
+        nNTParameters <- length(NTnames)
+        # extends NT design data already in trapdesigndata 
+        if (is.null(trapdesigndata ))
+            trapdesigndata <- temp
+        else
+            trapdesigndata <- cbind(trapdesigndata, temp)
+    }
+    
     ############################################
     # Parameter mapping (general)
     ############################################
-    nDetectionParameters <- sapply(design$designMatrices, ncol)
-    np <- c(D = nDensityParameters, nDetectionParameters)
+    detectparnames <- names(design$designMatrices) %in% c('g0','lambda0','sigma')
+    nDetectionParameters <- sapply(design$designMatrices[detectparnames], ncol)
+    np <- c(D = nDensityParameters, nDetectionParameters, NT = nNTParameters)
     NP <- sum(np)
     parindx <- split(1:NP, rep(1:length(np), np))
     names(parindx) <- names(np)[np>0]
@@ -283,13 +319,13 @@ ipsecr.fit <- function (
     # setup boxes
     ###########################################
     
-    if (length(details$boxsize)==1) boxsize1 <- rep(details$boxsize, NP)
-    else if (length(boxsize1) != NP)
-        stop ("invalid boxsize vector")
-    else boxsize1 <- details$boxsize
+    if (length(details$boxsize1)==1) boxsize1 <- rep(details$boxsize1, NP)
+    else if (length(details$boxsize1) != NP)
+        stop ("invalid boxsize1 vector")
+    else boxsize1 <- details$boxsize1
     if (length(details$boxsize2)==1) boxsize2 <- rep(details$boxsize2, NP)
     else if (length(details$boxsize2) != NP)
-        stop ("invalid boxsize vector")
+        stop ("invalid boxsize2 vector")
     else boxsize2 <- details$boxsize2
 
     #---------------------------------------------------------------------------
@@ -300,55 +336,43 @@ ipsecr.fit <- function (
         NP <- length(beta)
         attempts <- 0
         allOK <- FALSE
-        D <- getD(designD, beta, mask, parindx, link, fixed, nsessions)
+        D <- getD('D', designD, beta, mask, parindx, link, fixed, nsessions)
         N <- apply(D,2,sum) * cellarea
-        # cat('step 1 \n', apply(D,2,sum) , '\n', cellarea, '\n', distribution, '\n', N, '\n')        
         Ndist <- switch(distribution, poisson = 'poisson', binomial = 'fixed', even = 'fixed')    
         N <- switch(tolower(Ndist), poisson = rpois(1, N), fixed = round(N), NA)
         
         # cannot simulate zero animals, so return NA for predicted
-
         if (is.na(N) || any(N<=0) || any(N>details$Nmax)) return(rep(NA, NP))
-        
-        if (details$popmethod == 'internal') {
-            prob <- sweep(D, STATS = apply(D,2,sum), FUN = '/', MARGIN = 2)
-        }
-        # else if (details$popmethod == 'sim.popn') {
-        #     # covariates(mask) <- as.data.frame(D)
-        # }
         
         # detectpar is list of named parameters of detectfn
         # not yet modelled using design, design0: assumes 1:1
-        betalist <- lapply(parindx[-1], function(x) unname(beta[x]))
-        detectpar <- mapply(untransform, betalist, link[-1], SIMPLIFY = FALSE)
+        detectparnames <- names(parindx) %in% c('g0','lambda0','sigma')
+        betalist <- lapply(parindx[detectparnames], function(x) unname(beta[x]))
+        detectpar <- mapply(untransform, betalist, link[detectparnames], SIMPLIFY = FALSE)
 
+        if (modelnontarget) {
+            NT <- getD('NT', designNT, beta, trps, parindx, link, fixed, nsessions)
+        }
+        else {
+            NT <- NULL
+        }
+        
         repeat {
             
             #------------------------------------------------
             # generate population
             if (is.function(details$popmethod)) {   # user
-                popn <- details$popmethod(mask, prob, N)
+                popn <- details$popmethod(mask, D, N)
             }
             else if (details$popmethod == 'internal') {   # C++
-                if (nsessions>1) {
-                    stop("internal not ready for multisession")
-                }
-                if (distribution == 'even') {
-                    bounds <- apply(mask,2,range)
-                    popn <- popevencpp(as.matrix(bounds), as.integer(N))
-                }
-                else {
-                    # cat('N ', N, ' sum(prob) ', sum(prob), '\n')
-                    popn <- popcpp(as.matrix(mask), as.double(prob), 
-                        as.double(spacing(mask)/100), as.integer(N))
-                }
+                popn <- simpop(mask, D, N, distribution)
             }
             else if (details$popmethod == "sim.popn") {
                 popn <- sim.popn (D = as.data.frame(D), core = mask, 
                     model2D = 'IHP', Ndist = Ndist, nsessions = nsessions)
             }
             # abort if no animals to sample
-            if (length(popn)<2) {
+            if ((nsessions == 1 && length(popn)<2) || (nsessions>1 && any(sapply(popn,length)<2))) {
                 warning ("ipsecr.fit: no animals in simulated population", call. = FALSE)
                 return(rep(NA, NP))
             }
@@ -356,14 +380,14 @@ ipsecr.fit <- function (
             #------------------------------------------------
             # sample from population
             if (is.function(details$CHmethod)) {   # user
-                ch <- details$CHmethod(traps, popn, detectfn, detectpar, noccasions, details)
+                ch <- details$CHmethod(trps, popn, detectfn, detectpar, noccasions, details)
             }
             else if (details$CHmethod == 'internal') {   # C++
-                ch <- simCH(traps, popn, detectfn, detectpar, noccasions, details)
+                ch <- simCH(trps, popn, detectfn, detectpar, NT, noccasions, details)
             }
             else if (details$CHmethod == 'sim.capthist') {   
                 if (modelnontarget) stop ("sim.capthist does not simulate nontarget detections")
-                ch <- sim.capthist(traps, popn, detectfn, detectpar, noccasions, nsessions, 
+                ch <- sim.capthist(trps, popn, detectfn, detectpar, noccasions, nsessions, 
                     renumber = FALSE)
             }
             # check valid
@@ -379,7 +403,7 @@ ipsecr.fit <- function (
 
             #------------------------------------------------
             # predict values
-            predicted <- try (proxyfn (ch, model = model, ...))
+            predicted <- try (proxyfn (ch, model = model, trapdesigndata = trapdesigndata, ...))
             if (inherits(predicted, 'try-error')) {
                 predicted <- rep(NA, NP)
             }
@@ -428,7 +452,7 @@ ipsecr.fit <- function (
     ##########################################
     ## target values of predictor
     ##########################################
-    y <- proxyfn(capthist, model = model, ...)
+    y <- proxyfn(capthist, model = model, trapdesigndata = trapdesigndata, ...)
     if (length(y) != NP)
         stop ("need one proxy for each parameter ",
             paste(pnames, collapse=" "))
@@ -436,12 +460,12 @@ ipsecr.fit <- function (
     ##########################################
     ## starting values
     ##########################################
-    ## ad hoc exclusion of lambdak 2022-05-06
+    ## ad hoc exclusion of NT 2022-05-06
     details$trace <- verbose  # as used by makeStart
-    start <- makeStart(start, parindx[names(parindx) != 'lambdak'], 
+    start <- makeStart(start, parindx[names(parindx) != 'NT'], 
         capthist, mask, detectfn, link, details, fixed)
     if (modelnontarget) {
-        start <- c(start, y[4])
+        start <- c(start, y[parindx$NT])
     }
     
     ############################################
@@ -482,10 +506,10 @@ ipsecr.fit <- function (
             # clust <- makeCluster(ncores, type = "PSOCK", outfile = "clusterlogfile.txt")
             clust <- makeCluster(ncores, type = "PSOCK")
             clusterExport(clust, c(
-                "mask", "link", "fixed", "details", "traps",
+                "mask", "trps", "link", "fixed", "details", 
                 "detectfn", "noccasions", "nsessions", "proxyfn",
-                "model", "parindx", "designD", "getD", "simCH",
-                "modelnontarget", "cellarea"), 
+                "model", "trapdesigndata", "parindx", 
+                "designD", "designNT", "modelnontarget", "cellarea"), 
                 environment())
         }
         on.exit(stopCluster(clust))
@@ -502,7 +526,7 @@ ipsecr.fit <- function (
     ####################################################################
     
     beta <- start
-    
+    ip.nsim <- numeric(0)
     for (m in 1:details$max.nbox) {
         if (verbose) {
             cat('\nFitting box', m, '...  \n')
@@ -549,9 +573,8 @@ ipsecr.fit <- function (
             }
         }
         
-        designpoints <- nrow(designbeta)
-        
         # check number of simulations
+        designpoints <- nrow(designbeta)
         if (2 * designpoints * details$min.nsim > details$max.nsim) {
             stop("max.nsim = ", details$max.nsim, 
                 " does not allow two boxes with designpoints = ", designpoints, 
@@ -598,10 +621,22 @@ ipsecr.fit <- function (
             if (!is.null(dev) && !any(is.na(dev)) && all(dev <= details$dev.max)) break
         }
         
-        if (any(dev > details$dev.max)) {
+        # simulations for this box
+        ip.nsim <- c(ip.nsim, nrow(sim))  # 2022-06-14
+        
+        faildev <- (dev > details$dev.max)
+        if (any(faildev)) {
+            # namestring <-  paste(names(y)[faildev][1:2], collapse = ', ')
+            # if (sum(faildev)>1) namestring <- paste('proxies', namestring)
+            # else namestring <- paste('proxy', namestring)
+            # if (sum(faildev)>2) namestring <- paste(namestring, 'etc.')
             crit <- switch(details$boxtype, absolute = 'SE', relative = 'RSE')
-            memo(paste0("simulations for box ", m, " did not reach target for proxy ", 
-                crit, " ", details$dev.max), verbose)
+            memo(paste0("simulations for box ", m, " did not reach target precision:"), verbose)
+            if (verbose) {
+                out <- data.frame(proxy = names(y), dev = dev, target = details$dev.max)
+                names(out) <- c('Proxy', crit, paste0('target.', crit))
+                print(out[faildev,], row.names = FALSE)
+            }
         }
         
         if (code>2) {
@@ -622,8 +657,6 @@ ipsecr.fit <- function (
             else {
                 lambda <- coef(sim.lm)[1,]   ## intercepts
                 beta <- as.numeric(B %*% matrix((y - lambda), ncol = 1))
-                ## only break on second or later box if differ boxsize
-                # if (all(sapply(1:NP, within)) && (all(boxsize == boxsize2) || (m>1))) break
                 if (all(sapply(1:NP, within)) && (m >= details$min.nbox)) break
             }
         }
@@ -643,7 +676,7 @@ ipsecr.fit <- function (
     
     if (details$var.nsim>1 && code == 1) {
         if (verbose) {
-            cat('Simulating for variance ...\n')
+            cat('\nSimulating for variance ...\n')
             flush.console()
             cat('\n')
         }
@@ -704,7 +737,8 @@ ipsecr.fit <- function (
         timecov = timecov,
         sessioncov = sessioncov,
         details = details,
-        designD = designD,        
+        designD = designD,   
+        trapdesigndata = trapdesigndata, 
         design = design,
         design0 = design0,
         parindx = parindx,
@@ -715,7 +749,7 @@ ipsecr.fit <- function (
         beta = beta,
         beta.vcv = vcov,
         designbeta = designbeta,   # last 
-        ip.nsim = nrow(sim),
+        ip.nsim = ip.nsim,
         var.nsim.OK = if(details$var.nsim>1) sum(OK) else NA,
         variance.bootstrap = bootstrap,
         version = desc$Version,
