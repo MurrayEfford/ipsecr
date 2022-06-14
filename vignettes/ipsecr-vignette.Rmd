@@ -39,50 +39,7 @@ The default proxy function `proxyfn1` works for simple models with constant dens
 
 The monotonic relationship is demonstrated by simulation in the following figure.
 
-```{r monotonic, eval = TRUE, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-onecombo <- function (D, lambda0, sigma, nrepl = 50) {
-  out <- matrix(nrow = nrepl, ncol=3)
-  for (r in 1:nrepl) {
-  pop <- sim.popn(D = D, core = tr, buffer = 120)
-    ch <- sim.capthist(traps = tr, popn = pop, detectfn = 'HHN', 
-      detectpar = list(lambda0=lambda0, sigma=sigma), noccasions = 5)
-    out[r,] <- proxyfn1(ch)
-  }
-  out
-}
-Dval <- seq(3,7,0.5)
-lambda0val <- seq(0.1,0.3,0.025)
-sigmaval <- seq(20,40,2.5)
-library(ipsecr)
-tr <- traps(captdata)
-
-Dlist <- lapply(Dval, onecombo, lambda0 = 0.2, sigma = 30)
-lamlist <- lapply(lambda0val, onecombo, D = 5, sigma = 30)
-siglist <- lapply(sigmaval, onecombo, D = 5, lambda0 = 0.2)
-Dproxy <- sapply(Dlist, '[',,1)
-lamproxy <- sapply(lamlist, '[',,2)
-sigproxy <- sapply(siglist, '[',,3)
-```
-
-```{r monotonicplot, eval = TRUE, echo = FALSE, fig.height = 3, fig.width = 7, results = 'hide', warning = FALSE}
-oldpar <- par(mfrow = c(1,3))
-
-plot(1,1,type='n', xlim=c(2.8,8), ylim=c(3,4.8),
-  xlab = 'Density / ha', ylab = 'log(n)', log='x')
-apply(Dproxy,1,points, x=Dval)
-points(Dval, apply(Dproxy,2,mean), pch = 16, type='b', col='red')
-
-plot(1,1,type='n', xlim=c(0.09,0.35), ylim=c(-1,0.1),
-  xlab = 'lambda0', ylab = 'cloglog(p)', log='x')
-apply(lamproxy, 1 ,points, x=lambda0val)
-points(lambda0val, apply(lamproxy,2,mean), pch = 16, type='b', col='red')
-
-plot(1,1,type='n', xlim = c(18,46), ylim=c(2.5, 3.7),
-  xlab = 'sigma m', ylab = 'log(RPSV)', log='x')
-apply(sigproxy,1,points, x=sigmaval)
-points(sigmaval, apply(sigproxy,2,mean), pch = 16, type='b', col='red')
-par(oldpar)
-```
+![](linearityplot.png)
 
 **Fig.** Monotonic relationships between parameters (x-axis, log scale) and their default proxies (y-axis). 100 single-catch traps at 20-m spacing on a square grid. 50 simulations for each level, with other parameters held at their central value. Red line follows mean.
 
@@ -148,22 +105,6 @@ ip.single.0 <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN', proxyfn = pr
 ```{r compareproxy1}
 # secr function 'collate' works for both secr and ipsecr fits 
 collate(ip.single, ip.single.0)[1,,,]
-```
-
-# Comparing multi- and single-catch fits
-
-**secr** fits a ML multi-catch model to data from single-catch traps. It is interesting to compare the MLE from **secr** with those from **ipsecr**. The detector type may be coerced to a different value in `ipsecr.fit` with `details$newdetector`; we use that to switch between single- and multi-catch models for the captdata dataset:
-
-```{r examplemulti, eval = runall, purl = FALSE}
-secr.multi <- secr.fit(captdata, buffer = 100, detectfn = 'HHN', trace = FALSE)
-ip.multi <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN', verbose = FALSE,
-  details = list(newdetector = 'multi'))
-```
-
-The results are as expected: inverse prediction gives similar estimates to ML for the multi-catch model, especially for the detection parameters lambda0 and sigma, and both multi-catch fits differ from the inverse prediction single-catch model with respect to the estimate of the detection parameters.
-
-```{r comparemulti}
-collate(ip.single, ip.multi, secr.multi)[1,,,]
 ```
 
 # Non-target interference
@@ -322,7 +263,7 @@ designbeta
 For other designs you may specify the desired arguments of FrF2 as a list e.g., `details = list(factorial = 'fractional', FrF2args = list(nruns = 4, nfactors = 3, ncenter = 3))`. 
 
 ```{r saveall, echo = FALSE, eval = runall, purl = FALSE}
-save(ip.single, ip.single.0, ip.multi, secr.multi, ip.single.nontarget, ipx, ip.Fr, 
+save(ip.single, ip.single.0, ip.single.nontarget, ipx, ip.Fr, 
       file = 'd:/density secr 4.5/ipsecr/inst/example/fittedmodels.RData')
 tools::resaveRdaFiles(paste0('d:/density secr 4.5/ipsecr/inst/example'),'xz')
 ```
