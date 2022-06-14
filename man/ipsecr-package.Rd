@@ -143,19 +143,11 @@ Statistical inference from capture data on closed animal populations.
 \keyword{ package }
 
 \seealso{
+
 \code{\link{proxy.ms}}
 \code{\link[ipsecr]{ipsecr.fit}},
 \code{\link[secr]{secr.fit}},
 \code{\link[secr]{capthist}},
 \code{\link[secr]{mask}}
-}
-\examples{
-
-\donttest{
-
-ip <- ipsecr.fit(captdata)
-predict(ip)
-
-}
 
 }
