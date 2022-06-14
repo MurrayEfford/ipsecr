@@ -30,9 +30,10 @@ simCH(traps, popn, detectfn, detectpar, NT, noccasions, details = list())
 \arguments{
 
   \item{capthist}{secr capthist object}
-  \item{N.estimator}{character name of closed-population estimator}
   \item{model}{named list of model formulae (see \code{\link{ipsecr.fit}})}
   \item{trapdesigndata}{dataframe with one row for each detector and session}
+  \item{...}{other arguments (not used)}
+  \item{N.estimator}{character name of closed-population estimator}
  
   \item{mask}{ secr mask object}
  \item{D}{numeric density in each mask cell}
