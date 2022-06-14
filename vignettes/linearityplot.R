@@ -1,3 +1,5 @@
+# 2022-06-14
+# code to construct 3-part plot used in ipsecr vignette
 
 onecombo <- function (D, lambda0, sigma, nrepl = 50) {
     out <- matrix(nrow = nrepl, ncol=3)
@@ -40,4 +42,5 @@ plot(1,1,type='n', xlim = c(18,46), ylim=c(2.5, 3.7),
     xlab = 'sigma m', ylab = 'log(RPSV)', log='x')
 apply(sigproxy,1,points, x=sigmaval)
 points(sigmaval, apply(sigproxy,2,mean), pch = 16, type='b', col='red', lwd=1.5)
+
 dev.off()

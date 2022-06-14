@@ -9,4 +9,5 @@ src\*.o
 revdep
 extraR
 vignettes/ipsecr-vignette_cache
+vignettes/linearityplot.R
 README.md
