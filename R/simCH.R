@@ -1,7 +1,7 @@
 ###############################################################################
 ## package 'ipsecr'
 ## simCH.R
-## 2022-05-10, 2022-06-12, 2022-06-14
+## 2022-05-10, 2022-06-12, 2022-06-14, 2022-06-16
 ###############################################################################
 
 # function simCH is used by ipsecr.fit for CHmethod 'internal'
@@ -33,12 +33,11 @@ simCH <- function (traps, popn, detectfn, detectpar, NT, noccasions, details = l
         
         detpar <- unlist(detectpar[parnames(detectfn)])  # robust to order of detectpar
         # optional nontarget rate
-        # NT <- detectpar[['NT']]
         if (is.null(NT) || all(NT<=0)) {
             nontargetcode <- 0
         }
         else {
-            validnontargettype <- c('exclusive', 'truncated','erased','independent')
+            validnontargettype <- c('exclusive', 'truncated','erased','independent','dependent')
             # nontargettype defaults to 'exclusive'
             details$nontargettype <- match.arg(details$nontargettype, validnontargettype)
             nontargetcode <- match(details$nontargettype, validnontargettype)
@@ -59,8 +58,8 @@ simCH <- function (traps, popn, detectfn, detectpar, NT, noccasions, details = l
             as.integer(detectfn), 
             as.integer(detectcode), 
             as.integer(nontargetcode),
-            0, 0, 0)
-        
+            0, 0, rep(0, noccasions))
+     
         if (temp$resultcode != 0) {
             stop ("simulated detection failed, code ", temp$resultcode)
         }

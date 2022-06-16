@@ -3,6 +3,7 @@
 ## proxyfn.R
 ## 2022-05-08
 ## 2022-06-11 proxy.ms
+## 2022-06-15 proxy.ms extended for count detectors
 ###############################################################################
 
 proxyfn0 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife"), ...) {
@@ -78,13 +79,29 @@ proxy.ms <- function (capthist, model = list(D = ~1, NT = ~1), trapdesigndata = 
     ## ------
     
     ni <- function (chi) {
-        ch <- abs(chi) > 0
-        sum(apply(ch, 2, sum))
+        # ch <- abs(chi) > 0
+        # sum(apply(ch, 2, sum))
+        if (binary) {
+            sum(abs(chi)>0)
+        }
+        else {
+            sum(abs(chi))
+        }
     }
+    binary <- detector(traps(capthist[[1]]))[1] %in% c('single','multi','proximity')
     n    <- sapply(capthist, nrow)         ## number of individuals per session
     nocc <- sapply(capthist, ncol)         ## number of occasions
     K    <- sapply(traps(capthist), nrow)  ## detectors per session
-    p    <- sapply(capthist, ni) / n / nocc
+    
+    if (binary) {
+        p    <- sapply(capthist, ni) / n / nocc
+        pterms <- c(cloglogp = log(-log(1-mean(p))))
+    }
+    else {
+        lambda  <- sapply(capthist, ni) / n / nocc
+        pterms <- c(logL = log(mean(lambda)))
+    }
+    
     rpsv <- unlist(rpsv(capthist))
     
     ## Optional density model
@@ -108,19 +125,29 @@ proxy.ms <- function (capthist, model = list(D = ~1, NT = ~1), trapdesigndata = 
         if (any(sapply(nontarget,nrow)!= K | sapply(nontarget, ncol) != nocc)) {
             stop ("invalid nontarget data in proxy.ms")
         }
-        pdisturb <- sapply(nontarget, mean)
-        pdisturb[pdisturb>=1] <- 1 - 1e-4  ## arbitrary to dodge log(0)
-
         if (model$NT == ~1) {
-            NTterms <-  c(cloglogNT = log(-log(1-mean(pdisturb))))
+            pdisturb <- sapply(nontarget, mean)
+            if (binary) {
+                pdisturb[pdisturb>=1] <- 1 - 1e-4  ## arbitrary to dodge log(0)
+                NTterms <-  c(cloglogNT = log(-log(1-mean(pdisturb))))
+            }
+            else {
+                NTterms <- c(logNT = log(mean(pdisturb)))
+            }
         }
         else {
             NTk <- lapply(nontarget, apply, 1, mean)   # by detector
             trapdesigndata$NTk <- as.numeric(unlist(NTk))
             trapdesigndata$nocc <- rep(nocc, each = max(K))
             model$NT <- update(model$NT, NTk ~ .)  ## NTk on LHS
-            glmfitNT <- glm(model$NT, data = trapdesigndata, weights = nocc, 
-                family = binomial(link = "cloglog"))
+            if (binary) {
+                glmfitNT <- glm(model$NT, data = trapdesigndata, weights = nocc, 
+                    family = binomial(link = "cloglog"))
+            }
+            else {
+                glmfitNT <- glm(model$NT, data = trapdesigndata, weights = nocc, 
+                    family = poisson())
+            }
             NTterms <- coef(glmfitNT)    
         }
     }    
@@ -132,7 +159,7 @@ proxy.ms <- function (capthist, model = list(D = ~1, NT = ~1), trapdesigndata = 
     ## ---------------------
     c(
         Dterms,
-        cloglogp = log(-log(1-mean(p))),
+        pterms,
         logRPSV = log(mean(rpsv)),
         NTterms
     )

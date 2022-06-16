@@ -1,3 +1,8 @@
+Changes in version 1.1.1 (2022-06-16)
+
+New features or changed behaviour of old functions
+    o   dependent nontarget (Jimenez et al. binomial thinning)
+
 Changes in version 1.1.0 (2022-06-14)
 
 New features or changed behaviour of old functions

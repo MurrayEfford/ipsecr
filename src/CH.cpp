@@ -116,7 +116,8 @@ Rcpp::List CHcpp (
     int N1 = N + (nontargetcode==1);   // increment for exclusive nontargets
     int K = Tsk.nrow();
     int S = Tsk.ncol();
-    int i,k,n,s;
+    int i,k,j,n,s;
+    int isk;
     double d2;
     double h0;   // intermediate value of hazard
     Rcpp::NumericMatrix hik (N1,K);
@@ -197,8 +198,8 @@ Rcpp::List CHcpp (
     for (s=0; s<S; s++) {
         
         // --------------------------------------------------------------------- 
-        // interference events 
-        if (nontargetcode > 0) {
+        // interference events, excluding dependent 
+        if (nontargetcode > 0 && nontargetcode != 5) {
             for (k=0; k<K; k++) {
                 if (fabs(Tsk(k,s))>1e-10 && NT[k]>0) {
                     // random time of interference
@@ -357,12 +358,17 @@ Rcpp::List CHcpp (
                                 }
                             }
                             else if (detectorcode == 2) {             // count proximity 
-                                p = 1 - std::exp(-h0);
-                                if (binomN[s] == 1)
-                                    count = rcount(round(Tski), p, 1);
-                                else
-                                    count = rcount(binomN[s], p, Tski);
-                                if (count > 0 && nontargetcode>0) {
+                                if (binomN[s] == 0) {                 // Poisson 2022-06-15
+                                   count = R::rpois(h0 * Tski);
+                                }
+                                else {
+                                    p = 1 - std::exp(-h0);
+                                    if (binomN[s] == 1)
+                                        count = rcount(round(Tski), p, 1);
+                                    else
+                                        count = rcount(binomN[s], p, Tski);
+                                }
+                                if (count > 0 && nontargetcode>0 && nontargetcode != 5) {
                                     for (i=0; i<count; i++) {
                                         // random time of detection
                                         // NOT QUITE RIGHT BECAUSE ALREADY TIME<1
@@ -382,20 +388,39 @@ Rcpp::List CHcpp (
         }
         
         if (nontargetcode>0) {
+            
+            // dependent nontarget
+            // reclassify fraction NT[k] of detections to 'not identified'
+            if (nontargetcode == 5 && detectorcode == 2) {
+                for (k=0; k<K; k++) {
+                    for (i=0; i<N; i++) {
+                        isk = i3(i, s, k, N, S);
+                        for(j=1; j<=CH[isk]; j++) {
+                            if (R::runif(0,1) < NT[k]) {
+                                // transfer from ID to nontarget
+                                nontarget(k,s)++;
+                                CH[isk]--;
+                            }
+                        }
+                    }
+                }
+            }
+            
             // non-exclusive interference
-            if (nontargetcode > 1) {
+            else if (nontargetcode > 1) {
                 for (k=0; k<K; k++) {
                     if (inttime[k] < 1) {
                         nontarget(k,s) = 1;
                         if (nontargetcode == 3) {
                             // any detections erased
                             for (i=0; i<nc; i++) {
-                                CH[i3(s, k, i, S, K)] = 0;
+                                CH[i3(i,s,k,N,S)] = 0;
                             }  
                         }
                     }
                 }
             }
+            
             // capped detectors, exclusive interference
             else if (nontargetcode==1 && detectorcode== 8) {
                 for (k=0; k<K; k++) {
@@ -405,39 +430,6 @@ Rcpp::List CHcpp (
                 }
             }
         }
-        
-        // unused code anticipating inclusion of learned response
-        // if ((btype > 0) && (s < (S-1))) {
-        //     // update record of 'previous-capture' status 
-        //     if (btype == 1) {
-        //         for (i=0; i<N; i++) {
-        //             if (Markov) 
-        //                 caughtbefore[i] = 0;
-        //             for (k=0; k<K; k++)
-        //                 caughtbefore[i] = R::imax2 (CH[i3(s, k, i, S, K)], caughtbefore[i]);
-        //         }
-        //     }
-        //     else if (btype == 2) {
-        //         for (i=0; i<N; i++) {
-        //             for (k=0; k<K; k++) {
-        //                 ik = k * (N-1) + i;
-        //                 if (Markov) 
-        //                     caughtbefore[ik] = CH[i3(s, k, i, S, K)];
-        //                 else 
-        //                     caughtbefore[ik] = R::imax2 (CH[i3(s, k, i, S, K)], 
-        //                         caughtbefore[ik]);
-        //             }
-        //         }
-        //     }
-        //     else {
-        //         for (k=0;k<K;k++) {
-        //             if (Markov) 
-        //                 caughtbefore[k] = 0;
-        //             for (i=0; i<N; i++) 
-        //                 caughtbefore[k] = R::imax2 (CH[i3(s, k, i, S, K)], caughtbefore[k]);
-        //         }
-        //     }
-        // }
         
     }   // loop over s 
     

@@ -123,7 +123,7 @@ ipsecr.fit <- function (
     # nontarget model 
     #################################################
 
-    validnontargettype <- c('exclusive', 'truncated','erased','independent')
+    validnontargettype <- c('exclusive', 'truncated','erased','independent', 'dependent')
     details$nontargettype <- match.arg(details$nontargettype, choices = validnontargettype)
     if (detectortype %in% c('multi', 'proximity', 'count')) {
         if (details$nontargettype == 'exclusive') {
