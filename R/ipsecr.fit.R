@@ -186,6 +186,7 @@ ipsecr.fit <- function (
     }
     else {
         trapdesigndata <- NULL
+        model$NT <- NULL
     }
     
     #################################################

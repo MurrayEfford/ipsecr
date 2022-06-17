@@ -120,7 +120,7 @@ proxy.ms <- function (capthist, model = list(D = ~1, NT = ~1), trapdesigndata = 
     ## Optional model of nontarget data
     ## --------------------------------
     nontarget <- lapply(capthist, attr, which = 'nontarget', exact = TRUE)
-    usenontarget <- !any(sapply(nontarget, is.null))
+    usenontarget <- !any(sapply(nontarget, is.null)) && !is.null(model$NT)
     if (usenontarget) {
         if (any(sapply(nontarget,nrow)!= K | sapply(nontarget, ncol) != nocc)) {
             stop ("invalid nontarget data in proxy.ms")

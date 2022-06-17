@@ -368,6 +368,7 @@ Rcpp::List CHcpp (
                                     else
                                         count = rcount(binomN[s], p, Tski);
                                 }
+                                
                                 if (count > 0 && nontargetcode>0 && nontargetcode != 5) {
                                     for (i=0; i<count; i++) {
                                         // random time of detection
