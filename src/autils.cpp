@@ -173,40 +173,6 @@ double randomtime (double p)
 }
 //----------------------------------------------------------------
 
-void probsort (
-        const int n, 
-        std::vector<trap_animal> &tran)
-    // Sort using Shell algorithm see Press et al 1989 p 257
-    // tran is an array of trap_animal records
-    
-{
-    double aln2i = 1.442695022;
-    double tiny  = 1.0e-5;
-    int nn,m,lognb2,l,k,j,i;
-    trap_animal t;
-    lognb2 = trunc(log(n)*aln2i+tiny);
-    m = n;
-    for (nn=1; nn<=lognb2; nn++)
-    {
-        m = m / 2;
-        k = n-m;
-        for (j=1; j<=k; j++)
-        {
-            i = j;
-            lab1:    l = i+m;
-            if (tran[l-1].time < tran[i-1].time)
-            {
-                t = tran[i-1];
-                tran[i-1] = tran[l-1];
-                tran[l-1] = t;
-                i = i-m;
-                if (i >= 1)  goto lab1;
-            }
-        }
-    }
-}    // end of probsort 
-//----------------------------------------------------------------
-
 // random count from different distributions 
 
 double rcount (int binomN, double lambda, const double Tsk) {

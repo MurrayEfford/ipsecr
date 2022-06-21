@@ -24,11 +24,6 @@
 //-------------------
 // data structures   
 //-------------------
-struct trap_animal {
-    int     trap;
-    int     animal;
-    double  time;
-};
 struct rpoint {
     double x;
     double y;
@@ -52,12 +47,6 @@ double rcount (const int binomN, const double lambda, const double Tsk);
 //---------------------------------------------------------------------
 
 double randomtime (double p);
-//---------------------------------------------------------------------
-
-void probsort (
-    const int n, 
-    std::vector<trap_animal> &tran);
-
 //---------------------------------------------------------------------
 
 double gr (
