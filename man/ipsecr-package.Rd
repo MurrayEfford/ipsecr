@@ -34,7 +34,7 @@ animals. Individual histories are stored in an object of class
 `capthist' that includes the relevant `traps' object.
 
 Models for population density (animals per hectare) and detection are
-defined in \pkg{ipsecr} using symbolic formula notation (but only constant models are allowed for detection parameters in \pkg{ipsecr} 1.0) Density models
+defined in \pkg{ipsecr} using symbolic formula notation (but only constant models are allowed for detection parameters in \pkg{ipsecr} 1.1) Density models
 may include spatial trend. Habitat is distinguished from
 nonhabitat with an object of class `mask'.
 
@@ -97,7 +97,7 @@ See Efford et al. (2004) for another description of the method, and
 Efford et al. (2005) for an application.
 
 If not provided, the starting values are determined automatically
-with \code{\link{autoini}}.
+with the **secr** function \code{\link{makeStart}}.
 
 Linear measurements are assumed to be in metres and density in animals
 per hectare (10 000 \eqn{\mbox{m}^2}{m^2}).

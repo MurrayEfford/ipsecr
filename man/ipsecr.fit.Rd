@@ -163,8 +163,7 @@ for analysing capture-recapture data from passive detector arrays.
 
 \code{\link{proxy.ms}}, 
 \code{\link{predict.ipsecr}}, 
-\code{\link{summary.ipsecr}}, 
-\code{\link{autoini}}
+\code{\link{summary.ipsecr}}
 
 }
 
@@ -176,14 +175,4 @@ ipsecrdemo <- ipsecr.fit(captdata, ncores = 1, buffer = 100, detectfn = 14, seed
 
 }
 
-}
-
-\section{Warning}{ 
-
-  Simulation becomes unreliable with very sparse populations, or sparse sampling, 
-  because some simulated datasets will have no recaptures or even no captures. 
-  The code allows a failed simulation to be repeated (set the `max.ntries' 
-  details argument > 1), but results probably should not be relied upon when
-  there are warning messages regarding failed simulations. 
-  
 }

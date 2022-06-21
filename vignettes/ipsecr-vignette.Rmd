@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: 
   pdf_document: 
     toc: yes
-    toc_depth: 2
+    toc_depth: 1
 vignette: > 
   %\VignetteIndexEntry{Spatially explicit capture--recapture by inverse prediction}
   \usepackage[utf8]{inputenc}
@@ -28,7 +28,7 @@ The method (Efford 2004; Efford, Dawson and Robbins 2004; see also Carothers 197
 
 We use $\vec x_p$ for the vector of known parameter values at which simulations are performed and $\vec y_p$ for the vectors of proxies computed from these simulated data. The method fits a multivariate multiple regression over a set of points in parameter space ('box') and inverts that regression to estimate parameter values $\vec x$ from the observed proxy vector $\vec y$.
 
-The default proxy function `proxyfn1` works for simple models with constant density and two detection parameters. It uses a naive non-spatial estimate of population size ($\hat N$, or simply the number detected), the corresponding non-spatial detection probability $p$, and the 'root-pooled spatial variance' measure from the function `RPSV` in **secr**:
+The default proxy function `proxy.ms` works for simple models with two detection parameters. It uses a naive non-spatial estimate of population size (simply the number detected), the corresponding non-spatial detection probability $p$, and the 'root-pooled spatial variance' measure from the function `RPSV` in **secr** (argument CC = TRUE):
 
 | Parameter | Proxy | Proxy scale |
 |-----------|-------|-------------|
@@ -78,7 +78,7 @@ load(system.file("example", "fittedmodels.RData", package = "ipsecr"))
 ip.single <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN')
 ```
 
-The fitted model is of class 'ipsecr' for which there are the usual methods matching those in **secr** (`print`, `coef`, `predict`, `summary` etc.) as detailed [below](#methods)).
+The fitted model is of class 'ipsecr' for which there are the usual methods matching those in **secr** (`print`, `coef`, `predict`, `summary` etc. as detailed [below](#methods)).
 
 ```{r ip.single.output}
 predict(ip.single)
@@ -107,69 +107,9 @@ ip.single.0 <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN', proxyfn = pr
 collate(ip.single, ip.single.0)[1,,,]
 ```
 
-# Non-target interference
+# Multi-session models
 
-The capthist data object may include a binary $k \times s$ matrix indicating whether detector $k$ was disturbed or occupied by non-target species on each occasion $s$. 
-
-Disturbance at single-catch and capped detectors is usually taken to be exclusive of captures: an occupied trap cannot later catch a non-target animal, and vice versa. Multi-catch traps or binary proximity detectors may be disturbed after having registered detections, and both detections and interference are recorded (disturbance is independent of prior detector status, and has the effect of truncating the sampling interval). Variations may be specified with the details argument 'nontargettype' that takes one of the values 'exclusive', 'truncated', 'erased' or 'independent'.
-
-| Type | Allowed detectors | Explanation |
-|--------|------------|-------------------------------------------|
-| 'exclusive' | single, capped | detector may be occupied or interfered with, but not both |
-| 'truncated' | all | sampling interval ends at time of interference (default for all detectors except single and capped )|
-| 'erased' | all |  interference erases any previous detections at a site in the particular interval|
-| 'independent' | all | interference has no effect on detections, but is recorded and modelled | 
-
-We illustrate the fitting of a model with non-target captures by simulating disturbance at about 50% of the 235 unoccupied traps in the 'captdata' dataset. (This is an ad hoc method, used only for generating demonstration data).
-
-```{r nontargetdata}
-set.seed(123)
-ch <- captdata
-attr(ch, 'nontarget') <- (1-t(apply(ch,2:3,sum))) * (runif(500)>0.5)
-summary(ch)$nontarget
-```
-
-The attribute 'nontarget' is a matrix with one row per trap and one column per occasion. Entries are either 1 (nontarget or disturbed) or 0 (target species or undisturbed). For a dataset including non-target data `ipsecr.fit` automatically adds the hazard parameter 'NT' to represent a single ubiquitous disturbance process competing (in the 'exclusive' case) for detectors with each individual-specific capture process. The  non-target model may be suppressed by setting the details argument 'ignorenontarget = TRUE'.
-
-Information on the disturbance process is given by the frequency of nontarget events in the capthist input (attribute 'nontarget'). The last element of the vector returned by the proxy function `proxy.ms` transforms this to a hazard on the log scale (i.e. complementary log-log of proportion):
-
-```{r proxyfn2demo}
-proxy.ms(ch)
-```
-
-```{r nontargetdemo, eval = runall, purl = FALSE}
-ip.single.nontarget <- ipsecr.fit(ch, detectfn = 'HHN')
-```
-
-The estimate of lambda0 has risen compared to ip.single: 
-```{r nontargetdemoresults}
-predict(ip.single.nontarget)
-```
-
-Note that 'NT' cannot be estimated if all traps are occupied.
-
-# Tuning the algorithm
-
-Performance of the inverse prediction algorithm depends on several components of the 'details' argument of `ipsecr.fit` that may be seen as tuning parameters. 
-
-By default, the size of the box in parameter space is set to ± 'boxsize' units on the link scale. This may be changed to a multiple of the central value with `boxtype = 'relative'`.
-
-It is usual to start with a wide box and to use a narrower box for subsequent simulations, on the assumption that the first box has selected a region of parameter space very close to the solution.
-
-The stopping criterion 'dev.max' is used to exit the simulation loop early when sufficient precision has been achieved for all parameters. If `boxtype = 'absolute'` then the criterion is the standard error on the link scale. If `boxtype = 'relative'` then the criterion is the relative standard error (RSE or CV) on the link scale.
-
-| Tuning parameter | Default | Description |
-|--------------|--------- |----------------------------------|
-| boxtype      | 'absolute' | 'absolute' or 'relative'  |
-| boxsize1     | 0.2        | size of first box | 
-| boxsize2     | 0.05       | boxsize for boxes after the first | 
-| centre       | 3          | number of centre points |
-| dev.max      | 0.002      | stopping criterion | 
-| min.nsim     | 20         | minimum number of simulations per vertex |
-| max.nsim     | 2000       | maximum number of simulations per vertex | 
-| max.nbox     | 5          | maximum number of boxes | 
-| max.ntries   | 2          | maximum number of attempts to achieve valid simulation |
-| var.nsim     | 2000       | number of simulations for variance-covariance matrix |
+Data may take the form of independent samples. Models are constructed as in **secr** ([secr-multisession.pdf]). In **ipsecr  1.1** detection parameters are common to all sessions, but density D and non-target NT parameters may depend on session or session covariates as in **secr**.
 
 # Fitting a density gradient
 
@@ -222,11 +162,78 @@ par(oldpar)
 ```
 Figure: Estimated trend in density from log-linear model (red). Actual trend shown as black line.
 
-# Multi-session models
+# Non-target interference
 
-Data may take the form of independent samples. Models are constructed as in **secr** ([secr-multisession.pdf]). In **ipsecr  1.1** detection parameters are common to all sessions, but density D and non-target NT parameters may depend on session or session covariates as in **secr**.
+The capthist data object may include an attribute 'nontarget' that is a binary $K \times S$ matrix ($K$ detectors, $S$ occasions) indicating whether detector $k$ was disturbed or occupied by non-target species on each occasion $s$. 
+
+Disturbance at single-catch and capped detectors is usually taken to be exclusive of captures: an occupied trap cannot later catch a non-target animal or be disturbed, and vice versa. Multi-catch traps or binary proximity detectors may be disturbed after having registered detections, and both detections and interference are recorded (disturbance is independent of prior detector status, and has the effect of truncating the sampling interval). Variations may be specified with the details argument 'nontargettype' that takes one of the values 'exclusive', 'truncated', 'erased' or 'independent'.
+
+| Type | Allowed detectors | Explanation |
+|--------|------------|-------------------------------------------|
+| 'exclusive' | single, capped | detector may be occupied or interfered with, but not both |
+| 'truncated' | all | sampling interval ends at time of interference (default for all detectors except single and capped )|
+| 'erased' | all |  interference erases any previous detections at a site in the particular interval|
+| 'independent' | all | interference has no effect on detections, but is recorded and modelled | 
+
+We illustrate the fitting of a model with non-target captures by simulating disturbance at about 50% of the 235 unoccupied traps in the 'captdata' dataset. (This is an ad hoc method, used only for generating demonstration data).
+
+```{r nontargetdata}
+set.seed(123)
+ch <- captdata
+attr(ch, 'nontarget') <- (1-t(apply(ch,2:3,sum))) * (runif(500)>0.5)
+summary(ch)$nontarget
+```
+
+The attribute 'nontarget' is a matrix with one row per trap and one column per occasion. Entries are either 1 (nontarget or disturbed) or 0 (target species or undisturbed). For a dataset including non-target data `ipsecr.fit` automatically adds the parameter 'NT' for the hazard of a single ubiquitous disturbance process competing (in the 'exclusive' case) for detectors with each individual-specific capture process. The  non-target model may be suppressed by setting the details argument 'ignorenontarget = TRUE'.
+
+Information on the disturbance process is given by the frequency of nontarget events in the capthist input (attribute 'nontarget'). The last element of the vector returned by the proxy function `proxy.ms` transforms this to a hazard on the log scale (i.e. complementary log-log of proportion):
+
+```{r proxyfn2demo}
+proxy.ms(ch)
+```
+
+```{r nontargetdemo, eval = runall, purl = FALSE}
+ip.single.nontarget <- ipsecr.fit(ch, detectfn = 'HHN')
+```
+
+The estimate of lambda0 has risen compared to ip.single: 
+```{r nontargetdemoresults}
+predict(ip.single.nontarget)
+```
+
+Note that 'NT' cannot be estimated if all traps are occupied.
+
+# Tuning the algorithm
+
+The inverse prediction method assumes 
+
+1. linear relationships between proxies and parameters (jointly, a hyper-plane), and 
+2. negligible error in the predicted (mean) proxy for a given set of parameter values.
+
+Performance of the algorithm with respect to these assumptions depends on several components of the 'details' argument of `ipsecr.fit` that may be seen as tuning parameters. The first assumption is more plausible for small regions of parameter space (hence a small 'boxsize'). The second assumption is eased by increasing the number of simulations. Actual settings are a compromise between these requirements and execution time. Users may choose a different compromise.
+
+By default, the size of the box in parameter space is set to ± 'boxsize' units on the link scale. This may be changed to a multiple of the central value with `boxtype = 'relative'`.
+
+It is usual to start with a wide box and to use a narrower box for subsequent simulations, on the assumption that the first box has selected a region of parameter space very close to the solution.
+
+The stopping criterion 'dev.max' is used to exit the simulation loop early when sufficient precision has been achieved for all parameters. If `boxtype = 'absolute'` then the criterion is the standard error on the link scale. If `boxtype = 'relative'` then the criterion is the relative standard error (RSE or CV) on the link scale.
+
+| Tuning parameter | Default | Description |
+|--------------|--------- |----------------------------------|
+| boxtype      | 'absolute' | 'absolute' or 'relative'  |
+| boxsize1     | 0.2        | size of first box | 
+| boxsize2     | 0.05       | boxsize for boxes after the first | 
+| centre       | 3          | number of centre points |
+| dev.max      | 0.002      | stopping criterion | 
+| min.nsim     | 20         | minimum number of simulations per vertex |
+| max.nsim     | 2000       | maximum number of simulations (excluding for var-covar) | 
+| max.nbox     | 5          | maximum number of boxes | 
+| max.ntries   | 2          | maximum number of attempts to achieve valid simulation |
+| var.nsim     | 2000       | number of simulations for variance-covariance matrix |
 
 # Fractional designs
+
+By default, **ipsecr** fits a full factorial design in the parameter space. For NP parameters, simulations are performed at $2^{NP}$ points, the corners of a hyperrectangle (box), plus possible centre points. The total number of simulations grows rapidly for large NP. Fractional factorial designs may omit some parameter combinations while retaining balance and other desirable characteristics.
 
 The package **FrF2** may be used for fractional factorial designs (Groemping, 2014). 
 Fractional designs are selected by setting `details = list(factorial = 'fractional')` in `ipsecr.fit`. 
@@ -243,7 +250,7 @@ ip.Fr$proctime
 
 In this example the fractional design was actually slower than the full design because (i) there is little difference in the number of design points when NP = 3 (7 vs 11 with 3 centre points) and (ii) the fractional fit went to a third box. Conditions when fractional designs are faster have not been determined - they are probably useful only when parameters are numerous.
 
-The default is a 1/2 factorial design, illustrated by this code:
+The default fractional design is a 1/2 factorial, illustrated by this code:
 ```{r fractional2, eval = TRUE, message = FALSE}
 library(FrF2, quietly = TRUE)
 NP <- 3
@@ -253,11 +260,10 @@ data.frame(design)
 # recast factors as numeric
 design <- sapply(design, function(x) as.numeric(as.character(x)))
 design <- sweep(design, MAR=2, STATS = boxsize, FUN='*')
-design
 # apply to beta
 beta <- log(c(5,0.2,25))
 designbeta <- sweep(design, MAR=2, STATS=beta, FUN='+')
-designbeta 
+round(designbeta,3)
 ```
 
 For other designs you may specify the desired arguments of FrF2 as a list e.g., `details = list(factorial = 'fractional', FrF2args = list(nruns = 4, nfactors = 3, ncenter = 3))`. 
@@ -268,7 +274,9 @@ save(ip.single, ip.single.0, ip.single.nontarget, ipx, ip.Fr,
 tools::resaveRdaFiles(paste0('d:/density secr 4.5/ipsecr/inst/example'),'xz')
 ```
 
-# Functionality shared with **secr** {#methods}
+# Relationship to package **secr** {#methods}
+
+Some functionality of **ipsecr** is shared with **secr**.
 
 Methods for 'ipsecr' of generic functions defined in **secr**
 
@@ -277,7 +285,7 @@ Methods for 'ipsecr' of generic functions defined in **secr**
 |makeNewData| generate dataframe suitable for `predict.ipsecr` |
 |region.N| estimate number of animals in mask or polygon |
 
-Methods for 'ipsecr' of generic functions from base R
+Methods for 'ipsecr' of generic functions from base R and stats
 
 | Function | Description |
 |----------|-------------|
@@ -300,11 +308,21 @@ Functions from **secr** that work on fitted 'ipsecr' objects as-is
 # Troubleshooting and limitations
 
 **ipsecr 1.1** is not intended for models with many sessions or many covariates. 
+
 This version does not allow for any variation in detection parameters (g0, lambda0, sigma).
+
+## Sparse data
+
+Simulation becomes unreliable with very sparse populations, or sparse sampling, 
+because some simulated datasets will have no recaptures or even no captures. 
+The code allows a failed simulation to be repeated (set the `max.ntries' 
+details argument > 1), but results probably should not be relied upon when 
+there are warning messages regarding failed simulations. 
 
 ## "simulations for box 1 did not reach target for proxy SE 0.002 "
 
-This message may not be terminal. The target precision is arbitrary. Review the 'Variance bootstrap' table of verbose output
+This message may not be terminal. The target precision is arbitrary. 
+Review the 'Variance bootstrap' table of verbose output.
 
 
 # References
