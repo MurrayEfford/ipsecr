@@ -1,14 +1,12 @@
 ## 2022-04-17 start
-## 2022-05-08 new proxyfn1
 ## 2022-06-13 new proxy.ms
+## 2022-06-21 set RCPP_PARALLEL_BACKEND
 
 library(ipsecr)
-# library(testthat)
 
-## Not needed as RcppParallel not used, but keep as a reminder
 ## to avoid ASAN/UBSAN errors on CRAN, following advice of Kevin Ushey
 ## e.g. https://github.com/RcppCore/RcppParallel/issues/169
-## Sys.setenv(RCPP_PARALLEL_BACKEND = "tinythread")
+Sys.setenv(RCPP_PARALLEL_BACKEND = "tinythread")
 
 ###############################################################################
 set.seed(123)

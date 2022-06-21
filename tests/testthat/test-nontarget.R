@@ -4,6 +4,10 @@
 
 library(ipsecr)
 
+## to avoid ASAN/UBSAN errors on CRAN, following advice of Kevin Ushey
+## e.g. https://github.com/RcppCore/RcppParallel/issues/169
+Sys.setenv(RCPP_PARALLEL_BACKEND = "tinythread")
+
 #------------------------------------------------------------------
 set.seed(123)
 trs <- make.grid(8, 8, spacing = 30, detector = 'single')
