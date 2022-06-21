@@ -54,11 +54,13 @@ simCH <- function (traps, popn, detectfn, detectpar, NT, noccasions, details = l
             as.matrix(traps), 
             as.matrix(usge),
             as.double(detpar), 
-            as.double(NT),   # vector 2022-06-13
+            as.double(NT),         # vector 2022-06-13
             as.integer(detectfn), 
             as.integer(detectcode), 
             as.integer(nontargetcode),
-            0, 0, rep(0, noccasions))
+            0, 
+            0, 
+            rep(0, noccasions))    # binomN 0 = Poisson count if count detector
      
         if (temp$resultcode != 0) {
             stop ("simulated detection failed, code ", temp$resultcode)
