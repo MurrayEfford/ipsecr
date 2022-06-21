@@ -60,33 +60,46 @@ double zcpp (
 
 //==============================================================================
 
-// btype is code for behavioural response 
-// 0 none
-// 1 individual
-// 2 individual, trap-specific
-// 3 trap-specific
-// NOTE: behavioural responses not checked
-
-// int bswitch (
-//         const int btype, 
-//         const int N, 
-//         const int i, 
-//         const int k, 
-//         const std::vector<int> &caughtbefore)
-// {
-//     if (btype == 0)
-//         return(0);
-//     else if (btype == 1) 
-//         return(caughtbefore[i]);
-//     else if (btype == 2) 
-//         return(caughtbefore[k * (N-1) + i]);
-//     else if (btype == 3) 
-//         return(caughtbefore[k]);
-//     else 
-//         Rcpp::stop("unrecognised btype in bswitch");
-//     return(0);
-// }
+struct trap_animal {
+    int     trap;
+    int     animal;
+    double  time;
+};
 //==============================================================================
+
+void probsort (
+        const int n, 
+        std::vector<trap_animal> &tran)
+    // Sort using Shell algorithm see Press et al 1989 p 257
+    // tran is an array of trap_animal records
+    
+{
+    double aln2i = 1.442695022;
+    double tiny  = 1.0e-5;
+    int nn,m,lognb2,l,k,j,i;
+    trap_animal t;
+    lognb2 = trunc(log(n)*aln2i+tiny);
+    m = n;
+    for (nn=1; nn<=lognb2; nn++)
+    {
+        m = m / 2;
+        k = n-m;
+        for (j=1; j<=k; j++)
+        {
+            i = j;
+            lab1:    l = i+m;
+            if (tran[l-1].time < tran[i-1].time)
+            {
+                t = tran[i-1];
+                tran[i-1] = tran[l-1];
+                tran[l-1] = t;
+                i = i-m;
+                if (i >= 1)  goto lab1;
+            }
+        }
+    }
+}    // end of probsort 
+//----------------------------------------------------------------
 
 // [[Rcpp::export]]
 Rcpp::List CHcpp (
@@ -126,11 +139,7 @@ Rcpp::List CHcpp (
     int    nc = 0;
     int    count = 0;
     double Tski = 1.0;  
-    // int    ik;
-    // bool   before;
-    
-    std::vector<int> caughtbefore(N * K, 0);
-    
+
     // return values
     Rcpp::IntegerVector CH (N*S*K);        // return value array
     Rcpp::IntegerMatrix nontarget (K, S);  // return nontarget array
@@ -143,7 +152,6 @@ Rcpp::List CHcpp (
             if (detectfn<13) {
                 hik(n,k) = -std::log(1-hik(n,k)); 
             }
-            
         }
     }
     // notional animal N1 for exclusive nontarget process
@@ -162,11 +170,11 @@ Rcpp::List CHcpp (
     int    anum = 0;
     int    tnum = 0;
     int    nextcombo;
-    int    finished;
+    bool   finished;
     int    OK;
     double event_time;
-    std::vector<int> occupied(K);        // single, multi
-    std::vector<double> intrap(N);
+    std::vector<bool>        occupied(K);        // single, multi
+    std::vector<int>         intrap(N1);
     std::vector<trap_animal> tran(N1 * K);
     double maxt;
     
@@ -180,8 +188,6 @@ Rcpp::List CHcpp (
     // MAIN LINE 
     
     Rcpp::List nullresult = Rcpp::List::create(
-        // Rcpp::Named("n") = 0,
-        // Rcpp::Named("caught") = caught,
         Rcpp::Named("CH") = CH,
         Rcpp::Named("nontarget") = nontarget,
         Rcpp::Named("resultcode") = 2);
@@ -214,24 +220,13 @@ Rcpp::List CHcpp (
         // --------------------------------------------------------------------- 
         // single-catch traps 
         if (detectorcode == -1) {
-            // initialise day 
-            tr_an_indx = 0;
-            nanimals = N;                          // only real animals
-            ntraps   = K;
-            for (i=0; i<N; i++) intrap[i] = 0;
-            for (k=0; k<K; k++) occupied[k] = 0;
-            nextcombo = 0;
             
-            // make tran 
-            for (i=0; i<N1; i++) {  // animals, including nontarget
+            // make tran, a list of latent capture events 
+            tr_an_indx = 0;
+            for (i=0; i<N1; i++) {  // animals, including notional nontarget
                 for (k=0; k<K; k++) { // traps 
                     Tski = Tsk(k,s);
                     if (fabs(Tski) > 1e-10) {
-                        // learned response not implemented
-                        // before = bswitch (btype, N, i, k, caughtbefore);
-                        // if (before)
-                        //     h = hik(i,k);
-                        // else
                         h0 = hik(i,k);
                         if (fabs(Tski-1) > 1e-10) {
                             h0 = Tski * h0;
@@ -252,24 +247,32 @@ Rcpp::List CHcpp (
             }
             // end of make tran 
             
+            // sort events into chronological order
             if (tr_an_indx > 1) probsort (tr_an_indx, tran);
+
+            nanimals = N;                          // only real animals
+            ntraps   = K;
+            for (i=0; i<N1; i++) intrap[i] = 0;
+            for (k=0; k<K; k++) occupied[k] = false;
+            nextcombo = 0;
             
+            // over latent events, while there are uncaught animals or empty traps
             while ((nextcombo < tr_an_indx) && (nanimals>0) && (ntraps>0)) {
-                finished = 0;
-                OK       = 0;
-                while ((1-finished)*(1-OK) > 0) {      // until finished or OK 
+                finished = false;
+                OK       = false;
+                while (!finished && !OK) {         // until finished or OK 
                     if (nextcombo >= (tr_an_indx))
-                        finished = 1;                  // no more to process 
+                        finished = true;               // no more to process 
                     else {
                         anum = tran[nextcombo].animal;
                         tnum = tran[nextcombo].trap;
-                        OK = (1-occupied[tnum]) * (1-intrap[anum]); // not occupied and not intrap 
+                        OK = !occupied[tnum] && intrap[anum] == 0;    // not occupied and not intrap 
                         nextcombo++;
                     }
                 }
-                if (finished==0) {
+                if (!finished) {
                     // Record this capture 
-                    occupied[tnum] = 1;
+                    occupied[tnum] = true;
                     ntraps--;
                     if (anum<N) {
                         intrap[anum]   = tnum+1;         // trap = k+1 
@@ -316,7 +319,7 @@ Rcpp::List CHcpp (
         // binary capped
         else if (detectorcode == 8) {
             for (k=0; k<K; k++) {
-                occupied[k] = 0;
+                occupied[k] = false;
                 dettime = 1.0;
                 Tski = Tsk(k,s);
                 if (fabs(Tski) > 1e-10) {
@@ -332,7 +335,7 @@ Rcpp::List CHcpp (
                     }
                     if ((dettime < 1.0) && 
                         (dettime < inttime[k] || nontargetcode > 2)) {
-                        occupied[k] = 1;
+                        occupied[k] = true;
                         CH[i3(anum, s, k, N, S)] = 1;
                     }
                 }
@@ -342,7 +345,7 @@ Rcpp::List CHcpp (
         // the 'proximity' group of detectors: 1 proximity, 2 count
         else if (detectorcode == 1 || detectorcode == 2) {
             for (k=0; k<K; k++) {
-                occupied[k] = 0;
+                occupied[k] = false;
                 Tski = Tsk(k,s);
                 if (fabs(Tski) > 1e-10) {
                     for (i=0; i<N; i++) {
@@ -354,7 +357,7 @@ Rcpp::List CHcpp (
                                 count = (dettime < 1) && 
                                     (dettime < inttime[k] || nontargetcode > 2);
                                 if (count>0) {
-                                    occupied[k] = 1;
+                                    occupied[k] = true;
                                 }
                             }
                             else if (detectorcode == 2) {             // count proximity 
@@ -435,8 +438,6 @@ Rcpp::List CHcpp (
     }   // loop over s 
     
     return (Rcpp::List::create(
-            // Rcpp::Named("n") = nc, 
-            // Rcpp::Named("caught") = caught,
             Rcpp::Named("CH") = CH,
             Rcpp::Named("nontarget") = nontarget,
             Rcpp::Named("resultcode") = 0));
