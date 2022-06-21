@@ -1,10 +1,13 @@
-Changes in version 1.1.2 (2022-06-21)
+Changes in version 1.1.2 (2022-06-22)
 
 New features or changed behaviour of old functions
     o   none
 
+Bugs fixed
+    o   C++ memory issue with single-catch + nontarget
+
 Other
-    o   none
+    o   citation points to CRAN
 
 Changes in version 1.1.1 (2022-06-17)
 
@@ -12,7 +15,7 @@ New features or changed behaviour of old functions
     o   revised count detector simulations
 
 Other
-    o   minor tweaks for CRAN
+    o   first version on CRAN
 
 Changes in version 1.1.0 (2022-06-14)
 

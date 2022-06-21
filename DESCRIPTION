@@ -2,7 +2,7 @@ Package: ipsecr
 Type: Package
 Title: Spatially Explicit Capture-Recapture by Inverse Prediction
 Version: 1.1.2
-Date: 2022-06-21
+Date: 2022-06-22
 Depends: R (>= 3.5.0), secr (>= 4.5.4)
 Imports: graphics, grDevices, MASS, utils, parallel, stats, tools, stringr, nlme,  Rcpp (>= 0.12.14)
 Suggests: FrF2, rmarkdown, knitr, testthat    
