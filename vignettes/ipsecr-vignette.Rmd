@@ -237,10 +237,14 @@ By default, **ipsecr** fits a full factorial design in the parameter space. For 
 
 The package **FrF2** may be used for fractional factorial designs (Groemping, 2014). 
 Fractional designs are selected by setting `details = list(factorial = 'fractional')` in `ipsecr.fit`. 
-```{r fractional0, eval = runall, purl = FALSE}
+```{r fractional0, eval = runall}
 ip.Fr <- ipsecr.fit(captdata, detectfn = 'HHN', details = list(factorial = 'fractional'))
 ```
-(Expect the message "Registered S3 method overwritten by 'DoE.base':").
+
+```{r retrieveipFr, eval = !runall, echo = FALSE}
+# previously saved model ... see chunk 'saveall' at end
+suppressMessages(load(system.file("example", "ip.Fr.RData", package = "ipsecr")))
+```
 
 ```{r fractional1}
 collate(ip.single, ip.Fr)[1,,,]
@@ -251,26 +255,37 @@ ip.Fr$proctime
 In this example the fractional design was actually slower than the full design because (i) there is little difference in the number of design points when NP = 3 (7 vs 11 with 3 centre points) and (ii) the fractional fit went to a third box. Conditions when fractional designs are faster have not been determined - they are probably useful only when parameters are numerous.
 
 The default fractional design is a 1/2 factorial, illustrated by this code:
-```{r fractional2, eval = TRUE, message = FALSE}
-library(FrF2, quietly = TRUE)
-NP <- 3
-boxsize <- rep(0.2,3)
-design <- FrF2(2^(NP-1),NP, factor.names = c('D','lambda0','sigma'), ncenter = 2)
-data.frame(design)
-# recast factors as numeric
-design <- sapply(design, function(x) as.numeric(as.character(x)))
-design <- sweep(design, MAR=2, STATS = boxsize, FUN='*')
-# apply to beta
-beta <- log(c(5,0.2,25))
-designbeta <- sweep(design, MAR=2, STATS=beta, FUN='+')
-round(designbeta,3)
+```{r fractional2, eval = FALSE, message = FALSE, warning = FALSE}
+if (require('FrF2')) {
+  NP <- 3
+  boxsize <- rep(0.2,3)
+  design <- FrF2(2^(NP-1),NP, factor.names = c('D','lambda0','sigma'), ncenter = 2)
+  # recast factors as numeric
+  design <- sapply(design, function(x) as.numeric(as.character(x)))
+  design <- sweep(design, MAR=2, STATS = boxsize, FUN='*')
+  # apply to beta
+  beta <- log(c(5,0.2,25))
+  designbeta <- sweep(design, MAR=2, STATS=beta, FUN='+')
+  round(designbeta,3)
+}
 ```
+```
+         D lambda0 sigma
+[1,] 1.609  -1.609 3.219
+[2,] 1.809  -1.409 3.419
+[3,] 1.809  -1.809 3.019
+[4,] 1.409  -1.809 3.419
+[5,] 1.409  -1.409 3.019
+[6,] 1.609  -1.609 3.219
+```
+The first and last rows are centre points.
 
 For other designs you may specify the desired arguments of FrF2 as a list e.g., `details = list(factorial = 'fractional', FrF2args = list(nruns = 4, nfactors = 3, ncenter = 3))`. 
 
-```{r saveall, echo = FALSE, eval = runall, purl = FALSE}
-save(ip.single, ip.single.0, ip.single.nontarget, ipx, ip.Fr, 
+```{r saveall, echo = FALSE, eval = runall}
+save(ip.single, ip.single.0, ip.single.nontarget, ipx, 
       file = 'd:/density secr 4.5/ipsecr/inst/example/fittedmodels.RData')
+save(ip.Fr, file = 'd:/density secr 4.5/ipsecr/inst/example/ip.Fr.RData')
 tools::resaveRdaFiles(paste0('d:/density secr 4.5/ipsecr/inst/example'),'xz')
 ```
 
@@ -281,25 +296,25 @@ Some functionality of **ipsecr** is shared with **secr**.
 Methods for 'ipsecr' of generic functions defined in **secr**
 
 | Function | Description |
-|----------|-------------|
+|----------|-----------------------------------------|
 |makeNewData| generate dataframe suitable for `predict.ipsecr` |
 |region.N| estimate number of animals in mask or polygon |
 
 Methods for 'ipsecr' of generic functions from base R and stats
 
 | Function | Description |
-|----------|-------------|
-| coef    | coefficients (beta parameters) of fitted model |
-| plot    | plot detection function from fitted model |
-| print   | display 'ipsecr' object|
-| predict | predict real parameters |
-| summary | summarise fitted model|
-| vcov    | variance-covariance matrix of coefficients (beta parameters) |
+|----------|------------------------------------------|
+| coef     | coefficients (beta parameters) of fitted model |
+| plot     | plot detection function from fitted model |
+| print    | display 'ipsecr' object |
+| predict  | predict real parameters |
+| summary  | summarise fitted model |
+| vcov     | variance-covariance matrix of coefficients (beta parameters) |
 
 Functions from **secr** that work on fitted 'ipsecr' objects as-is
 
 | Function | Description |
-|----------|-------------|
+|----------|------------------------------------------------|
 | ellipse.secr| plot confidence ellipse for 2 parameters |
 | predictDsurface| predict density for each cell of mask |
 | makeStart| generate starting values from various inputs |
