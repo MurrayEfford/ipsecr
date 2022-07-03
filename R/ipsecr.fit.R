@@ -607,7 +607,12 @@ ipsecr.fit <- function (
             }
             sim <- rbind(sim, newsim[OK,])
             alldesignbeta <- rbind(alldesignbeta,basedesign[OK,])
-            sim.lm <- lm ( sim ~ alldesignbeta )   # proxy ~ link(param)
+            sim.lm <- lm ( sim ~ alldesignbeta )  # proxy ~ link(param)
+
+            # break if have exceeded allowed simulations
+            if ((nrow(alldesignbeta) > details$max.nsim)) break
+            # alternatively, determine whether sufficient precision achieved
+            #--------------------------------------------------------------------
             sum.sim.lm <- summary(sim.lm)
             code <- 0
             if (details$boxtype == 'absolute') {
@@ -616,10 +621,9 @@ ipsecr.fit <- function (
             else {
                 dev <- sapply(sum.sim.lm, function(x) x$sigma) / y / sqrt(nrow(sim))
             }
-            # break if have exceeded allowed simulations
-            if ((nrow(alldesignbeta) > details$max.nsim)) break
             # break if have achieved target precision
             if (!is.null(dev) && !any(is.na(dev)) && all(dev <= details$dev.max)) break
+            #-------------------------------------------------------------------
         }
         
         # simulations for this box
@@ -649,7 +653,6 @@ ipsecr.fit <- function (
         }
         else {
             B <- coef(sim.lm)[-1,]
-            # B <- solve(t(B))  ## invert
             B <- try(MASS::ginv(t(B)), silent = TRUE)   ## 2022-05-15
             if (inherits(B, 'try-error')) {
                 code <- 5
@@ -663,7 +666,6 @@ ipsecr.fit <- function (
         }
     }    # end of loop over boxes
     ####################################################################
-    
     if (code == 0) {
         if (!all(sapply(1:NP, within))) {
             warning ("solution not found after ", details$max.nbox, " attempts")
@@ -701,8 +703,9 @@ ipsecr.fit <- function (
         }
         newsim <- newsim[OK,]
         V <- var(newsim)  ## additional simulations for var-covar matrix
-        vcov <- B %*% V %*% t(B)
         
+        vcov <- B %*% V %*% t(B)
+
         ## compare estimates to parametric bootstrap
         n <- apply(newsim, 2, function(x) sum(!is.na(x)))
         ymean <- apply(newsim, 2, mean, na.rm=T)
@@ -712,9 +715,9 @@ ipsecr.fit <- function (
             SE.simulated = yse)
         
         ## biasest not reported, yet
-        yest <- as.numeric(B %*% matrix((ymean - lambda), ncol = 1))
-        biasest <- data.frame (estimate = 100 * (beta - yest) / yest,
-            SE = 100 * (beta - yest) / yest)
+        # yest <- as.numeric(B %*% matrix((ymean - lambda), ncol = 1))
+        # biasest <- data.frame (estimate = 100 * (beta - yest) / yest,
+        #     SE = 100 * (beta - yest) / yest)
         
     }
     else {
