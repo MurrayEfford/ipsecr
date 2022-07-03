@@ -21,8 +21,8 @@
 \tabular{ll}{
 Package: \tab ipsecr\cr
 Type: \tab Package\cr
-Version: \tab 1.1.2\cr
-Date: \tab 2022-06-22\cr
+Version: \tab 1.1.3\cr
+Date: \tab 2022-07-03\cr
 License: \tab GNU General Public License Version 2 or later\cr
 }
 
