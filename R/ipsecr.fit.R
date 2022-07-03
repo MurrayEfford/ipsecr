@@ -363,10 +363,10 @@ ipsecr.fit <- function (
             #------------------------------------------------
             # generate population
             if (is.function(details$popmethod)) {   # user
-                popn <- details$popmethod(mask, D, N)
+                popn <- details$popmethod(mask, D, N, details)
             }
             else if (details$popmethod == 'internal') {   # C++
-                popn <- simpop(mask, D, N, distribution)
+                popn <- simpop(mask, D, N, details)
             }
             else if (details$popmethod == "sim.popn") {
                 popn <- sim.popn (D = as.data.frame(D), core = mask, 
@@ -381,10 +381,10 @@ ipsecr.fit <- function (
             #------------------------------------------------
             # sample from population
             if (is.function(details$CHmethod)) {   # user
-                ch <- details$CHmethod(trps, popn, detectfn, detectpar, noccasions, details)
+                ch <- details$CHmethod(trps, popn, detectfn, detectpar, noccasions, NT, details)
             }
             else if (details$CHmethod == 'internal') {   # C++
-                ch <- simCH(trps, popn, detectfn, detectpar, NT, noccasions, details)
+                ch <- simCH(trps, popn, detectfn, detectpar, noccasions, NT, details)
             }
             else if (details$CHmethod == 'sim.capthist') {   
                 if (modelnontarget) stop ("sim.capthist does not simulate nontarget detections")

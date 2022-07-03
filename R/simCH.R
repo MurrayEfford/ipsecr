@@ -6,7 +6,7 @@
 
 # function simCH is used by ipsecr.fit for CHmethod 'internal'
 
-simCH <- function (traps, popn, detectfn, detectpar, NT, noccasions, details = list()) {
+simCH <- function (traps, popn, detectfn, detectpar, noccasions, NT, details = list()) {
     if (ms(traps)) {
         # if detectpar vary across sessions then should be list of lists
         if (!is.list(detectpar[[1]])) detectpar <- list(detectpar)
@@ -15,8 +15,8 @@ simCH <- function (traps, popn, detectfn, detectpar, NT, noccasions, details = l
             traps = traps, 
             popn = popn, 
             detectpar = detectpar, 
-            NT = as.data.frame(NT),  # detector x session 
             noccasions = noccasions,
+            NT = as.data.frame(NT),  # detector x session 
             MoreArgs = list(detectfn = detectfn, details = details), 
             SIMPLIFY = FALSE)
         MS.capthist(tmp)

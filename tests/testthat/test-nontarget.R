@@ -17,8 +17,8 @@ chs <- simCH(
     popn = pop, 
     detectfn = 14, 
     detectpar = list(lambda0 = 0.2, sigma = 20),
-    NT = 0.5,
     noccasions = 5, 
+    NT = 0.5,
     details = list(nontargettype='exclusive'))
 summ <- summary(chs)
 nt <- as.numeric(summ$nontarget)[1:5]
@@ -44,8 +44,8 @@ chm <- simCH(
     popn = pop, 
     detectfn = 14, 
     detectpar = list(lambda0 = 0.2, sigma = 20),
-    NT = 0.5, 
     noccasions = 5, 
+    NT = 0.5, 
     details = list(nontargettype='truncated'))
 summ <- summary(chm)
 nt <- as.numeric(summ$nontarget)[1:5]
@@ -71,8 +71,8 @@ chp <- simCH(
     popn = pop, 
     detectfn = 14, 
     detectpar = list(lambda0 = 0.2, sigma = 20),
-    NT = 0.5,
     noccasions = 5, 
+    NT = 0.5,
     details = list(nontargettype = 'truncated'))
 summ <- summary(chp)
 nt <- as.numeric(summ$nontarget)[1:5]
@@ -98,8 +98,8 @@ chc <- simCH(
     popn = pop, 
     detectfn = 14, 
     detectpar = list(lambda0 = 0.2, sigma = 20),
-    NT = 0.5,
     noccasions = 5, 
+    NT = 0.5,
     details = list(nontargettype = 'exclusive'))
 summ <- summary(chc)
 nt <- as.numeric(summ$nontarget)[1:5]
