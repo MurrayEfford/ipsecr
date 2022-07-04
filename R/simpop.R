@@ -6,6 +6,7 @@
 
 # function simpop is used by ipsecr.fit for popmethod 'internal'
 # 2022-07-04 distribution replaced by details$distribution
+# 2022-07-04 class popn
 
 simpop <- function (mask, D, N, details = list()) {
     if (ms(mask)) {
@@ -20,8 +21,10 @@ simpop <- function (mask, D, N, details = list()) {
         tmp
     }
     else {
-        if (is.null(details$distribution) || details$distribution == 'even') {
-            popcpp(
+        if (is.null(details$distribution) || 
+                tolower(details$distribution) == 'poisson') {
+            D <- rep(D, length.out = nrow(mask))  # 2022-07-04
+            pop <- popcpp(
                 as.matrix(mask), 
                 as.double(D/sum(D)), 
                 as.double(spacing(mask)/100), 
@@ -30,10 +33,14 @@ simpop <- function (mask, D, N, details = list()) {
         }
         else {  # details$distribution == 'even' 
             bounds <- apply(mask,2,range)
-            popevencpp(
+            pop <- popevencpp(
                 as.matrix(bounds), 
                 as.integer(N)
             )
         }
+        dimnames(pop)[[2]] <- c('x','y')
+        pop <- as.data.frame(pop)
+        class(pop) <- c('popn','data.frame')
+        pop
     }
 }
