@@ -28,7 +28,7 @@ predict.ipsecr <- function (object, newdata = NULL, type = c("response", "link")
     beta.vcv <- complete.beta.vcv(object)
 
     getfield <- function (x) {
-      secr.lpredictor (
+      ipsecr.lpredictor (
         formula = models[[x]], 
         newdata = newdata,
         indx = parindices[[x]], 
