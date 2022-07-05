@@ -245,18 +245,6 @@ ipsecr.fit <- function (
     link <- replace (defaultlink, names(link), link)
     link[!(names(link) %in% pnames)] <- NULL
     
-    ##############################################
-    # Prepare detection design matrices and lookup
-    ##############################################
-    # memo ('Preparing detection design matrices', verbose)
-    design <- secr.design.MS (capthist, model, timecov, sessioncov, NULL, NULL,
-        NULL, ignoreusage = details$ignoreusage, naive = FALSE,
-        CL = FALSE, contrasts = details$contrasts)
-    design0 <- design   # for now
-    # design0 <- secr.design.MS (capthist, model, timecov, sessioncov, NULL, NULL,
-    #     NULL, ignoreusage = details$ignoreusage, naive = TRUE,
-    #     CL = FALSE, contrasts = details$contrasts)
-    
     ############################################
     # Prepare density design matrix
     ############################################
@@ -309,12 +297,22 @@ ipsecr.fit <- function (
     ############################################
     # Parameter mapping (general)
     ############################################
-    detectparnames <- names(design$designMatrices) %in% c('g0','lambda0','sigma')
-    nDetectionParameters <- sapply(design$designMatrices[detectparnames], ncol)
+    popn <- simpop(mask, D=1, N = 10, details) # throw-away popn for parameter counting
+    detbetanames <- detBetaNames(popn, model, detectfn, sessionlevels, fixed, details)
+    nDetectionParameters <- sapply(detbetanames, length)
+    
     np <- c(D = nDensityParameters, nDetectionParameters, NT = nNTParameters)
     NP <- sum(np)
     parindx <- split(1:NP, rep(1:length(np), np))
     names(parindx) <- names(np)[np>0]
+    
+    ############################################
+    # Variable names (general)
+    ############################################
+    realnames <- names(model)
+    ## coefficients for D precede all others
+    betanames <- c(paste('D', Dnames, sep='.'), unlist(detbetanames))
+    betanames <- sub('..(Intercept))','',betanames)
     
     ###########################################
     # setup boxes
@@ -345,12 +343,6 @@ ipsecr.fit <- function (
         # cannot simulate zero animals, so return NA for predicted
         if (is.na(N) || any(N<=0) || any(N>details$Nmax)) return(rep(NA, NP))
         
-        # detectpar is list of named parameters of detectfn
-        # not yet modelled using design, design0: assumes 1:1
-        detectparnames <- names(parindx) %in% c('g0','lambda0','sigma')
-        betalist <- lapply(parindx[detectparnames], function(x) unname(beta[x]))
-        detectpar <- mapply(untransform, betalist, link[detectparnames], SIMPLIFY = FALSE)
-
         if (modelnontarget) {
             NT <- getD('NT', designNT, beta, trps, parindx, link, fixed, nsessions)
         }
@@ -363,7 +355,7 @@ ipsecr.fit <- function (
             #------------------------------------------------
             # generate population
             if (is.function(details$popmethod)) {   # user
-                popn <- details$popmethod(mask, D, N, details)
+                popn <- details$popmethod(mask = mask, D = D, N = N, details = details)
             }
             else if (details$popmethod == 'internal') {   # C++
                 popn <- simpop(mask, D, N, details)
@@ -378,17 +370,20 @@ ipsecr.fit <- function (
                 return(rep(NA, NP))
             }
 
-            #------------------------------------------------
+            #-----------------------------------------------------
+            # session-specific detection parameter matrix/matrices
+            detparmat <- getDetParMat (popn, model, detectfn, beta, parindx, link, fixed, details, sessionlevels)
+            #-----------------------------------------------------
             # sample from population
             if (is.function(details$CHmethod)) {   # user
-                ch <- details$CHmethod(trps, popn, detectfn, detectpar, noccasions, NT, details)
+                ch <- details$CHmethod(trps, popn, detectfn, detparmat, noccasions, NT, details)
             }
             else if (details$CHmethod == 'internal') {   # C++
-                ch <- simCH(trps, popn, detectfn, detectpar, noccasions, NT, details)
+                ch <- simCH(trps, popn, detectfn, detparmat, noccasions, NT, details)
             }
             else if (details$CHmethod == 'sim.capthist') {   
                 if (modelnontarget) stop ("sim.capthist does not simulate nontarget detections")
-                ch <- sim.capthist(trps, popn, detectfn, detectpar, noccasions, nsessions, 
+                ch <- sim.capthist(trps, popn, detectfn, as.list(detparmat[1,]), noccasions, nsessions, 
                     renumber = FALSE)
             }
             # check valid
@@ -455,8 +450,8 @@ ipsecr.fit <- function (
     ##########################################
     y <- proxyfn(capthist, model = model, trapdesigndata = trapdesigndata, ...)
     if (length(y) != NP)
-        stop ("need one proxy for each parameter ",
-            paste(pnames, collapse=" "))
+        stop ("need one proxy for each coefficient ",
+            paste(betanames, collapse=" "))
 
     ##########################################
     ## starting values
@@ -465,6 +460,7 @@ ipsecr.fit <- function (
     details$trace <- verbose  # as used by makeStart
     start <- makeStart(start, parindx[names(parindx) != 'NT'], 
         capthist, mask, detectfn, link, details, fixed)
+browser()    
     if (modelnontarget) {
         start <- c(start, y[parindx$NT])
     }
@@ -483,16 +479,6 @@ ipsecr.fit <- function (
         NP <- length(start)
     }
     
-    ############################################
-    # Variable names (general)
-    ############################################
-    betanames <- unlist(sapply(design$designMatrices, colnames))
-    names(betanames) <- NULL
-    realnames <- names(model)
-    ## coefficients for D precede all others
-    betanames <- c(paste('D', Dnames, sep='.'), betanames)
-    betanames <- sub('..(Intercept))','',betanames)
-
     ###########################################
     # cluster for parallel processing
     ###########################################
@@ -743,8 +729,6 @@ ipsecr.fit <- function (
         details = details,
         designD = designD,   
         trapdesigndata = trapdesigndata, 
-        design = design,
-        design0 = design0,
         parindx = parindx,
         vars = vars,
         betanames = betanames,

@@ -6,7 +6,7 @@
 
 # function simCH is used by ipsecr.fit for CHmethod 'internal'
 
-simCH <- function (traps, popn, detectfn, detectpar, noccasions, NT, details = list()) {
+simCH <- function (traps, popn, detectfn, detparmat, noccasions, NT = NULL, details = list()) {
     if (ms(traps)) {
         # if detectpar vary across sessions then should be list of lists
         if (!is.list(detectpar[[1]])) detectpar <- list(detectpar)
@@ -31,7 +31,6 @@ simCH <- function (traps, popn, detectfn, detectpar, noccasions, NT, details = l
             multi = 0, proximity = 1, count = 2, capped = 8, 9)
         if (detectcode == 9) stop ("unsupported detector type")
         
-        detpar <- unlist(detectpar[parnames(detectfn)])  # robust to order of detectpar
         # optional nontarget rate
         if (is.null(NT) || all(NT<=0)) {
             nontargetcode <- 0
@@ -53,7 +52,7 @@ simCH <- function (traps, popn, detectfn, detectpar, noccasions, NT, details = l
             as.matrix(popn), 
             as.matrix(traps), 
             as.matrix(usge),
-            as.double(detpar), 
+            as.matrix(detparmat),  # matrix 2022-07-04
             as.double(NT),         # vector 2022-06-13
             as.integer(detectfn), 
             as.integer(detectcode), 

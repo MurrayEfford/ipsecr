@@ -11,7 +11,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // CHcpp
-Rcpp::List CHcpp(const Rcpp::NumericMatrix& animals, const Rcpp::NumericMatrix& traps, const Rcpp::NumericMatrix& Tsk, const Rcpp::NumericVector& gsb, const Rcpp::NumericVector& NT, const int detectfn, const int detectorcode, const int nontargetcode, const int btype, const int Markov, const Rcpp::IntegerVector& binomN);
+Rcpp::List CHcpp(const Rcpp::NumericMatrix& animals, const Rcpp::NumericMatrix& traps, const Rcpp::NumericMatrix& Tsk, const Rcpp::NumericMatrix& gsb, const Rcpp::NumericVector& NT, const int detectfn, const int detectorcode, const int nontargetcode, const int btype, const int Markov, const Rcpp::IntegerVector& binomN);
 RcppExport SEXP _ipsecr_CHcpp(SEXP animalsSEXP, SEXP trapsSEXP, SEXP TskSEXP, SEXP gsbSEXP, SEXP NTSEXP, SEXP detectfnSEXP, SEXP detectorcodeSEXP, SEXP nontargetcodeSEXP, SEXP btypeSEXP, SEXP MarkovSEXP, SEXP binomNSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -19,7 +19,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type animals(animalsSEXP);
     Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type traps(trapsSEXP);
     Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type Tsk(TskSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type gsb(gsbSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type gsb(gsbSEXP);
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type NT(NTSEXP);
     Rcpp::traits::input_parameter< const int >::type detectfn(detectfnSEXP);
     Rcpp::traits::input_parameter< const int >::type detectorcode(detectorcodeSEXP);

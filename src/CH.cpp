@@ -1,4 +1,5 @@
 #include "ipsecr.h"
+using namespace Rcpp;
 
 //===============================================================================
 
@@ -106,7 +107,7 @@ Rcpp::List CHcpp (
         const Rcpp::NumericMatrix &animals, // x-y coord
         const Rcpp::NumericMatrix &traps,   // x-y coord
         const Rcpp::NumericMatrix &Tsk,     // usage
-        const Rcpp::NumericVector &gsb,
+        const Rcpp::NumericMatrix &gsb,
         const Rcpp::NumericVector &NT,
         const int                 detectfn,
         const int                 detectorcode,
@@ -129,6 +130,7 @@ Rcpp::List CHcpp (
     int N1 = N + (nontargetcode==1);   // increment for exclusive nontargets
     int K = Tsk.nrow();
     int S = Tsk.ncol();
+    int ndetpar = gsb.ncol();
     int i,k,j,n,s;
     int isk;
     double d2;
@@ -148,7 +150,7 @@ Rcpp::List CHcpp (
     for (n = 0; n<N; n++) {
         for (k=0; k<K; k++) {
             d2 = d2cpp (n, k, animals, traps);
-            hik(n,k) = zcpp(d2, detectfn, gsb);
+            hik(n,k) = zcpp(d2, detectfn, gsb(n,_));
             if (detectfn<13) {
                 hik(n,k) = -std::log(1-hik(n,k)); 
             }
