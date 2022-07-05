@@ -15,17 +15,6 @@
 ## .localstuff$packageType <- ' pre-release'
 .localstuff$packageType <- ''
 
-.localstuff$validdetectors <- c('single','multi','proximity','count', 
-    'polygonX', 'transectX', 'signal', 'polygon', 'transect', 
-    'capped', 'null','null','null','null', 'telemetry', 'signalnoise')
-.localstuff$simpledetectors <- c('single','multi','proximity','count', 'capped')
-.localstuff$individualdetectors <- c('single','multi','proximity','count',
-    'polygonX', 'transectX', 'signal', 'signalnoise', 'polygon', 'transect',
-                                     'telemetry', 'capped')
-.localstuff$pointdetectors <- c('single','multi','proximity','count',
-    'signal', 'signalnoise', 'unmarked','presence','capped')
-.localstuff$polydetectors <- c('polygon','transect','polygonX','transectX')
-.localstuff$exclusivedetectors <- c('single','multi','polygonX','transectX')
 .localstuff$countdetectors <- c('count','polygon','transect','unmarked','telemetry')
 .localstuff$detectionfunctions <-
   c('halfnormal',
@@ -53,8 +42,6 @@
 .localstuff$DFN <- c('HN', 'HR', 'EX', 'CHN', 'UN', 'WEX', 'ANN', 'CLN', 'CG',
   'BSS', 'SS', 'SSS', 'SN', 'SNS',
   'HHN', 'HHR', 'HEX', 'HAN', 'HCG', 'HVP','HPX')
-
-.localstuff$learnedresponses <- c('b', 'bk', 'B', 'k', 'Bk')   ## Bk added 2020-02-26
 
 detectionfunctionname <- function (fn) {
     .localstuff$detectionfunctions[fn+1]
@@ -96,26 +83,6 @@ parnames <- function (detectfn) {
 getdfn <- function (detectfn) {
     switch (detectfn+1, HN, HR, EX, CHN, UN, WEX, ANN, CLN, CG, BSS, SS, SSS,
                        SN, SNS, HHN, HHR, HEX, HAN, HCG, HVP, HPX)
-}
-
-valid.detectfn <- function (detectfn, valid = c(0:3,5:19, 20)) {
-# exclude 4 uniform: too numerically flakey
-    if (is.null(detectfn))
-        stop ("requires 'detectfn'")
-    if (is.character(detectfn))
-        detectfn <- detectionfunctionnumber(detectfn)
-    if (!(detectfn %in% valid))
-        stop ("invalid detection function")
-    detectfn
-}
-
-valid.detectpar <- function (detectpar, detectfn) {
-    if (is.null(detectpar) | is.null(detectfn))
-        stop ("requires valid 'detectpar' and 'detectfn'")
-    if (!all(parnames(detectfn) %in% names(detectpar)))
-        stop ("requires 'detectpar' ", paste(parnames(detectfn), collapse=','),
-            " for ", detectionfunctionname(detectfn), " detectfn")
-    detectpar[parnames(detectfn)]
 }
 
 valid.pnames <- function (details, CL, detectfn, alltelem, sighting, nmix) {
@@ -207,64 +174,8 @@ fixed.string <- function (fixed) {
     if (is.null(fixed) | length(fixed)==0) 'none'
     else paste (names(fixed), as.character(fixed), collapse=', ', sep=' = ')
 }
-############################################################################################
-
-var.in.model <- function(v,m) v %in% unlist(lapply(m, all.vars))
-
-############################################################################################
-
-add.cl <- function (df, alpha, loginterval, lowerbound = 0) {
-
-## add lognormal or standard Wald intervals to dataframe with columns
-## 'estimate' and 'SE.estimate'
-## lowerbound added 2011-07-15
-    z <- abs(qnorm(1-alpha/2))
-    if (loginterval) {
-        delta <- df$estimate - lowerbound
-        df$lcl <- delta / exp(z * sqrt(log(1 + (df$SE.estimate /
-                        delta)^2))) + lowerbound
-        df$ucl <- delta * exp(z * sqrt(log(1 + (df$SE.estimate /
-                        delta)^2))) + lowerbound
-    }
-    else {
-        df$lcl <- pmax(lowerbound, df$estimate - z * df$SE.estimate)
-        df$ucl <- df$estimate + z * df$SE.estimate
-    }
-    df
-}
-
 ###############################################################################
 
-spatialscale <- function (object, detectfn, session = '') {
-    if (inherits(object, 'secr')) {
-        if (ms(object))
-            detpar <- detectpar(object)[[session]]
-        else
-            detpar <- detectpar(object)
-        cutval <- object$details$cutval
-    }
-    else {
-        detpar <- object
-        cutval <- object$cutval
-    }
-    if (!is.null(detpar$sigma)) detpar$sigma
-    else if (detectfn == 10) {
-        (cutval - detpar$beta0) / detpar$beta1
-    }
-    else if (detectfn == 11) {
-        d11 <- function(d, beta0, beta1, c) beta0 +
-            beta1 * (d-1) - 10 * log10(d^2) - c
-        interval <- c(0,10 * (cutval - detpar$beta0) / detpar$beta1)
-        uniroot (d11, interval, detpar$beta0, detpar$beta1, cutval)$root
-    }
-    else if (detectfn == 9) {
-#        (0.5 - detpar$b0) / detpar$b1
-        - 1 / detpar$b1   ## 2010-11-01
-    }
-    else stop ("unrecognised detectfn")
-}
-
-###############################################################################
 ## mean and SD if x numeric
 ## was statfn 2011-11-08
 getMeanSD <- function(xy) {
@@ -276,20 +187,6 @@ getMeanSD <- function(xy) {
     }
     as.data.frame (apply(xy, 2, MeanSD))
 }
-###############################################################################
-
-## clunky but effective re-write 2012-09-04, improved 2016-02-20, 2016-05-10
-leadingzero <- function (x) {
-    xc <- as.character(x)
-    w <- max(nchar(xc))
-    n0 <- function(n) paste(rep('0',n), collapse='')
-    paste(sapply(w-nchar(xc), n0), x, sep='')
-
-    ## or, 2016-01-15, 2016-02-20 BUT DOESN'T HANDLE NON-INTEGER 2016-05-10
-    #     if (is.character(x)) x <- as.numeric(x)
-    #     sprintf(paste("%0", w, "d", sep = ""), x)
-}
-
 ###############################################################################
 
 ## Detection functions
@@ -403,7 +300,7 @@ HPX <- function (r, pars, cutval) {
     ifelse (r<=radius, g0, 0)  # circular, not square! crude approx
 }
 
-############################################################################################
+################################################################################
 
 gradient <- function (pars, fun, eps=0.001, ...)
 ## quick & dirty 2009 09 14
@@ -425,9 +322,7 @@ gradient <- function (pars, fun, eps=0.001, ...)
   }
   g
 }
-############################################################################################
-
-#-------------------------------------------------------------------------------
+################################################################################
 
 # transformation tidy up 2021-12-16
 # arbitrary link function specified with functions X, invX, se.invX
@@ -533,13 +428,6 @@ mlogit.untransform <- function (beta, latentmodel) {
     }
 }
 
-clean.mlogit <- function(x) {
-    ## 2014-08-19 for robustness...
-    if (is.na(x[2])) x[2] <- 1-x[1]
-    x[1] <- NA   ## assumed reference class
-    logit(mlogit.untransform(x))
-}
-
 mlogit <- function (x) {
     ## return the mlogit of an unscaled vector of positive values
     ## 2013-04-14
@@ -548,34 +436,7 @@ mlogit <- function (x) {
 
 ## End of miscellaneous functions
 
-############################################################################################
-
-## expand beta parameter vector using template of 'fixed beta'
-## fixed beta fb input is missing (NA) for estimated beta parameters
-fullbeta <- function (beta, fb) {
-    if (!is.null(fb)) {
-        fb[is.na(fb)] <- beta  ## partial beta (varying only)
-        beta <- fb             ## complete beta
-    }
-    beta
-}
-###############################################################################
-
-## moved from pdot.R 2013-11-09
-## scalar 2016-10-14
-getbinomN <- function (binomN, detectr) {
-    if (any(detectr %in% .localstuff$countdetectors)) {
-        if (is.null(binomN))
-            return(0)
-        else if (binomN == 'usage')
-            return(1)
-        else
-            return(binomN)
-    }
-    else
-        return(1)
-}
-###############################################################################
+################################################################################
 
 complete.beta <- function (object) {
     fb <- object$details$fixedbeta
@@ -623,67 +484,8 @@ general.model.matrix <- function (formula, data, gamsmth = NULL,
 }
 ###############################################################################
 
-## shifted from secrloglik 2016-10-16
-makerealparameters <- function (design, beta, parindx, link, fixed) {
-    modelfn <- function(i) {
-        ## linear predictor for real parameter i
-        Yp <- design$designMatrices[[i]] %*% beta[parindx[[i]]]
-        if (names(link)[i] == 'pmix') {
-            ## 2013-04-14 index of class groups (pmix sum to 1.0 within latentmodel)
-            cols <- dimnames(design$designMatrices[[i]])[[2]]
-            h2 <- grep('.h2', cols, fixed=T)
-            h3 <- grep('.h3', cols, fixed=T)
-            h2c <- grep(':h2', cols, fixed=T)
-            h3c <- grep(':h3', cols, fixed=T)
-            h.cols <- c(h2,h3,h2c,h3c)
-            tmp <- design$designMatrices[[i]][,-h.cols, drop = FALSE]
-            tmph <- design$designMatrices[[i]][,h.cols, drop = FALSE]
-            ## 2018-02-23 why as.numeric()? 
-            latentmodel <- as.numeric(factor(apply(tmp,1,paste, collapse='')))
-            refclass <- apply(tmph,1,sum) == 0
-            Yp[refclass] <- NA
-            Yp <- mlogit.untransform(Yp, latentmodel)
-            Yp[design$parameterTable[,i]]
-        }
-        else {
-            Yp <- untransform(Yp, link[[i]])
-            Yp[design$parameterTable[,i]]   ## replicate as required
-        }
-    }
-    ## construct matrix of detection parameters
-    nrealpar  <- length(design$designMatrices)
-    parindx$D <- NULL ## detection parameters only
-    link$D    <- NULL ## detection parameters only
-    parindx$noneuc <- NULL ## detection parameters only
-    link$noneuc    <- NULL ## detection parameters only
-    detectionparameters <- names(link)
-    fixed.dp <- fixed[detectionparameters[detectionparameters %in% names(fixed)]]
-    
-    if (length(fixed.dp)>0)
-        for (a in names(fixed.dp))  ## bug fixed by adding this line 2011-09-28
-            link[[a]] <- NULL
-    if (length(link) != nrealpar)
-        stop ("number of links does not match design matrices")
-    
-    if (nrealpar == 0) {
-        return(matrix(unlist(fixed.dp),nrow = 1))
-    }
-    
-    temp <- sapply (1:nrealpar, modelfn)
-    if (nrow(design$parameterTable)==1) temp <- t(temp)
-    nrw <- nrow(temp)
-    ## make new matrix and insert columns in right place
-    temp2 <- as.data.frame(matrix(nrow = nrw, ncol = length(detectionparameters)))
-    names(temp2) <- detectionparameters
-    temp2[ , names(design$designMatrices)] <- temp          ## modelled
-    if (!is.null(fixed.dp) & length(fixed.dp)>0)
-        temp2[ , names(fixed.dp)] <- sapply(fixed.dp, rep, nrw)    ## fixed
-    as.matrix(temp2)
-    
-}
-############################################################################################
 
-secr.lpredictor <- function (formula, newdata, indx, beta, field, beta.vcv=NULL,
+ipsecr.lpredictor <- function (formula, newdata, indx, beta, field, beta.vcv=NULL,
     smoothsetup = NULL, contrasts = NULL, f = NULL) {
     ## form linear predictor for a single 'real' parameter
     ## smoothsetup should be provided whenever newdata differs from
@@ -771,7 +573,7 @@ secr.lpredictor <- function (formula, newdata, indx, beta, field, beta.vcv=NULL,
     }
 }
 
-############################################################################################
+################################################################################
 
 ## 2014-10-25, 2017-01-24
 ## intercept and fix certain ,models with bad defaults
@@ -788,7 +590,7 @@ updatemodel <- function (model, detectfn, detectfns, oldvar, newvar, warn = FALS
     }
     model
 }
-############################################################################################
+################################################################################
 
 # number of beta parameters
 nparameters <- function (object) {
@@ -798,42 +600,7 @@ nparameters <- function (object) {
         Npar <- Npar - sum(!is.na(object$details$fixedbeta))
     Npar
 }
-############################################################################################
-
-mapbeta <- function (parindx0, parindx1, beta0, betaindex)
-
-    ## Extend beta vector from simple model (beta0) to a more complex (i.e. general)
-    ## model, inserting neutral values (zero) as required.
-    ## For each real parameter, a 1:1 match is assumed between
-    ## beta values until all beta values from the simpler model are
-    ## used up. THIS ASSUMPTION MAY NOT BE JUSTIFIED.
-    ## betaindex is a user-controlled alternative.
-
-{
-    ## list of zeroed vectors, one per real parameter
-    beta1 <- lapply(parindx1, function (x) {x[]<-0; x})
-
-    if (!is.null(betaindex)) {
-        beta1 <- unlist(beta1)
-        if (sum(betaindex>0) != length(beta0))
-            stop ("invalid 'betaindex'")
-        beta1[betaindex] <- beta0
-        beta1
-    }
-    else {
-        ## indx is within-parameter rather than absolute index
-        ## for each _original_ real parameter
-        indx <- lapply(parindx0, function(x) x-x[1]+1)
-        ## for (j in 1:length(beta1))
-        ## improved replace by name2015-11-17
-        for (j in names(beta1)) {
-            if (j %in% names(beta0))
-                beta1[[j]][indx[[j]]] <- beta0[parindx0[[j]]]
-        }
-        unlist(beta1)
-    }
-}
-############################################################################################
+################################################################################
 
 detectorcode <- function (object, MLonly = TRUE, noccasions = NULL) {
   ## numeric detector code from a traps object
@@ -864,113 +631,115 @@ detectorcode <- function (object, MLonly = TRUE, noccasions = NULL) {
     detcode <- rep(detcode, noccasions)
   detcode
 }
-############################################################################################
-
-expandbinomN <- function (binomN, detectorcodes) {
-    # assumes detectorcodes is a vector of length = noccasions
-    binomN <- ifelse (detectorcodes %in% c(2,6,7), binomN, 1)
-    if (any(is.na(binomN))) stop ("NA value in binomN")
-    binomN
-}
-############################################################################################
-
-
-newstr <-function (strings) {
-    ## compress a character vector
-    ## use run length encoding function
-    rl <- rle(strings)
-    st <- rl$values
-    le <- paste0(' (',as.character(rl$lengths), ')')
-    le[le==' (1)'] <- ''
-    paste(paste0(st, le), collapse = ', ')
-}
-# newstr(c("single", rep("proximity",4)))
-############################################################################################
-
-## Based on Charles C. Berry on R-help 2008-01-13
-## drop = FALSE 2018-11-22
-
-## used in secr.design.MS
-
-n.unique.rows <- function(x) {
-  order.x <- do.call(order, as.data.frame(x))
-  equal.to.previous <- rowSums(x[tail(order.x,-1),,drop = FALSE] != 
-                                 x[head(order.x,-1),,drop = FALSE])==0 
-  1 + sum(!equal.to.previous)
-}
-
-individualcovariates <- function (PIA) {
-  pia <- matrix(aperm(PIA, c(2:5,1)), nrow = dim(PIA)[2])
-  n.unique.rows(pia) > 1
-}
-##############################################################################
+################################################################################
 
 # modified from secr
 getD <- function (parm = 'D', designD, beta, mask, parindx, link, fixed, nsessions) {
-  if (is.function(designD)) {
-    stop ("designD cannot be a function in ipsecr")
-  }
-  else {
-    if ((is.null(designD) || nrow(designD)==0) && (is.null(fixed[[parm]]))) return(NULL)
-  }
-  if (nsessions>1)
-    nmask <- max(sapply(mask, nrow))
-  else
-    nmask <- nrow(mask)
-  D <- matrix(nrow = nmask, ncol = nsessions)
-  
-  if (!is.null(fixed[[parm]])) {
-    D[] <- fixed[[parm]]
-  }
-  else {
-    beta <- beta[parindx[[parm]]]
-    D[] <- designD %*% beta
-    D[] <- untransform (D, link[[parm]])
-    # silently truncate D at zero
-    D[D<0] <- 0
-  }
-  dimnames(D)[[2]] <- paste0(parm, 1:nsessions)
-  D
+    if (is.function(designD)) {
+        stop ("designD cannot be a function in ipsecr")
+    }
+    else {
+        if ((is.null(designD) || nrow(designD)==0) && (is.null(fixed[[parm]]))) return(NULL)
+    }
+    if (nsessions>1)
+        nmask <- max(sapply(mask, nrow))
+    else
+        nmask <- nrow(mask)
+    D <- matrix(nrow = nmask, ncol = nsessions)
+    
+    if (!is.null(fixed[[parm]])) {
+        D[] <- fixed[[parm]]
+    }
+    else {
+        beta <- beta[parindx[[parm]]]
+        D[] <- designD %*% beta
+        D[] <- untransform (D, link[[parm]])
+        # silently truncate D at zero
+        D[D<0] <- 0
+    }
+    dimnames(D)[[2]] <- paste0(parm, 1:nsessions)
+    D
 }
 ##############################################################################
 
-# copied from secr
-mapbeta <- function (parindx0, parindx1, beta0, betaindex)
-  
-  ## Extend beta vector from simple model (beta0) to a more complex (i.e. general)
-  ## model, inserting neutral values (zero) as required.
-  ## For each real parameter, a 1:1 match is assumed between
-  ## beta values until all beta values from the simpler model are
-  ## used up. THIS ASSUMPTION MAY NOT BE JUSTIFIED.
-  ## betaindex is a user-controlled alternative.
-  
-{
-  ## list of zeroed vectors, one per real parameter
-  beta1 <- lapply(parindx1, function (x) {x[]<-0; x})
-  
-  if (!is.null(betaindex)) {
-    beta1 <- unlist(beta1)
-    if (sum(betaindex>0) != length(beta0))
-      stop ("invalid 'betaindex'")
-    beta1[betaindex] <- beta0
-    beta1
-  }
-  else {
-    ## indx is within-parameter rather than absolute index
-    ## for each _original_ real parameter
-    indx <- lapply(parindx0, function(x) x-x[1]+1)
-    ## for (j in 1:length(beta1))
-    ## improved replace by name2015-11-17
-    for (j in names(beta1)) {
-      if (j %in% names(beta0))
-        beta1[[j]][indx[[j]]] <- beta0[parindx0[[j]]]
+getDetDesignData <- function(popn, model, session, sessionlevels) {
+    designdata <- popn
+    if (!is.null(covariates(popn)))
+        designdata <- cbind(designdata, covariates(popn))
+    vars <- unlist(sapply(model, all.vars))
+    if ('random' %in% vars) {
+        designdata$random <- rnorm(nrow(popn))   # hold space
     }
-    unlist(beta1)
-  }
+    if ('session' %in% vars && !is.null(session)) {
+        designdata$session <- rep(factor(session, levels = sessionlevels), nrow(pop))
+    }
+    found <- vars %in% names(designdata)
+    if (sum(!found)>0) stop('detection predictors not found: ', vars[!found])
+    designdata
 }
-############################################################################################
+################################################################################
 
-# RPSV(..., CC=TRUE)
+getDetParMat <- function (popn, model, detectfn, beta, parindx, link, fixed, 
+    details, sessionlevels, session = NULL) {
+    # if ((is.null(design) || nrow(design)==0) && (is.null(fixed))) return(NULL)
+    if (ms(popn)) {
+        # for each session
+        out <- mapply(getDetParMat, popn = popn, session = sessionlevels,
+            MoreArgs = list(model, detectfn, beta, parindx, link, fixed, 
+                details, sessionlevels), SIMPLIFY = FALSE)
+        out
+    }
+    else {
+        detectparnames <- parnames(detectfn)
+        npop <- nrow(popn)
+        detparmat <- matrix(nrow = npop, ncol = length(detectparnames), 
+            dimnames =list(NULL, detectparnames))
+        designdata <- getDetDesignData(popn, model, session, sessionlevels)
+            
+        for (parm in detectparnames) {
+            if (!is.null(fixed[[parm]])) {
+                detparmat[,parm] <- fixed[[parm]]
+            }
+            else {
+                if ('random' %in% all.vars(model[[parm]])) {
+                    designdata$random <- rnorm(npop)
+                }
+                
+                design <- model.matrix(model[[parm]], data = designdata, 
+                    contrasts.arg = details$contrasts)                   
+                detparmat[,parm] <- design %*% beta[parindx[[parm]]]
+                detparmat[,parm] <- untransform (detparmat[,parm], link[[parm]])
+            }
+        }
+        # silently truncate at zero
+        detparmat[detparmat<0] <- 0
+        detparmat
+    }
+}
+##############################################################################
+
+# return names of coefficients for each parameter
+# requires prior simulation of popn, including any individual covariates
+detBetaNames <- function(popn, model, detectfn, sessionlevels, fixed = NULL, 
+    details = NULL) {
+    if (ms(popn)) popn <- popn[[1]]
+    detectparnames <- parnames(detectfn)
+    detparmat <- matrix(nrow = nrow(popn), ncol = length(detectparnames), 
+        dimnames =list(NULL, detectparnames))
+    designdata <- getDetDesignData(popn, model, NULL, sessionlevels)
+    nb <- function (parm) {
+        out <- if (!is.null(fixed[[parm]])) character(0)
+        else colnames(model.matrix(model[[parm]], data = designdata, 
+            contrasts.arg = details$contrasts)) 
+        out[out=='(Intercept)'] <- parm
+        out
+    }
+    out <- lapply(detectparnames, nb)
+    names(out) <- detectparnames
+    out
+    
+}
+################################################################################
 
 rpsv <- function (capthist)
 {
@@ -992,3 +761,4 @@ rpsv <- function (capthist)
     temp
   }
 }
+################################################################################
