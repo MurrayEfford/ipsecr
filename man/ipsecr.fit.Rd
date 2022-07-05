@@ -123,8 +123,6 @@ An object of class 'ipsecr', a list comprising:
   \item{model}{input} 
   \item{details}{input}
   \item{designD}{list of design data for density}
-  \item{design}{list of design data for detection parameters}
-  \item{design0}{list of design data for detection parameters (naive animal)}
   \item{parindx}{mapping of coefficients (beta parameters) to real parameters}
   \item{vars}{names of covariates in model}
   \item{betanames}{names of coefficients}
