@@ -76,6 +76,6 @@ vcov.ipsecr <- function (object, realnames = NULL, newdata = NULL, byrow = FALSE
             names (vcvlist) <- realnames
             return (vcvlist)
         }
-        ## DIFFERENT VARIANCE TO secr.lpredictor for sigma because there use se.Xuntransfom
+        ## DIFFERENT VARIANCE TO ipsecr.lpredictor for sigma because there use se.Xuntransfom
     }
 }
