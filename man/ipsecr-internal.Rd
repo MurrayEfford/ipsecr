@@ -23,7 +23,7 @@ proxyfn0(capthist, N.estimator =  c("n", "null","zippin","jackknife"), ...)
 proxyfn1(capthist, N.estimator =  c("n", "null","zippin","jackknife"), ...)
 
 simpop(mask, D, N, details = list())
-simCH(traps, popn, detectfn, detectpar, noccasions, NT, details = list())
+simCH(traps, popn, detectfn, detparmat, noccasions, NT = NULL, details = list())
       
 }
 
@@ -42,7 +42,7 @@ simCH(traps, popn, detectfn, detectpar, noccasions, NT, details = list())
  \item{traps}{detector locations as \pkg{secr} traps object}
   \item{popn}{animal locations as \pkg{secr} popn object}
   \item{detectfn}{integer code for detection function (see \link{detectfn})}
-  \item{detectpar}{named list of parameter values }
+  \item{detparmat}{numeric matrix of detection parameter values}
   \item{noccasions}{integer number of sampling occasions}
   \item{NT}{numeric hazard of non-target interference at each detector}
   \item{details}{list with optional additional named arguments}
@@ -56,7 +56,7 @@ simCH(traps, popn, detectfn, detectpar, noccasions, NT, details = list())
   \code{simpop} is used by \code{\link{ipsecr.fit}} for popmethod 'internal'. It is faster and simpler than the \pkg{secr} function \code{\link{sim.popn}}. The details component 'distribution' is a character value that may be `poisson' (default) or `even.
 
 
-  \code{simCH} is used by \code{\link{ipsecr.fit}} for CHmethod 'internal'. It is faster and simpler than the \pkg{secr} function \code{\link{sim.capthist}}, and optionally simulates non-target interference.
+  \code{simCH} is used by \code{\link{ipsecr.fit}} for CHmethod 'internal'. It is faster and simpler than the \pkg{secr} function \code{\link{sim.capthist}}, and optionally simulates non-target interference. The argument \code{detparmat} is an individual x parameter matrix, with parameters in the order usual for \code{detectfn}.
  
  \code{D} and \code{NT} are matrices with one column per session. 
  
