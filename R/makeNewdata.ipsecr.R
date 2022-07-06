@@ -65,6 +65,10 @@ makeNewData.ipsecr <- function (object, all.levels = FALSE, ...) {
                 else
                     basevars$tcov <- 0        # ideally use mean or standardize?
             }
+            
+            if (v=='random') {
+                basevars$random <- 0
+            }
         }
         ## all autovars should now have been dealt with
         basevars <- findvars (basevars, timecov)
