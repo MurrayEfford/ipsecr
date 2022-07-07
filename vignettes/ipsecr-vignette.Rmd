@@ -1,5 +1,5 @@
 ---
-title: '**ipsecr** 1.1 - spatially explicit capture--recapture by inverse prediction'
+title: '**ipsecr** 1.2 - spatially explicit capture--recapture by inverse prediction'
 author: "Murray Efford"
 date: "`r Sys.Date()`"
 output: 
@@ -16,11 +16,11 @@ header-includes:
 
 \vspace{12pt}
 
-This document provides an overview of **ipsecr** 1.1, an R package for spatially explicit capture--recapture analysis (SECR) that uses simulation and inverse prediction instead of maximum likelihood, as in **secr** (Efford 2022), or MCMC, as in various Bayesian approaches. The parent package **secr** included the function `ip.secr`; **ipsecr** extends the capability of that function in its central function `ipsecr.fit` whose arguments are closely modelled on `secr.fit` from **secr**. 
+This document provides an overview of **ipsecr** 1.2, an R package for spatially explicit capture--recapture analysis (SECR) that uses simulation and inverse prediction instead of maximum likelihood, as in **secr** (Efford 2022), or MCMC, as in various Bayesian approaches. The parent package **secr** included the function `ip.secr`; **ipsecr** extends the capability of that function in its central function `ipsecr.fit` whose arguments are closely modelled on `secr.fit` from **secr**. 
 
 Simulation and inverse prediction allows some models to be fitted that strictly cannot be fitted by other methods. Single-catch traps are a common example.
 
-There are limitations: **ipsecr** 1.1 does not yet allow variation in detection parameters (e.g., $\lambda_0$, $\sigma$) and NT may vary with session and detector (trap) but not occasion.
+There are limitations: **ipsecr** 1.2 does not allow variation in detection parameters (e.g., $\lambda_0$, $\sigma$) with respect to occasion, detector or previous detection (e.g., ~t, ~b or ~bk as allowed in **secr**) and NT may vary with session and detector (trap) but not occasion.
 
 # Inverse prediction for capture--recapture estimation
 
@@ -109,7 +109,7 @@ collate(ip.single, ip.single.0)[1,,,]
 
 # Multi-session models
 
-Data may take the form of independent samples. Models are constructed as in **secr** ([secr-multisession.pdf]). In **ipsecr  1.1** detection parameters are common to all sessions, but density D and non-target NT parameters may depend on session or session covariates as in **secr**.
+Data may take the form of independent samples. Models are constructed as in **secr** ([secr-multisession.pdf]). In **ipsecr  1.2**, density D, detection parameters, and non-target NT parameters may all depend on session or session covariates as in **secr**.
 
 # Fitting a density gradient
 
@@ -322,7 +322,7 @@ Functions from **secr** that work on fitted 'ipsecr' objects as-is
 
 # Troubleshooting and limitations
 
-**ipsecr 1.1** is not intended for models with many sessions or many covariates. 
+**ipsecr 1.2** is not intended for models with many sessions or many covariates. 
 
 This version does not allow for any variation in detection parameters (g0, lambda0, sigma).
 
@@ -336,9 +336,12 @@ there are warning messages regarding failed simulations.
 
 ## "simulations for box 1 did not reach target for proxy SE 0.002 "
 
-This message may not be terminal. The target precision is arbitrary. 
+This message may not be fatal. The target precision is arbitrary. 
 Review the 'Variance bootstrap' table of verbose output.
 
+## "solution not found after 5 attempts"
+
+It seems ipsecr is not converging on the right part of the parameter space. Try specifying a wider boxsize1 for the first box, or set starting values. 
 
 # References
 
