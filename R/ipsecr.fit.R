@@ -369,11 +369,14 @@ ipsecr.fit <- function (
                 warning ("ipsecr.fit: no animals in simulated population", call. = FALSE)
                 return(rep(NA, NP))
             }
-
             #-----------------------------------------------------
             # session-specific detection parameter matrix/matrices
-            detparmat <- getDetParMat (popn, model, detectfn, beta, parindx, link, fixed, details, sessionlevels)
+            meanSD <- attr(mask,'meanSD')
+            popn2 <- popn
+            popn2[,] <- scale(popn, meanSD[1,], meanSD[2,])
+            detparmat <- getDetParMat (popn2, model, detectfn, beta, parindx, link, fixed, details, sessionlevels)
             #-----------------------------------------------------
+
             # sample from population
             if (is.function(details$CHmethod)) {   # user
                 ch <- details$CHmethod(trps, popn, detectfn, detparmat, noccasions, NT, details)
@@ -460,7 +463,6 @@ ipsecr.fit <- function (
     details$trace <- verbose  # as used by makeStart
     start <- makeStart(start, parindx[names(parindx) != 'NT'], 
         capthist, mask, detectfn, link, details, fixed)
-browser()    
     if (modelnontarget) {
         start <- c(start, y[parindx$NT])
     }
