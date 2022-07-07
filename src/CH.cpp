@@ -130,7 +130,6 @@ Rcpp::List CHcpp (
     int N1 = N + (nontargetcode==1);   // increment for exclusive nontargets
     int K = Tsk.nrow();
     int S = Tsk.ncol();
-    int ndetpar = gsb.ncol();
     int i,k,j,n,s;
     int isk;
     double d2;
