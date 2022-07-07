@@ -762,3 +762,4 @@ rpsv <- function (capthist)
   }
 }
 ################################################################################
+replacedefaults <- function (default, user) replace(default, names(user), user)
