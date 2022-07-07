@@ -1,4 +1,4 @@
-# 2022-03-31, 2022-04-19
+# 2022-03-31, 2022-04-19, 2022-07-06
 
 import (secr)
 import (parallel)
@@ -42,6 +42,7 @@ export (proxyfn1)
 export (proxy.ms)
 export (simpop)
 export (simCH)
+export (plotProxy)
 
 S3method(print, ipsecr)
 S3method(summary, ipsecr)
