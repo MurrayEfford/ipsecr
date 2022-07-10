@@ -743,23 +743,41 @@ detBetaNames <- function(popn, model, detectfn, sessionlevels, fixed = NULL,
 
 rpsv <- function (capthist)
 {
-  if (inherits (capthist, 'list')) {
-    lapply(capthist, rpsv)   ## recursive
-  }
-  else {
-    if (nrow(capthist) < 1) return(NA)
-    trm <- as.matrix(traps(capthist))
-    temp <- apply(abs(capthist), 1, rpsvcpp, trm)
-    temp <- matrix(unlist(temp), nrow = 3)
-    temp <- apply(temp,1,sum, na.rm = TRUE)
-    if (any(is.na(temp) | temp<0)) {
-      temp <- NA  
+    if (inherits (capthist, 'list')) {
+        lapply(capthist, rpsv)   ## recursive
     }
     else {
-      temp <- sqrt((temp[2]+temp[3]) / (2 * temp[1]))
+        if (nrow(capthist) < 1) return(NA)
+        trm <- as.matrix(traps(capthist))
+        temp <- apply(abs(capthist), 1, rpsvcpp, trm)
+        temp <- matrix(unlist(temp), nrow = 3)
+        temp <- apply(temp,1,sum, na.rm = TRUE)
+        if (any(is.na(temp) | temp<0)) {
+            temp <- NA  
+        }
+        else {
+            temp <- sqrt((temp[2]+temp[3]) / (2 * temp[1]))
+        }
+        temp
     }
-    temp
-  }
 }
+rpsvi <- function (capthist)
+{
+    if (inherits (capthist, 'list')) {
+        lapply(capthist, rpsvi)   ## recursive
+    }
+    else {
+        if (nrow(capthist) < 1) return(NA)
+        trm <- as.matrix(traps(capthist))
+        temp <- apply(abs(capthist), 1, rpsvcpp, trm)
+        temp <- matrix(unlist(temp), nrow = 3)
+        
+        onedxy <- function (dxy) {
+            if (dxy[1]==0) NA else sqrt((dxy[2]+dxy[3]) / (2 * dxy[1]))
+        }
+        apply(temp,2,onedxy)
+    }
+}
+
 ################################################################################
 replacedefaults <- function (default, user) replace(default, names(user), user)
