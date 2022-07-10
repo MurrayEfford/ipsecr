@@ -341,7 +341,7 @@ ipsecr.fit <- function (
         N <- switch(tolower(Ndist), poisson = rpois(1, N), fixed = round(N), NA)
         
         # cannot simulate zero animals, so return NA for predicted
-        if (is.na(N) || any(N<=0) || any(N>details$Nmax)) return(rep(NA, NP))
+        if (any(is.na(N)) || any(N<=0) || any(N>details$Nmax)) return(rep(NA, NP))
         
         if (modelnontarget) {
             NT <- getD('NT', designNT, beta, trps, parindx, link, fixed, nsessions)
@@ -371,9 +371,19 @@ ipsecr.fit <- function (
             }
             #-----------------------------------------------------
             # session-specific detection parameter matrix/matrices
-            meanSD <- attr(mask,'meanSD')
-            popn2 <- popn
-            popn2[,] <- scale(popn, meanSD[1,], meanSD[2,])
+            scalepopn <- function (popn, mask) {
+                if (ms(popn)) {
+                    out <- mapply(scalepopn, popn, mask, SIMPLIFY = FALSE)
+                    class(out) <- class(popn)
+                    out
+                }
+                else {
+                    meanSD <- attr(mask,'meanSD')
+                    popn[,] <- scale(popn, meanSD[1,], meanSD[2,])
+                    popn
+                }
+            }
+            popn2 <- scalepopn(popn, mask)
             detparmat <- getDetParMat (popn2, model, detectfn, beta, parindx, link, fixed, details, sessionlevels)
             #-----------------------------------------------------
 
@@ -410,7 +420,7 @@ ipsecr.fit <- function (
                 cat ('saving ch to ch.RDS\n')
                 saveRDS(ch, file='ch.RDS')
                 cat('N ', N, '\n')
-                cat('detectpar', unlist(detectpar), '\n')
+                cat('detparmat', unlist(detparmat), '\n')
                 cat('detectfn', detectfn, '\n')
                 print(summary(ch))
                 cat('\nproxyfn\n')
