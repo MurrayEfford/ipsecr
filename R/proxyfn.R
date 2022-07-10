@@ -108,25 +108,41 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL,
     if (is.null(pmodel)) {
         pmodel <- model$lambda0
     }
+    smodel <- model$sigma
+    if (pmodel != ~1 ) {
+        # prepare animaldesigndata
+        getxy <- function(ch,nocc) as.data.frame(centroids(ch))[rep(1:nrow(ch), nocc),]
+        animaldesigndata <- do.call(rbind, mapply(getxy, capthist, nocc, SIMPLIFY = FALSE))
+        names(animaldesigndata) <- c('x','y')
+        animaldesigndata$session <- rep(1:length(capthist), n*nocc)
+        animaldesigndata$nocc <- rep(nocc, each = n*nocc)
+        covar1 <- covariates(capthist[[1]])
+        if (!is.null(covar1) && nrow(covar1)>0) {
+            getcov <- function(ch,nocc) covariates(ch)[rep(1:nrow(ch), nocc),]
+            animalcov <- do.call(rbind, mapply(getcov, capthist, nocc, SIMPLIFY = FALSE))
+            animaldesigndata <- cbind(animaldesigndata, animalcov)
+        }
+    }    
+    if (smodel != ~1) {
+        # prepare animaldesigndata.s
+        getxy <- function(ch) as.data.frame(centroids(ch))
+        animaldesigndata.s <- do.call(rbind, lapply(capthist, getxy))
+        names(animaldesigndata.s) <- c('x','y')
+        animaldesigndata.s$session <- rep(1:length(capthist), n)
+        covar1 <- covariates(capthist[[1]])
+        if (!is.null(covar1) && nrow(covar1)>0) {
+            animalcov <- do.call(rbind, lapply(capthist, covariates))
+            animaldesigndata.s <- cbind(animaldesigndata.s, animalcov)
+        }
+        animaldesigndata.s$freq <- unlist(sapply(capthist,function(x) apply(abs(x)>0,1,sum)-1))
+    }    
     
     if (binary) {
-        # p    <- sapply(capthist, ni) / n / nocc
         if (pmodel == ~1) {
             p    <- lapply(capthist, function(x) apply(x,1,nim))
             pterms <- c(cloglogp = log(-log(1-mean(unlist(p)))))
         }
         else {
-            getxy <- function(ch,nocc) as.data.frame(centroids(ch))[rep(1:nrow(ch), nocc),]
-            animaldesigndata <- do.call(rbind, mapply(getxy, capthist, nocc, SIMPLIFY = FALSE))
-            names(animaldesigndata) <- c('x','y')
-            animaldesigndata$session <- rep(1:length(capthist), each = n*nocc)
-            animaldesigndata$nocc <- rep(nocc, each = n*nocc)
-            covar1 <- covariates(capthist[[1]])
-            if (!is.null(covar1) && nrow(covar1>0)) {
-                getcov <- function(ch,nocc) covariates(ch)[rep(1:nrow(ch), nocc),]
-                animalcov <- do.call(rbind, mapply(getcov, capthist, nocc, SIMPLIFY = FALSE))
-                animaldesigndata <- cbind(animaldesigndata, animalcov)
-            }
             # binary animal x occasion data
             ni <- lapply(capthist, function(x) apply(x>0,1:2,sum))
 
@@ -140,13 +156,23 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL,
             }
             pterms <- coef(glmfit)    
         }
+        if (smodel == ~1) {
+            sterms <- c(logRPSV = log(mean(unlist(rpsv(capthist)))))
+        }
+        else {
+            si <- lapply(capthist, rpsvi)
+            animaldesigndata.s$si <- unlist(lapply(si, as.numeric)) 
+            smodel <- update(smodel, si ~ .)  ## si on LHS
+            glmfit <- glm(smodel, data = animaldesigndata.s, na.action = na.omit, weights = freq)
+            sterms <- coef(glmfit)
+        }
     }
     else {
+        # not yet ready for modelled lambda0
         lambda  <- sapply(capthist, ni) / n / nocc
         pterms <- c(logL = log(mean(lambda)))
+        sterms <- c(logRPSV = log(mean(unlist(rpsv(capthist)))))
     }
-    
-    rpsv <- unlist(rpsv(capthist))
     
     ## Optional density model
     ## ----------------------
@@ -204,7 +230,7 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL,
     c(
         Dterms,
         pterms,
-        logRPSV = log(mean(rpsv)),
+        sterms,
         NTterms
     )
 }
@@ -264,4 +290,6 @@ proxy.Mhbeta <- function (capthist, ...) {
 # trapdesigndata <- D.designdata(traps(capthist), model$D, 1, sessionlevels, sessioncov, meanSD)
 
 # system.time(proxy.ms(ovenCHp, model=list(D= ~y)))
-# ipsecr.fit(ovenCHp, mask=msk, model=list(D~y), proxyfn = proxy.ms, ncores=4)
+# library(ipsecr)
+# msk <- make.mask(traps(ovenCHp[[1]]), buffer=250)
+# ipsecr.fit(ovenCHp, mask=msk, model=list(D~y), proxyfn = proxy.ms, ncores=1)
