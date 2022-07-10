@@ -8,13 +8,13 @@
 
 simCH <- function (traps, popn, detectfn, detparmat, noccasions, NT = NULL, details = list()) {
     if (ms(traps)) {
-        # if detectpar vary across sessions then should be list of lists
-        if (!is.list(detectpar[[1]])) detectpar <- list(detectpar)
+        # detparmat should be list of lists
+        if (!is.list(detparmat)) detparmat <- list(detparmat)
         if (length(NT) == 0 || length(unlist(sapply(NT, length))) < length(traps)) NT <- 0
         tmp <- mapply(simCH, 
             traps = traps, 
             popn = popn, 
-            detectpar = detectpar, 
+            detparmat = detparmat,     # automatically replicated if single component
             noccasions = noccasions,
             NT = as.data.frame(NT),  # detector x session 
             MoreArgs = list(detectfn = detectfn, details = details), 
