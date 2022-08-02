@@ -748,7 +748,8 @@ ipsecr.fit <- function (
         code = code,                # success of fit
         beta = beta,
         beta.vcv = vcov,
-        designbeta = designbeta,   # last 
+        designbeta = designbeta,    # last 
+        sim.lm = sim.lm,            # added 2022-08-02
         ip.nsim = ip.nsim,
         var.nsim.OK = if(details$var.nsim>1) sum(OK) else NA,
         variance.bootstrap = bootstrap,
