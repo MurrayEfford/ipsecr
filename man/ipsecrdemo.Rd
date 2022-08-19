@@ -12,7 +12,8 @@
 
   The fitted models are objects of class \code{ipsecr} formed by 
 
-  \code{ipsecrdemo <- ipsecr.fit(captdata, ncores = 1, detectfn = 14, seed = 1237)}
+  \code{ipsecrdemo <- ipsecr.fit(captdata, ncores = 1, detectfn = 'HHN', 
+  seed = 1237, details = list(keep.sim = TRUE))}
 
 }
 
