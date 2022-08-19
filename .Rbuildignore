@@ -12,3 +12,4 @@
 ^vignettes/linearityplot.R$
 ^README.md$
 ^Rprof.out$
+^.builddata.R$
