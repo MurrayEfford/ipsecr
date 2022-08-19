@@ -5,14 +5,14 @@ import (parallel)
 
 # Base R
 
-importFrom (graphics, .filled.contour, abline, arrows, contour, hist, 
+importFrom (graphics, .filled.contour, abline, arrows, box, contour, hist, 
     lines, locator, mtext, par, persp, points, polygon, rect, 
     segments, strheight, strwidth, symbols, text, legend, axis)
 importFrom (grDevices, chull, contourLines, grey, palette, 
     terrain.colors, topo.colors, rainbow)
 importFrom (stats, AIC, approx, approxfun, as.formula, binomial, chisq.test, coef,
     cutree, deviance, df.residual, dist, dpois,  formula, glm, hclust,
-    integrate, lm, logLik, median, model.matrix, nlm, nls, optim,
+    integrate, lm, logLik, median, model.matrix, na.omit, nlm, nls, optim,
     optimise, optimize, pchisq, pgamma, plnorm, pnorm, poisson,
     predict, qchisq, qnorm, rbeta, rbinom, rexp, rgamma, rlnorm, 
     rmultinom, rnbinom, rnorm, rpois, rt, runif, rweibull, sd, 
@@ -36,6 +36,10 @@ importFrom (stringr,
 importFrom (nlme, 
     "fdHess")
 
+# importFrom (geometry, 
+#    "convhulln",
+#    "inhulln")
+
 export (ipsecr.fit)
 export (proxyfn0)
 export (proxyfn1)
@@ -43,6 +47,7 @@ export (proxy.ms)
 export (simpop)
 export (simCH)
 export (plotProxy)
+export (plot3D.IP)
 
 S3method(print, ipsecr)
 S3method(summary, ipsecr)
