@@ -2,6 +2,15 @@
 
 //==============================================================================
 
+// https://stackoverflow.com/questions/24618370/using-rmultinom-with-rcpp
+Rcpp::IntegerVector oneMultinomCall(Rcpp::NumericVector probs, int N) {
+    int k = probs.size();
+    Rcpp::IntegerVector ans(k);
+    rmultinom(N, probs.begin(), k, ans.begin());
+    return(ans);
+}
+//===============================================================================
+
 // [[Rcpp::export]]
 Rcpp::NumericMatrix popcpp (
         const Rcpp::NumericMatrix &mask,  // x-y coord
@@ -37,6 +46,8 @@ Rcpp::NumericMatrix popevencpp (
     // not to be called with N < 1
     if (N<1) Rcpp::stop ("zero population requested");
     Rcpp::NumericMatrix animals (N,2);
+    std::fill(animals.begin(), animals.end(), Rcpp::NumericVector::get_na() ) ;
+
     double dx = bounds(1,0) - bounds(0,0);
     double dy = bounds(1,1) - bounds(0,1);
     double area = dx * dy;
