@@ -17,7 +17,7 @@ plot.ipsecr <- function (x, newdata = NULL, add = FALSE,
                 out[[i]] <- gline(predicted[[i]], i)
             names(out) <- names(predicted)
             out
-        }
+        } 
         else {
             pars <- predicted[parnames(x$detectfn),'estimate']
             pars[is.na(pars)] <- unlist(x$fixed)
@@ -56,10 +56,9 @@ plot.ipsecr <- function (x, newdata = NULL, add = FALSE,
                     
                     for (rn in parnamvec) {
                         par.rn <- x$parindx[[rn]]
-                        mat <- general.model.matrix(
+                        mat <- model.matrix(
                             x$model[[rn]], 
                             data = newdata[rowi,,drop=FALSE], 
-                            gamsmth = NULL, # x$smoothsetup[[rn]],
                             contrasts = x$details$contrasts)
                         lp <- mat %*% matrix(beta[par.rn], ncol = 1)
                         real[rn] <- untransform (lp, x$link[[rn]])
@@ -85,7 +84,7 @@ plot.ipsecr <- function (x, newdata = NULL, add = FALSE,
                 if (parnamvec[1] == 'lambda0') {
                     lcl <- ifelse ((y>eps) & (y<(1-eps)), 1 - exp(-exp(log(-log(1-y)) - z*se)), NA)
                     ucl <- ifelse ((y>eps) & (y<(1-eps)), 1 - exp(-exp(log(-log(1-y)) + z*se)), NA)
-                }
+                } 
                 else {
                     lcl <- ifelse ((y>eps) & (y<(1-eps)), invlogit(logit(y) - z*se), NA)
                     ucl <- ifelse ((y>eps) & (y<(1-eps)), invlogit(logit(y) + z*se), NA)
@@ -105,7 +104,7 @@ plot.ipsecr <- function (x, newdata = NULL, add = FALSE,
     if (is.null(ylim)) {
         if (x$detectfn %in% c(9,10,11,12,13)) {      ## included 9 2010-11-01
             ylim <- c(0, 1)
-        }
+        } 
         else {
             if (x$detectfn %in% 14:19)
                 yname <- 'lambda0'
@@ -132,13 +131,6 @@ plot.ipsecr <- function (x, newdata = NULL, add = FALSE,
             xlab <- 'Distance  (m)'
         if (is.null(ylab)) {
            binomN <- ifelse(is.null(x$details$binomN),0,x$details$binomN)
-## revisit this 2011-02-06
-## suppress confusing option 2017-05-24           
-           # dlambda <- any(detector(traps(x$capthist)) %in% c('polygon','polygonX')) |
-           #     any((detector(traps(x$capthist)) %in% c('count')) & (binomN==0))
-           # if (dlambda)
-           #     ylab <- 'Detection lambda'
-           # else
            ylab <- 'Detection probability'
         }
         plot (type ='n', 0,0, xlim=range(xval), ylim=ylim,
@@ -147,129 +139,3 @@ plot.ipsecr <- function (x, newdata = NULL, add = FALSE,
     invisible(gline(temp))
 }
 ############################################################################################
-
-detectfnplot <- function (detectfn, pars, details = NULL,
-    add = FALSE, sigmatick = FALSE, rgr = FALSE, hazard = FALSE, 
-    xval = 0:200, ylim = NULL, xlab = NULL, ylab = NULL, ...)
-{
-    gline <- function (pars) {
-        ## here pars is a vector of parameter values
-        dfn <- getdfn(detectfn)
-        if (sigmatick) {
-            sigma <- pars[2]
-            y <- dfn(sigma, pars,details$cutval)
-            ###################
-            ## 2017-08-28
-            if (hazard)
-                y <- -log(1-y)
-            ###################
-            dy <- par()$usr[4]/20
-            segments (sigma, y-dy, sigma, y+dy)
-        }
-        y <- dfn(xval, pars, details$cutval)
-        ###################
-        ## 2017-08-28
-        if (hazard)
-            y <- -log(1-y)
-        ###################
-        if (rgr) {
-            y <- xval * y
-            ymax <- par()$usr[4]
-            lines (xval, y * 0.8 * ymax / max(y), lty = 2, ...)
-        }
-        else lines (xval, y, ...)
-
-        data.frame(x=xval, y=y)
-
-    }
-
-    ### mainline
-    if (is.list(pars)) {   ## 2010-10-26
-        if (is.list(pars[[1]]))
-            pars <- matrix(unlist(pars), nrow = length(pars), byrow = T)
-        else
-            pars <- unlist(pars)
-    }
-
-    if (!is.matrix(pars)) pars <- matrix(pars, nrow = 1)
-
-    ## added 2010-07-01
-    if (is.character(detectfn))
-        detectfn <- detectionfunctionnumber(detectfn)
-
-    needp <- c(2,3,2,3,2,3,3,3,3,2,3,3,5,5,2,3,2,3,3,3)[detectfn+1]
-
-    if (ncol(pars) != needp)
-        stop ("require ", needp, " parameters for ",
-             detectionfunctionname(detectfn), " detection function")
-
-    if (is.null(ylim)) {
-        if (detectfn %in% c(10,11,12,13)) {
-            ylim <- c(0, 1)
-        }
-        else {
-            ylim <- c(0, max(pars[,1]))   ## g0 or lambda0
-        }
-    }
-
-    if (!add) {
-        if (is.null(xlab))
-            xlab <- 'Distance  (m)'
-        if (is.null(ylab))
-            ylab <- 'Detection'
-        plot (type ='n', 0,0, xlim=range(xval), ylim=ylim,
-            xlab=xlab, ylab=ylab,...)
-    }
-
-    invisible( apply (pars, 1, gline) )
-
-}
-############################################################################################
-
-attenuationplot <- function (pars, add = FALSE, spherical = TRUE,
-    xval = 0:200, ylim = NULL, xlab = NULL, ylab = NULL, ...) {
-
-    mufn <- function (pars, r) {
-        beta0 <- pars[1]
-        beta1 <- pars[2]
-        ## if spherical, assume distance r measured from 1 m
-        if (spherical) {
-            mu <- beta0 - 10 * log ( r^2 ) / 2.302585 + beta1 * (r-1)
-            mu[r<1] <- beta0
-        }
-        else
-            mu <- beta0 + beta1 * r
-        mu
-    }
-
-    aline <- function (pars, r) {
-        y <- mufn (pars, xval)
-        lines (xval, y, ...)
-        data.frame(x=xval, y=y)
-    }
-
-    if (is.list(pars)) {   ## 2010-10-26
-        if (is.list(pars[[1]]))
-            pars <- matrix(unlist(pars), nrow = length(pars), byrow = T)
-        else
-            pars <- unlist(pars)
-    }
-    if (!is.matrix(pars)) pars <- matrix(pars, nrow = 1)
-
-    if (is.null(ylim)) {
-        lower <- min(apply(pars, 1, mufn, r = max(xval)))
-        ylim <- c(lower, max(pars[,1]))
-    }
-
-    if (!add) {
-        if (is.null(xlab))
-            xlab <- 'Distance  (m)'
-        if (is.null(ylab))
-            ylab <- 'Acoustic power (dB)'
-        plot (type ='n', 0,0, xlim=range(xval), ylim=ylim,
-            xlab=xlab, ylab=ylab,...)
-    }
-    invisible( apply (pars, 1, aline) )
-
-}
-
