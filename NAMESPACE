@@ -45,26 +45,26 @@ importFrom (nlme,
 #    "inhulln")
 
 export (ipsecr.fit)
+export (plot3D.IP)
+export (plotProxy)
+export (proxy.ms)
 export (proxyfn0) # defunct 1.2.0
 export (proxyfn1)
-export (proxy.ms)
-export (simpop)
-export (simCH)
-export (plotProxy)
-export (plot3D.IP)
 export (rpsv)
 export (rpsvi)
+export (simCH)
+export (simpop)
 
-S3method(print, ipsecr)
-S3method(summary, ipsecr)
-S3method(print, summary.ipsecr)
+S3method(coef, ipsecr)
+S3method(makeNewData, ipsecr)
 S3method(plot, ipsecr)
 S3method(predict, ipsecr)
+S3method(print, ipsecr)
+S3method(print, summary.ipsecr)
+S3method(summary, ipsecr)
 S3method(vcov, ipsecr)
-S3method(coef, ipsecr)
-# S3method(region.N, ipsecr)
 
-S3method(makeNewData, ipsecr)
+# S3method(region.N, ipsecr)
 
 importFrom (Rcpp, evalCpp)
 

@@ -1,11 +1,11 @@
 Changes in version 1.2.0 (2022-08-29)
 
 New features or changed behaviour of old functions
-    o   plotProxy()
     o   individual-specific detection
     o   new routine output (var.sim, sim.lm)
     o   optional output (details$keep.sim)
     o   max.nsim set to 200 and applies per vertex per box
+    o   plotProxy()
     o   plot3D.IP() for visualising design and simulations
     o   internal functions rpsv, rpsvi exported
 
