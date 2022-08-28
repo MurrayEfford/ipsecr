@@ -4,34 +4,16 @@
 ## 2022-05-08
 ## 2022-06-11 proxy.ms
 ## 2022-06-15 proxy.ms extended for count detectors
+## 2022-08-24 fixed major bug in zippin
+## 2022-08-24 defunct proxyfn0
+## 2022-08-27 proxy.ms glm log(si+1)
+
 ###############################################################################
 
 proxyfn0 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife"), ...) {
-    N.estimator <- tolower(N.estimator)
-    N.estimator <- match.arg(N.estimator)
-    ## capthist single-session only; ignoring losses
-    n <- nrow(capthist)         ## number of individuals
-    ch <- abs(capthist)>0
-    nocc <- ncol(capthist)      ## number of occasions
-    ni <- apply(ch, 2, sum)     ## individuals on each occasion
-    estimates <- {
-        if (N.estimator == "n")
-            c(n, sum(ni)/n/nocc)
-        else if (N.estimator == "null")
-            M0(c(sum(ni), n, nocc))
-        else if (N.estimator == "zippin") {
-            tempx2 <- apply(ch, 1, function(x) cumsum(abs(x))>0)
-            Mt1 <- apply(tempx2,1,sum)
-            ui <- c(ni[1], diff(Mt1))
-            Mb(ui)
-        }
-        else if (N.estimator == "jackknife") {
-            fi <- tabulate(apply(ch,1,sum), nbins = nocc)
-            Mh(fi)
-        }
-    }
-    c(N=estimates[1], oddsp = odds(estimates[2]), rpsv=rpsv(capthist))
+    .Defunct('proxyfn1', package = 'ipsecr') ## 2022-08-24
 }
+
 ##################################################
 
 proxyfn1 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife"), ...) {
@@ -39,7 +21,8 @@ proxyfn1 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife
     N.estimator <- match.arg(N.estimator)
     ## capthist single-session only; ignoring losses
     n <- nrow(capthist)         ## number of individuals
-    ch <- abs(capthist)>0
+    ch <- apply(abs(capthist), 1:2, sum) > 0
+    
     nocc <- ncol(capthist)      ## number of occasions
     ni <- apply(ch, 2, sum)     ## individuals on each occasion
     estimates <- {
@@ -51,7 +34,7 @@ proxyfn1 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife
             tempx2 <- apply(ch, 1, function(x) cumsum(abs(x))>0)
             Mt1 <- apply(tempx2,1,sum)
             ui <- c(ni[1], diff(Mt1))
-            Mb(ui)
+            Mb(ni, ui)
         }
         else if (N.estimator == "jackknife") {
             fi <- tabulate(apply(ch,1,sum), nbins = nocc)
@@ -66,8 +49,7 @@ proxyfn1 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife
 }
 ##################################################
 
-proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL, 
-    animaldesigndata = NULL, ...) {
+proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL, ...) {
     
     ## force list for simplicity
     ## -------------------------
@@ -75,7 +57,6 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL,
     if (!secr::ms(capthist)) {   
         capthist <- list(capthist)
     }
-    
     ## basics
     ## ------
     
@@ -105,7 +86,7 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL,
     defaultmodel <- list(D = ~1, g0 = ~1, lambda0 = ~1, sigma = ~1, NT = ~1)
     model <- replacedefaults(defaultmodel, model)
     pmodel <- model$g0
-    if (is.null(pmodel)) {
+    if ('lambda0' %in% names(model)) {
         pmodel <- model$lambda0
     }
     smodel <- model$sigma
@@ -114,21 +95,28 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL,
         getxy <- function(ch,nocc) as.data.frame(centroids(ch))[rep(1:nrow(ch), nocc),]
         animaldesigndata <- do.call(rbind, mapply(getxy, capthist, nocc, SIMPLIFY = FALSE))
         names(animaldesigndata) <- c('x','y')
-        animaldesigndata$session <- rep(1:length(capthist), n*nocc)
-        animaldesigndata$nocc <- rep(nocc, each = n*nocc)
+        animaldesigndata$session <- factor(rep(1:length(capthist), n*nocc))
+        animaldesigndata$nocc <- rep(nocc, n*nocc)
         covar1 <- covariates(capthist[[1]])
         if (!is.null(covar1) && nrow(covar1)>0) {
-            getcov <- function(ch,nocc) covariates(ch)[rep(1:nrow(ch), nocc),]
-            animalcov <- do.call(rbind, mapply(getcov, capthist, nocc, SIMPLIFY = FALSE))
+            getcov <- function(ch,nocc) covariates(ch)[rep(1:nrow(ch), nocc),, drop = FALSE]
+            animalcovlist <- mapply(getcov, capthist, nocc, SIMPLIFY = FALSE)
+            animalcov <- do.call(rbind, animalcovlist)
             animaldesigndata <- cbind(animaldesigndata, animalcov)
         }
     }    
     if (smodel != ~1) {
         # prepare animaldesigndata.s
-        getxy <- function(ch) as.data.frame(centroids(ch))
-        animaldesigndata.s <- do.call(rbind, lapply(capthist, getxy))
-        names(animaldesigndata.s) <- c('x','y')
-        animaldesigndata.s$session <- rep(1:length(capthist), n)
+        getxys <- function(ch) as.data.frame(centroids(ch))
+        xys <- lapply(capthist, getxys)
+        class(xys) <- c('popn','list')  # fool addCovariates
+        if ('spatialdata' %in% names(list(...))) {
+            tmp <- covariates(addCovariates(xys, ...))
+            xys <- mapply(cbind, xys, tmp, SIMPLIFY = FALSE)
+        }
+        animaldesigndata.s <- do.call(rbind, xys)
+        names(animaldesigndata.s)[1:2] <- c('x','y')   # replaces meanx, meany
+        animaldesigndata.s$session <- factor(rep(1:length(capthist), n))
         covar1 <- covariates(capthist[[1]])
         if (!is.null(covar1) && nrow(covar1)>0) {
             animalcov <- do.call(rbind, lapply(capthist, covariates))
@@ -144,7 +132,7 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL,
         }
         else {
             # binary animal x occasion data
-            ni <- lapply(capthist, function(x) apply(x>0,1:2,sum))
+            ni <- lapply(capthist, function(x) apply(abs(x),1:2,sum))
 
             animaldesigndata$ni <- unlist(lapply(ni, as.numeric)) 
             pmodel <- update(pmodel, ni ~ .)  ## ni on LHS
@@ -152,7 +140,11 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL,
                 glmfit <- glm(pmodel, data = animaldesigndata, family = binomial())
             }
             else {
-                stop("not ready for non-binom")
+                # ntraps <- sapply(capthist, function(x) dim(x)[3])
+                # animaldesigndata$ntraps <- rep(ntraps, n*nocc)
+                # glmfit <- glm(pmodel, data = animaldesigndata, family = binomial(), weights = ntraps)
+                # using Poisson approximation
+                glmfit <- glm(pmodel, data = animaldesigndata, family = poisson())
             }
             pterms <- coef(glmfit)    
         }
@@ -160,15 +152,18 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL,
             sterms <- c(logRPSV = log(mean(unlist(rpsv(capthist)))))
         }
         else {
-            si <- lapply(capthist, rpsvi)
-            animaldesigndata.s$si <- unlist(lapply(si, as.numeric)) 
+            # si <- lapply(capthist, rpsvi)
+            # animaldesigndata.s$si <- unlist(lapply(si, as.numeric)) 
+            getsi <- function (capthist) log( as.numeric(rpsvi(capthist)) + 1 )
+            animaldesigndata.s$si <- unlist(lapply(capthist, getsi))
             smodel <- update(smodel, si ~ .)  ## si on LHS
-            glmfit <- glm(smodel, data = animaldesigndata.s, na.action = na.omit, weights = freq)
+            freq <- animaldesigndata.s$freq
+            glmfit <- glm(smodel, data = animaldesigndata.s, 
+                na.action = na.omit, weights = freq)
             sterms <- coef(glmfit)
         }
     }
     else {
-        # not yet ready for modelled lambda0
         lambda  <- sapply(capthist, ni) / n / nocc
         pterms <- c(logL = log(mean(lambda)))
         sterms <- c(logRPSV = log(mean(unlist(rpsv(capthist)))))
@@ -219,6 +214,9 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL,
                     family = poisson())
             }
             NTterms <- coef(glmfitNT)    
+            names(NTterms) <- paste('NT', names(NTterms), sep = '.')
+            names(NTterms) <- sub('..(Intercept))', '', names(NTterms))
+            
         }
     }    
     else {
@@ -240,56 +238,44 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL,
 ## Dorazio & Royle
 ## based in part on S+ code of Shirley Pledger 24/4/98
 
-proxy.Mhbeta <- function (capthist, ...) {
-    loglik <- function (pr) {
-        pr <- exp(pr)   ## all on log scale
-        N <- Mt1 + pr[1]
-        rat   <- pr[2] * (1- pr[2])/ pr[3]
-        if (is.na(rat) || (rat<1) || (N>maxN))  return (1e10)
-        alpha <- pr[2] * (rat-1)
-        beta  <- (1 - pr[2]) * (rat-1)
-        i <- 1:tt
-        terms <-  lgamma(alpha+i) + lgamma(beta+tt-i)
-        LL <- lgamma (N+1) - lgamma(N-Mt1+1) - lgamma(Mt1+1) +
-            N * (lgamma(alpha+beta) - lgamma(alpha) - lgamma(beta) -
-                    lgamma(alpha + beta + tt)) +
-            (N-Mt1) * (lgamma(alpha) + lgamma(beta+tt)) +
-            sum(fi*terms)
-        -LL
-    }
-    if (ms(capthist)) stop("proxy.Mhbeta is for single session only")
-    maxN <- 1e7  # little risk in hard-wiring this
-    tt <- ncol(capthist)
-    Mt1  <- nrow(capthist)
-    fi <- tabulate(apply(apply(abs(capthist),1:2,sum)>0,1,sum), nbins=tt)
-    start <- log(c(10, 1/tt, 0.2 * 1/tt * (1 - 1/tt) ))
-    fit <- nlm (p = start, f = loglik, hessian = TRUE)
-    Nhat <- exp(fit$estimate[1]) + Mt1
-    phat <- sum(abs(capthist)) / tt / Nhat
-    pr <- exp(fit$estimate) # all log scale
-    rat <- pr[2] * (1- pr[2])/ pr[3]
-    alpha <- pr[2] * (rat-1)
-    beta  <- (1 - pr[2]) * (rat-1)
-    mean <- alpha / (alpha+beta)    
-    var <- alpha * beta / (alpha+beta)^2 / (alpha+beta+1)
-    CV <- sqrt(var)/mean
-    c(
-        logN     = log(Nhat), 
-        cloglogp = log(-log(1-phat)), 
-        logCV    = log(CV), 
-        logRPSV  = log(rpsv(capthist))
-    )
-}
+# proxy.Mhbeta <- function (capthist, ...) {
+#     loglik <- function (pr) {
+#         pr <- exp(pr)   ## all on log scale
+#         N <- Mt1 + pr[1]
+#         rat   <- pr[2] * (1- pr[2])/ pr[3]
+#         if (is.na(rat) || (rat<1) || (N>maxN))  return (1e10)
+#         alpha <- pr[2] * (rat-1)
+#         beta  <- (1 - pr[2]) * (rat-1)
+#         i <- 1:tt
+#         terms <-  lgamma(alpha+i) + lgamma(beta+tt-i)
+#         LL <- lgamma (N+1) - lgamma(N-Mt1+1) - lgamma(Mt1+1) +
+#             N * (lgamma(alpha+beta) - lgamma(alpha) - lgamma(beta) -
+#                     lgamma(alpha + beta + tt)) +
+#             (N-Mt1) * (lgamma(alpha) + lgamma(beta+tt)) +
+#             sum(fi*terms)
+#         -LL
+#     }
+#     if (ms(capthist)) stop("proxy.Mhbeta is for single session only")
+#     maxN <- 1e7  # little risk in hard-wiring this
+#     tt <- ncol(capthist)
+#     Mt1  <- nrow(capthist)
+#     fi <- tabulate(apply(apply(abs(capthist),1:2,sum)>0,1,sum), nbins=tt)
+#     start <- log(c(10, 1/tt, 0.2 * 1/tt * (1 - 1/tt) ))
+#     fit <- nlm (p = start, f = loglik, hessian = TRUE)
+#     Nhat <- exp(fit$estimate[1]) + Mt1
+#     phat <- sum(abs(capthist)) / tt / Nhat
+#     pr <- exp(fit$estimate) # all log scale
+#     rat <- pr[2] * (1- pr[2])/ pr[3]
+#     alpha <- pr[2] * (rat-1)
+#     beta  <- (1 - pr[2]) * (rat-1)
+#     mean <- alpha / (alpha+beta)    
+#     var <- alpha * beta / (alpha+beta)^2 / (alpha+beta+1)
+#     CV <- sqrt(var)/mean
+#     c(
+#         logN     = log(Nhat), 
+#         cloglogp = log(-log(1-phat)), 
+#         logCV    = log(CV), 
+#         logRPSV  = log(rpsv(capthist))
+#     )
+# }
 ##################################################
-
-# 
-# ms 
-# meanSD <- lapply(traps(capthist), getMeanSD)
-# not ms 
-# meanSD <- getMeanSD(traps(capthist))
-# trapdesigndata <- D.designdata(traps(capthist), model$D, 1, sessionlevels, sessioncov, meanSD)
-
-# system.time(proxy.ms(ovenCHp, model=list(D= ~y)))
-# library(ipsecr)
-# msk <- make.mask(traps(ovenCHp[[1]]), buffer=250)
-# ipsecr.fit(ovenCHp, mask=msk, model=list(D~y), proxyfn = proxy.ms, ncores=1)
