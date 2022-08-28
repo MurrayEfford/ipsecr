@@ -20,7 +20,7 @@ This document provides an overview of **ipsecr** 1.2, an R package for spatially
 
 Simulation and inverse prediction allows some models to be fitted that strictly cannot be fitted by other methods. Single-catch traps are a common example.
 
-There are limitations: **ipsecr** 1.2 does not allow variation in detection parameters (e.g., $\lambda_0$, $\sigma$) with respect to occasion, detector or previous detection (e.g., ~t, ~b or ~bk as allowed in **secr**) and NT may vary with session and detector (trap) but not occasion.
+There are limitations: **ipsecr** 1.2 allows variation in detection parameters (e.g., $\lambda_0$, $\sigma$) only with respect to individual and session. This excludes variation with respect to occasion, detector or previous detection (e.g., ~t, ~b or ~bk as allowed in **secr**). **ipsecr** does allow variation in $\lambda_0$ and $\sigma$ that depends on the location of each animal's activity centre, which is not allowed in **secr**.  
 
 # Inverse prediction for capture--recapture estimation
 
@@ -54,6 +54,15 @@ The algorithm includes these steps
 7. Simulate at the estimates to obtain variance-covariance matrix 
 
 \* including some centre points
+
+```{r schematic, fig.width=6, fig.height=6, message = FALSE}
+library(ipsecr)
+par(mfrow=c(2,2), mar=c(1,1,1,1), oma=c(1,1,2,1))
+oldplot <- plot3D.IP(ipsecrdemo)
+plot3D.IP(ipsecrdemo, box=2, oldplot)
+mtext(outer=TRUE, side=3, c('Parameter space','Proxy space'), adj=c(0.21,0.77))
+```
+**Fig.** Schematic process of fitting in `ipsecr.fit`.
 
 # Simple example
 
@@ -201,7 +210,8 @@ The estimate of lambda0 has risen compared to ip.single:
 predict(ip.single.nontarget)
 ```
 
-Note that 'NT' cannot be estimated if all traps are occupied.
+Note that 'NT' cannot be estimated if all traps are occupied. 'NT' may be modelled as a function of session and detector (trap), but not occasion.
+
 
 # Tuning the algorithm
 
@@ -226,7 +236,7 @@ The stopping criterion 'dev.max' is used to exit the simulation loop early when 
 | centre       | 3          | number of centre points |
 | dev.max      | 0.002      | stopping criterion | 
 | min.nsim     | 20         | minimum number of simulations per vertex |
-| max.nsim     | 2000       | maximum number of simulations (excluding for var-covar) | 
+| max.nsim     | 200        | maximum number of simulations per vertex | 
 | max.nbox     | 5          | maximum number of boxes | 
 | max.ntries   | 2          | maximum number of attempts to achieve valid simulation |
 | var.nsim     | 2000       | number of simulations for variance-covariance matrix |

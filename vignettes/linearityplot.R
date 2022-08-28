@@ -14,6 +14,7 @@ onecombo <- function (D, lambda0, sigma, nrepl = 50) {
 
 library(ipsecr)
 tr <- traps(captdata)
+
 Dval <- seq(3,7,0.5)
 lambda0val <- seq(0.1,0.3,0.025)
 sigmaval <- seq(20,40,2.5)
@@ -44,3 +45,14 @@ apply(sigproxy,1,points, x=sigmaval)
 points(sigmaval, apply(sigproxy,2,mean), pch = 16, type='b', col='red', lwd=1.5)
 
 dev.off()
+
+# or 2022-08-24
+tr <- traps(captdata)
+msk <- make.mask(tr)
+par(mfrow = c(1,3), mgp=c(2.4,0.7,0), mar=c(4,4,2,2), cex=1)
+plotProxy(parameter = "D", traps = tr, mask = msk, 
+    basepar = list(D = 5, lambda0 = 0.2, sigma = 30))
+plotProxy(parameter = "lambda0", traps = tr, mask = msk, 
+    basepar = list(D = 5, lambda0 = 0.2, sigma = 30))
+plotProxy(parameter = "sigma", traps = tr, mask = msk, 
+    basepar = list(D = 5, lambda0 = 0.2, sigma = 30))
