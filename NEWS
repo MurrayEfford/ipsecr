@@ -1,11 +1,23 @@
-Changes in version 1.2.0 (2022-07-06)
+Changes in version 1.2.0 (2022-08-28)
 
 New features or changed behaviour of old functions
     o   plotProxy()
     o   individual-specific detection
+    o   new routine output (var.sim, sim.lm)
+    o   optional output (details$keep.sim)
+    o   max.nsim set to 200 and applies per vertex per box
+    o   plot3D.IP() for visualising design and simulations
+    o   internal functions rpsv, rpsvi exported
+
+Bugs fixed
+    o   proxyfn1() spurious 'zippin' estimates
+    o   vcov.ipsecr failed with non-null realnames
 
 Other
     o   remove design, design0 from output object
+    o   proxyfn0() defunct
+    o   shortened test ipsecr.fit; other new tests
+    o   links to RcppArmadillo
 
 Changes in version 1.1.2 (2022-06-22)
 
