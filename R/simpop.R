@@ -37,10 +37,18 @@ simpop <- function (mask, D, N, details = list()) {
                 as.matrix(bounds), 
                 as.integer(N)
             )
+            pop <- pop[!is.na(pop[,1]),]
         }
         dimnames(pop)[[2]] <- c('x','y')
         pop <- as.data.frame(pop)
+        attr(pop, 'boundingbox') <- attr(mask, 'boundingbox')
         class(pop) <- c('popn','data.frame')
+        
+        # add mask covariates (could make conditional on details argument)
+        if (!is.null(covariates(mask))) {
+            pop <- addCovariates(pop, mask)   # add all
+        }
+        
         pop
     }
 }
