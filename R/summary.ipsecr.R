@@ -46,8 +46,14 @@ summary.ipsecr <- function (object, newdata = NULL, alpha = 0.05, ...) {
     
     ####################
     ## Completion code
-    codetext <- paste (c('OK', 'reached maximum number of boxes, ', 'reached maximum number of simulations, '),
-        c("",  object$details$max.nbox, object$details$max.nsim))
+    codetext <- paste (
+        c('OK', 
+            'reached maximum number of boxes, ', 
+            'reached maximum number of simulations, '),
+        c("",  
+            object$details$max.nbox, 
+            object$details$max.nsim)
+    )
     out$completioncode <- paste0("Completion code ", object$code, ": ", codetext[object$code])
     
     out$coef <- coef(object)
