@@ -1,3 +1,9 @@
+############################################################################################
+## vcov.ipsecr.R
+## S3 method cf vcov.ipsecr
+## 2022-08-24  bug fixed; newdata not fully tested
+############################################################################################
+
 vcov.ipsecr <- function (object, realnames = NULL, newdata = NULL, byrow = FALSE, ...) {
     ## return either the beta-parameter variance-covariance matrix
     ## or vcv each real parameters between points given by newdata (byrow = TRUE)
@@ -10,14 +16,13 @@ vcov.ipsecr <- function (object, realnames = NULL, newdata = NULL, byrow = FALSE
         ## average beta parameters
         return( object$beta.vcv )
     else {
+        if (is.null(newdata)) {
+            newdata <- makeNewData (object)
+        }
         ## average real parameters
         ## vcv among multiple rows
-        
         if (byrow) {
             ## need delta-method variance of reals given object$beta.vcv & newdata
-            if (is.null(newdata)) {
-                newdata <- makeNewData (object)
-            }
             nreal <- length(realnames)
             nbeta <- length(object$fit$par)
             
@@ -25,10 +30,7 @@ vcov.ipsecr <- function (object, realnames = NULL, newdata = NULL, byrow = FALSE
                 reali <- function (beta, rn) {
                     ## real from all beta pars eval at newdata[i,]
                     par.rn <- object$parindx[[rn]]
-                    mat <- general.model.matrix(
-                        object$model[[rn]], 
-                        data = newdatai,
-                        gamsmth = NULL, 
+                    mat <- model.matrix(object$model[[rn]], data = newdatai, 
                         contrasts = object$details$contrasts)
                     lp <- mat %*% matrix(beta[par.rn], ncol = 1)
                     untransform (lp, object$link[[rn]])
@@ -36,7 +38,7 @@ vcov.ipsecr <- function (object, realnames = NULL, newdata = NULL, byrow = FALSE
                 grad <- matrix(nrow = nreal, ncol = nbeta)
                 dimnames(grad) <- list(realnames, object$betanames)
                 for (rn in realnames)
-                    grad[rn,] <- fdHess (pars = object$fit$par, fun = reali, rn = rn)$gradient
+                    grad[rn,] <- fdHess (pars = object$beta, fun = reali, rn = rn)$gradient
                 vcv <- grad %*% object$beta.vcv %*% t(grad)
                 vcv
             }
@@ -52,16 +54,12 @@ vcov.ipsecr <- function (object, realnames = NULL, newdata = NULL, byrow = FALSE
                 collapse=','))
             vcvlist <- list()
             for (rn in realnames) {
-                ## temporary fix 2015-09-30
-                if (rn == 'pmix')
-                    stop("vcov does not work at present when realname == 'pmix'")
                 par.rn <- object$parindx[[rn]]
-                mat <- general.model.matrix(
+                mat <- model.matrix(
                     object$model[[rn]], 
                     data = newdata,
-                    gamsmth = NULL,
                     contrasts = object$details$contrasts)
-                lp <- mat %*% matrix(object$fit$par[par.rn], ncol = 1)
+                lp <- mat %*% matrix(object$beta[par.rn], ncol = 1)
                 real <- untransform (lp, object$link[[rn]])
                 real <- as.vector(real)
                 ## from Jeff Laake's 'compute.real' in RMark...
