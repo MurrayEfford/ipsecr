@@ -2,18 +2,18 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 CHcpp <- function(animals, traps, Tsk, gsb, NT, detectfn, detectorcode, nontargetcode, btype, Markov, binomN) {
-    .Call('_ipsecr_CHcpp', PACKAGE = 'ipsecr', animals, traps, Tsk, gsb, NT, detectfn, detectorcode, nontargetcode, btype, Markov, binomN)
+    .Call(`_ipsecr_CHcpp`, animals, traps, Tsk, gsb, NT, detectfn, detectorcode, nontargetcode, btype, Markov, binomN)
 }
 
 rpsvcpp <- function(sk, traps) {
-    .Call('_ipsecr_rpsvcpp', PACKAGE = 'ipsecr', sk, traps)
+    .Call(`_ipsecr_rpsvcpp`, sk, traps)
 }
 
 popcpp <- function(mask, prob, maskspacing, N) {
-    .Call('_ipsecr_popcpp', PACKAGE = 'ipsecr', mask, prob, maskspacing, N)
+    .Call(`_ipsecr_popcpp`, mask, prob, maskspacing, N)
 }
 
 popevencpp <- function(bounds, N) {
-    .Call('_ipsecr_popevencpp', PACKAGE = 'ipsecr', bounds, N)
+    .Call(`_ipsecr_popevencpp`, bounds, N)
 }
 
