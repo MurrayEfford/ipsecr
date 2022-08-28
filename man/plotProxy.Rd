@@ -70,10 +70,11 @@ The simulated proxy values are returned invisibly as a matrix (nrepl x nlevels).
 
 \examples{
 
+# try with small number of replicates
 trps <- traps(captdata)
 msk <- make.mask(trps, buffer = 100)
 base <- list(D = 5, lambda0 = 0.2, sigma = 25)
 out <- plotProxy (parameter = 'D', traps = trps, mask = msk,
-     basepar = base, boxplotargs = list(col='orange'), nrepl = 50)
+     basepar = base, boxplotargs = list(col='orange'), nrepl = 20)
 
 }
