@@ -1,4 +1,4 @@
-# 2022-03-31, 2022-04-19, 2022-07-06
+# 2022-03-31, 2022-04-19, 2022-07-06, 2022-08-25
 
 import (secr)
 import (parallel)
@@ -8,17 +8,21 @@ import (parallel)
 importFrom (graphics, .filled.contour, abline, arrows, box, contour, hist, 
     lines, locator, mtext, par, persp, points, polygon, rect, 
     segments, strheight, strwidth, symbols, text, legend, axis)
+
 importFrom (grDevices, chull, contourLines, grey, palette, 
     terrain.colors, topo.colors, rainbow)
+
 importFrom (stats, AIC, approx, approxfun, as.formula, binomial, chisq.test, coef,
     cutree, deviance, df.residual, dist, dpois,  formula, glm, hclust,
     integrate, lm, logLik, median, model.matrix, na.omit, nlm, nls, optim,
     optimise, optimize, pchisq, pgamma, plnorm, pnorm, poisson,
-    predict, qchisq, qnorm, rbeta, rbinom, rexp, rgamma, rlnorm, 
+    predict, qchisq, qnorm, quantile, rbeta, rbinom, rexp, rgamma, rlnorm, 
     rmultinom, rnbinom, rnorm, rpois, rt, runif, rweibull, sd, 
     simulate, smooth.spline, terms, uniroot, update, update.formula, 
     var, vcov)
+
 importFrom (tools, file_ext)
+
 importFrom (utils, count.fields, flush.console, getS3method, head,
     object.size, packageDescription, packageVersion, read.csv,
     read.table, tail, write.table)   
@@ -41,13 +45,15 @@ importFrom (nlme,
 #    "inhulln")
 
 export (ipsecr.fit)
-export (proxyfn0)
+export (proxyfn0) # defunct 1.2.0
 export (proxyfn1)
 export (proxy.ms)
 export (simpop)
 export (simCH)
 export (plotProxy)
 export (plot3D.IP)
+export (rpsv)
+export (rpsvi)
 
 S3method(print, ipsecr)
 S3method(summary, ipsecr)
@@ -56,12 +62,12 @@ S3method(plot, ipsecr)
 S3method(predict, ipsecr)
 S3method(vcov, ipsecr)
 S3method(coef, ipsecr)
-S3method(region.N, ipsecr)
+# S3method(region.N, ipsecr)
 
 S3method(makeNewData, ipsecr)
 
 importFrom (Rcpp, evalCpp)
 
-useDynLib (ipsecr)
+useDynLib (ipsecr, .registration = TRUE)
 ## DEBUGGING ONLY (cpp functions not documented)
 ## exportPattern("*cpp")
