@@ -13,3 +13,5 @@
 ^README.md$
 ^Rprof.out$
 ^.builddata.R$
+^.testcoverage.R$
+^.benchmark.R$
