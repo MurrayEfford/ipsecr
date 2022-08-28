@@ -308,7 +308,6 @@ Methods for 'ipsecr' of generic functions defined in **secr**
 | Function | Description |
 |----------|-----------------------------------------|
 |makeNewData| generate dataframe suitable for `predict.ipsecr` |
-|region.N| estimate number of animals in mask or polygon |
 
 Methods for 'ipsecr' of generic functions from base R and stats
 
