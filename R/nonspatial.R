@@ -1,21 +1,37 @@
-## population size likelihoods
+## closed population size likelihoods
 negloglikM0   <- function (theta, n) {
     NN   <- exp(theta)
     ndot <- n[1]  # total captures
     Mt1  <- n[2]  # total animals
-    K    <- n[3]
+    K    <- n[3]  # number of occasions
     LL   <- lgamma (NN+1) - lgamma(NN-Mt1+1) + ndot * log(ndot) +
         (K*NN - ndot) * log(K*NN - ndot) - K*NN*log(K*NN)
     if (is.finite(LL)) -LL
     else 1e10
 }
 
-negloglikMb   <- function (theta, u) {
+negloglikMbold   <- function (theta, u) {
     p <- invlogit(theta)
     K <- length(u)
     n  <- sum(u)
     -(n * log(p)+ sum(u *(0:(K-1))) * log (1-p) - n * log(1 - (1-p)^K))
 }
+
+#     tt <- length(ut)
+#     m <- sum(nt-ut)
+#     Mj <- c(0,cumsum(ut))
+#     M.  <- sum(Mj[2:tt])
+#     Mt1 <- Mj[tt+1]
+    
+#     ## OK <- sum( (tt+1-2*(1:tt)) * ut) > 0
+#     fit <- optimize(f = loglik, interval = c(Mt1, maxN),  maximum = TRUE)
+#     nhat <- fit$maximum
+#     phat <- Mt1 / (tt*nhat - M.)
+#     senhat <- sqrt((nhat * (1-phat)^tt * (1 - (1-phat)^tt)) /
+#             ((1 - (1-phat)^tt)^2 - tt^2*phat^2*(1-phat)^(tt-1)))
+#     c(Mt1 = Mt1, Nhat = nhat, seNhat = senhat, npar = 3, LL = fit$objective)
+# }
+
 ##################################################
 
 jack.est <- function (inp, deads = 0, full = F)
@@ -109,12 +125,12 @@ jack.est <- function (inp, deads = 0, full = F)
             beta	<- 1 - alpha
             z	<- aki[1,  ] * alpha + beta
             N <- z %*% fi  # varN <- (z * z) %*% fi - N
-        }
+        } 
         else {
             N	<- nj[1]
             varN	<- varnj[1]
         }
-    }
+    } 
     else {
         alpha	<- (test[mt - 1] - 3.84)/(test[mt - 1] - test[mt])
         beta	<- 1 - alpha
@@ -148,29 +164,66 @@ jack.est <- function (inp, deads = 0, full = F)
 }
 ##################################################
 
-M0 <- function (ni)
+M0 <- function (ni) {
     ## data vector ni is c(total captures, total animals, n occasions)
-{ Mt1 <- ni[2]
-if (Mt1==0) c(0,NA,NA)
-else {
-    theta <- optimize (f = negloglikM0, lower = log(Mt1), upper = log(1000*Mt1),
-        n = ni)$minimum
-    c(exp(theta), ni[1]/exp(theta)/ni[3])
-}
+    Mt1 <- ni[2]
+    if (Mt1==0) {
+        c(0,NA,NA)
+    } 
+    else {
+        theta <- optimize (f = negloglikM0, lower = log(Mt1), upper = log(1000*Mt1),
+            n = ni)$minimum
+        c(exp(theta), ni[1]/exp(theta)/ni[3])
+    }
 }
 ##################################################
 
-Mb <- function (ui)
+Mbold <- function (ui) {
     ## data vector ui is number of new animals on each occasion
-{ n <- sum(ui)
-if (n==0) c(0,NA)
-else {
-    theta <- optimize (f = negloglikMb, lower = logit(0.0001), upper = logit(0.9999),
-        u = ui)$minimum
-    p <- invlogit(theta)
-    p <- 1 - (1-p)^length(ui)
-    c(n/p, p)  ## Nhat, p
+    n <- sum(ui)
+    if (n==0) {
+        c(0,NA)
+    } 
+    else {
+        theta <- optimize (f = negloglikMb, lower = logit(0.0001), upper = logit(0.9999),
+            u = ui)$minimum
+        p <- invlogit(theta)
+        p <- 1 - (1-p)^length(ui)
+        c(n/p, p)  ## Nhat, p
+    }
 }
+##################################################
+
+
+negloglikMb   <- function (theta, tt, m, M., Mt1) {
+    N <- exp(theta)
+    cterm <- ifelse (m>0, m*log(m/M.) + (M.-m) * log(1-m/M.), 0)
+    lgamma(N+1) - lgamma(N-Mt1+1) - lgamma(Mt1+1) +
+        Mt1*log(Mt1) +
+        (tt*N - M. - Mt1) * log(tt*N - M. - Mt1) -
+        (tt*N - M.) * log(tt*N - M.) +
+        cterm
+}
+
+Mb <- function (ni, ui) {
+    ## data vector ni is number of new animals on each occasion
+    ## data vector ui is number of new animals on each occasion
+    n <- sum(ui)
+    if (n==0) {
+        c(0,NA)
+    } 
+    else {
+        tt <- length(ui)
+        m <- sum(ni-ui)
+        Mj <- c(0,cumsum(ui))
+        M.  <- sum(Mj[2:tt])
+        Mt1 <- Mj[tt+1]
+        theta <- optimize (f = negloglikMb, lower = log(Mt1), upper = log(1000*Mt1),
+            tt = tt, m = m, M. = M., Mt1 = Mt1, maximum = TRUE)$maximum
+        Nhat <- exp(theta)
+        phat <- Mt1 / (tt * Nhat - M.)
+        c(Nhat, 1 - (1-phat)^tt)
+    }
 }
 ##################################################
 
