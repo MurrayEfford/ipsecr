@@ -42,7 +42,9 @@ predict.ipsecr <- function (object, newdata = NULL, type = c("response", "link")
     predict <- sapply (realnames, getfield, simplify = FALSE)
   
     z <- abs(qnorm(1-alpha/2))   ## beware confusion with hazard z!
-    if (se.fit)  out <- list(nrow(newdata))
+    if (se.fit)  {
+        out <- list(nrow(newdata))
+    } 
     else {
         out <- newdata
         ## add columns for real parameter estimates
@@ -79,7 +81,7 @@ predict.ipsecr <- function (object, newdata = NULL, type = c("response", "link")
                     #     temp['D', -1] <- temp['D', -1] / n.clust
                     # }
                 }
-            }
+            } 
             else {
                 temp <- data.frame (
                     row.names = realnames,
@@ -93,7 +95,9 @@ predict.ipsecr <- function (object, newdata = NULL, type = c("response", "link")
 
             det <- detector(traps(object$capthist))
 
-            if (nrow(newdata)==1) out <- temp
+            if (nrow(newdata)==1) {
+                out <- temp
+            } 
             else {
                 out[[new]] <- temp
                 names(out)[new] <- paste (
@@ -101,11 +105,11 @@ predict.ipsecr <- function (object, newdata = NULL, type = c("response", "link")
                         sep=' ',collapse=', '),
                     sep=',')
             }
-        }
+        } 
         else { # no SE; terse format
             if (type == "link") {
                 out[new, (ncol(newdata)+1) : ncol(out)] <- lpred
-            }
+            } 
             else {
                 if ('D' %in% names(Xlpred)) {
                     Xlpred['D'] <- ifelse (Xlpred['D']<0, 0, Xlpred['D'])
