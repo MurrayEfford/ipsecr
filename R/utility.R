@@ -8,12 +8,11 @@
 # Global variables in namespace
 #
 ## define a local environment for temporary variables e.g. iter
-## e.g. Roger Peng https://stat.ethz.ch/pipermail/r-devel/2009-March/052883.html
 
 .localstuff <- new.env()
 
-## .localstuff$packageType <- ' pre-release'
-.localstuff$packageType <- ''
+.localstuff$packageType <- ' pre-release'
+##.localstuff$packageType <- ''
 
 .localstuff$countdetectors <- c('count','polygon','transect','unmarked','telemetry')
 .localstuff$detectionfunctions <-
@@ -100,8 +99,8 @@ valid.pnames <- function (details, CL, detectfn, alltelem, sighting, nmix) {
         c('b0','b1'),              # 9
         c('beta0','beta1','sdS'),  # 10
         c('beta0','beta1','sdS'),  # 11
-        c('beta0','beta1','sdS'),  # 12  cf parnames() in utility.R: muN, sdN?
-        c('beta0','beta1','sdS'),  # 13  cf parnames() in utility.R: muN, sdN?
+        c('beta0','beta1','sdS'),  # 12  
+        c('beta0','beta1','sdS'),  # 13 
         c('lambda0','sigma'),      # 14 hazard halfnormal
         c('lambda0','sigma','z'),  # 15 hazard hazard rate
         c('lambda0','sigma'),      # 16 hazard exponential
@@ -156,10 +155,6 @@ invsine  <- function (y) (sin(y)+1) / 2
 odds     <- function (x) x / (1-x)
 invodds  <- function (y) y / (1+y)
 
-lnbinomial <- function (x,size,prob) {
-  lgamma (size+1) - lgamma (size-x+1) - lgamma (x+1) +
-      x * log(prob) + (size-x) * log (1-prob)
-}
 ############################################################################################
 
 model.string <- function (model, userDfn) {
@@ -385,15 +380,11 @@ se.untransform <- function (beta, sebeta, link) {
 #-------------------------------------------------------------------------------
 
 # vectorized transformations
-Xtransform <- function (real, linkfn, varnames) {
-    mapply(transform, real, linkfn[varnames])
-}
-se.Xtransform <- function (real, sereal, linkfn, varnames) {
-    mapply(se.transform, real, sereal, linkfn[varnames])
-}
+
 Xuntransform <- function (beta, linkfn, varnames) {
     mapply(untransform, beta, linkfn[varnames])
 }
+
 se.Xuntransform <- function (beta, sebeta, linkfn, varnames)
 {
     if (length(beta)!=length(sebeta))
@@ -403,36 +394,6 @@ se.Xuntransform <- function (beta, sebeta, linkfn, varnames)
     mapply(se.untransform, beta, sebeta, linkfn[varnames])
 }
 #-------------------------------------------------------------------------------
-
-mlogit.untransform <- function (beta, latentmodel) {
-    if (!missing(latentmodel)) {
-        for (i in unique(latentmodel))
-            beta[latentmodel==i] <- mlogit.untransform(beta[latentmodel==i])
-        beta
-    }
-    else {
-        ## beta should include values for all classes (mixture components)
-        nmix <- length(beta)
-        if (sum(is.na(beta)) != 1) {
-            ## require NA for a single reference class
-            rep(NA, length(beta))
-        }
-        else {
-            nonreference <- !is.na(beta)   # not reference class
-            b <- beta[nonreference]
-            pmix <- numeric(nmix)
-            pmix[nonreference] <- exp(b) / (1+sum(exp(b)))
-            pmix[!nonreference] <- 1 - sum(pmix[nonreference])
-            pmix
-        }
-    }
-}
-
-mlogit <- function (x) {
-    ## return the mlogit of an unscaled vector of positive values
-    ## 2013-04-14
-    logit(x/sum(x))
-}
 
 ## End of miscellaneous functions
 
@@ -466,24 +427,6 @@ complete.beta.vcv <- function (object) {
 }
 ###############################################################################
 
-general.model.matrix <- function (formula, data, gamsmth = NULL, 
-    contrasts = NULL, ...) {
-
-    ## A function to compute the design matrix for the model in
-    ## 'formula' given the data in 'data'. This is merely the result
-    ## of model.matrix() unless 'formula' includes smooth terms -- s()
-    ## or te() as described in mgcv ?formula.gam.
-
-    ## smooth terms blocked in ipsecr
-    dots <- list(...)
-
-    ## model.matrix(formula, data, ...)
-    mat <- model.matrix(formula, data = data, contrasts.arg = contrasts)
-    rownames (mat) <- NULL
-    mat
-}
-###############################################################################
-
 
 ipsecr.lpredictor <- function (formula, newdata, indx, beta, field, beta.vcv=NULL,
     smoothsetup = NULL, contrasts = NULL, f = NULL) {
@@ -508,40 +451,17 @@ ipsecr.lpredictor <- function (formula, newdata, indx, beta, field, beta.vcv=NUL
     }
     else {
         
-        mat <- general.model.matrix(formula, data = newdata, gamsmth = NULL, 
-            contrasts = contrasts)
+        mat <- model.matrix(formula, data = newdata, contrasts = contrasts)
+        rownames(mat) <- NULL
         if (nrow(mat) < nrow(newdata))
             warning ("missing values in predictors?")
         
         nmix <- 1
-        if (field=='pmix') {
-            ## drop pmix beta0 column from design matrix (always zero)
-            mat <- mat[,-1,drop=FALSE]
-            if ('h2' %in% names(newdata)) nmix <- 2
-            if ('h3' %in% names(newdata)) nmix <- 3
-            mixfield <- c('h2','h3')[nmix-1]
-        }
-        
+
         ###############################
         Yp <- mat %*% beta[indx]
         ###############################
         
-        ## A latent model comprises one row for each latent class.
-        ## Back transformation of pmix in mlogit.untransform() requires all rows of 
-        ## each latent model. That function splits vector Yp by latent model.
-        
-        if (field == 'pmix') {
-            nonh <- newdata[, names(newdata) != mixfield, drop = FALSE]
-            latentmodel <- factor(apply(nonh, 1, paste, collapse = ''))
-            refclass <- as.numeric(newdata[, mixfield]) == 1
-            Yp[refclass] <- NA
-            Yp <- mlogit.untransform(Yp, latentmodel)
-            Yp <- logit(Yp)  # return to logit scale for later untransform!
-            if (nmix==2) {
-                h2.1 <- as.numeric(newdata$h2)==1
-                h2.2 <- as.numeric(newdata$h2)==2
-            }
-        }
     }
 
     lpred[,1] <- Yp
@@ -555,12 +475,6 @@ ipsecr.lpredictor <- function (formula, newdata, indx, beta, field, beta.vcv=NUL
                 mat[ij[1],, drop=F] %*% vcv %*% t(mat[ij[2],, drop=F])) 
             
             vcv <- matrix (vcv, nrow = nrw)
-            if (field=='pmix') {
-                if (nmix==2)
-                    vcv[h2.1,h2.1] <- vcv[h2.2,h2.2]
-                else
-                    vcv[,] <- NA
-            }
             lpred[,2] <- diag(vcv)^0.5
         }
         else {
@@ -663,15 +577,16 @@ getD <- function (parm = 'D', designD, beta, mask, parindx, link, fixed, nsessio
 ##############################################################################
 
 getDetDesignData <- function(popn, model, session, sessionlevels) {
-    designdata <- popn
-    if (!is.null(covariates(popn)))
+    designdata <- popn   ## x,y
+    if (!is.null(covariates(popn))) {
         designdata <- cbind(designdata, covariates(popn))
+    }
     vars <- unlist(sapply(model, all.vars))
     if ('random' %in% vars) {
         designdata$random <- rnorm(nrow(popn))   # hold space
     }
     if ('session' %in% vars && !is.null(session)) {
-        designdata$session <- rep(factor(session, levels = sessionlevels), nrow(pop))
+        designdata$session <- rep(factor(session, levels = sessionlevels), nrow(popn))
     }
     found <- vars %in% names(designdata)
     if (sum(!found)>0) stop('detection predictors not found: ', vars[!found])
@@ -726,7 +641,7 @@ detBetaNames <- function(popn, model, detectfn, sessionlevels, fixed = NULL,
     detectparnames <- parnames(detectfn)
     detparmat <- matrix(nrow = nrow(popn), ncol = length(detectparnames), 
         dimnames =list(NULL, detectparnames))
-    designdata <- getDetDesignData(popn, model, NULL, sessionlevels)
+    designdata <- getDetDesignData(popn, model, sessionlevels[1], sessionlevels)
     nb <- function (parm) {
         out <- if (!is.null(fixed[[parm]])) character(0)
         else colnames(model.matrix(model[[parm]], data = designdata, 
@@ -750,7 +665,6 @@ rpsv <- function (capthist)
         if (nrow(capthist) < 1) return(NA)
         trm <- as.matrix(traps(capthist))
         temp <- apply(abs(capthist), 1, rpsvcpp, trm)
-        temp <- matrix(unlist(temp), nrow = 3)
         temp <- apply(temp,1,sum, na.rm = TRUE)
         if (any(is.na(temp) | temp<0)) {
             temp <- NA  
@@ -767,15 +681,13 @@ rpsvi <- function (capthist)
         lapply(capthist, rpsvi)   ## recursive
     }
     else {
-        if (nrow(capthist) < 1) return(NA)
-        trm <- as.matrix(traps(capthist))
-        temp <- apply(abs(capthist), 1, rpsvcpp, trm)
-        temp <- matrix(unlist(temp), nrow = 3)
-        
         onedxy <- function (dxy) {
             if (dxy[1]==0) NA else sqrt((dxy[2]+dxy[3]) / (2 * dxy[1]))
         }
-        apply(temp,2,onedxy)
+        if (nrow(capthist) < 1) return(NA)
+        trm <- as.matrix(traps(capthist))
+        temp <- apply(abs(capthist), 1, rpsvcpp, trm)
+        unname(apply(temp,2,onedxy))
     }
 }
 
