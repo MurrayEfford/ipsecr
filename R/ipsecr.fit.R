@@ -40,6 +40,11 @@ ipsecr.fit <- function (
     #################################################
     
     trps <- traps(capthist)
+    
+    if (!is.null(covariates(mask))) {
+        trps <- addCovariates(trps, mask)
+    }
+    
     #------------------------------------------
     # optionally replace detector type
     if (!is.null(details$newdetector)) {
@@ -87,7 +92,6 @@ ipsecr.fit <- function (
         max.nbox     = 5, 
         max.ntries   = 2,
         distribution = 'poisson',
-        even         = FALSE,
         binomN       = 0,               ## Poisson counts
         ignoreusage  = FALSE,
         ignorenontarget = FALSE,
@@ -161,9 +165,7 @@ ipsecr.fit <- function (
         trapmeanSD <- getMeanSD(trps)
         nontarget <- attr(capthist, 'nontarget', exact = TRUE)
     }
-    
-    
-    
+
     #################################################
     ## optional data check
     #################################################
@@ -204,7 +206,14 @@ ipsecr.fit <- function (
     model <- updatemodel(model, detectfn, 14:20, 'g0', 'lambda0')
     
     detmodels <- names(model) %in% c('g0','lambda0','sigma')
-    if (any(sapply(model[detmodels], "!=", ~1))) stop ("not ready for varying detection")
+    # if (any(sapply(model[detmodels], "!=", ~1))) stop ("not ready for varying detection")
+    notOK <- function(model) {
+        sessvars <- names(sessioncov)
+        maskvars <- names(covariates(if (ms(mask)) mask[[1]] else mask))  
+        !all(all.vars(model) %in% c("session", "Session", "x", "y", sessvars, maskvars))
+    }
+    
+    if (any(sapply(model[detmodels], notOK))) stop ("detection model includes unavailable variables")
     
     fnames <- names(fixed)
     
@@ -265,8 +274,9 @@ ipsecr.fit <- function (
     else {
         memo ('Preparing density design matrix', verbose)
         temp <- D.designdata( mask, model$D, 1, sessionlevels, sessioncov)
-        designD <- general.model.matrix(model$D, data = temp, gamsmth = NULL,
-            contrasts = details$contrasts)
+        designD <- model.matrix(model$D, data = temp, contrasts.arg = details$contrasts)
+        rownames (designD) <- NULL
+        
         attr(designD, 'dimD') <- attr(temp, 'dimD')
         Dnames <- colnames(designD)
         nDensityParameters <- length(Dnames)
@@ -289,8 +299,8 @@ ipsecr.fit <- function (
     else {
         memo ('Preparing NT design matrix', verbose)
         temp <- D.designdata( trps, model$NT, 1, sessionlevels, sessioncov, trapmeanSD)
-        designNT <- general.model.matrix(model$NT, data = temp, gamsmth = NULL,
-            contrasts = details$contrasts)
+        designNT <- model.matrix(model$NT, data = temp, contrasts = details$contrasts)
+        rownames(designNT) <- NULL
         attr(designNT, 'dimD') <- attr(temp, 'dimD')
         NTnames <- colnames(designNT)
         nNTParameters <- length(NTnames)
@@ -501,6 +511,24 @@ ipsecr.fit <- function (
         NP <- length(start)
     }
     
+    ##########################
+    # set random seed
+    # (from simulate.lm)
+    ##########################
+
+    if (!exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+        runif(1)
+    }
+    if (is.null(seed)) {
+        RNGstate <- get(".Random.seed", envir = .GlobalEnv)
+    }
+    else {
+        R.seed <- get(".Random.seed", envir = .GlobalEnv)
+        set.seed(seed)
+        RNGstate <- structure(seed, kind = as.list(RNGkind()))
+        on.exit(assign(".Random.seed", R.seed, envir = .GlobalEnv))
+    }
+    
     ###########################################
     # cluster for parallel processing
     ###########################################
@@ -532,24 +560,6 @@ ipsecr.fit <- function (
     else {
         clust <- NULL
         #set.seed(seed)
-        
-        ##########################
-        ## set random seed
-        ## copied from simulate.lm
-        if (!exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
-            runif(1)
-        }
-        if (is.null(seed)) {
-            RNGstate <- get(".Random.seed", envir = .GlobalEnv)
-        }
-        else {
-            R.seed <- get(".Random.seed", envir = .GlobalEnv)
-            set.seed(seed)
-            RNGstate <- structure(seed, kind = as.list(RNGkind()))
-            on.exit(assign(".Random.seed", R.seed, envir = .GlobalEnv))
-        }
-        ##########################
-        
     }
 
     ####################################################################
@@ -614,7 +624,7 @@ ipsecr.fit <- function (
         ndesignpoints <- nrow(designbeta)
         sim <- NULL
         alldesignbeta <- NULL
-        tempdistn <- if (details$even) 'even' else 'binomial'
+        tempdistn <- if (details$distribution == 'even') 'even' else 'binomial'
         basedesign <- designbeta[rep(1:nrow(designbeta), details$min.nsim),]
         # accumulate simulations until reach precision target or exceed max.nsim
         tries <- 0
