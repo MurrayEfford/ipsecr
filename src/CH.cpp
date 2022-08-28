@@ -102,6 +102,67 @@ void probsort (
 }    // end of probsort 
 //----------------------------------------------------------------
 
+double d2cpp (
+        const int k,
+        const int m,
+        const Rcpp::NumericMatrix &A1,
+        const Rcpp::NumericMatrix &A2)
+    // return squared distance between two points given by row k in A1
+    // and row m in A2, where A1 and A2 have respectively A1rows and A2rows
+{
+    return(
+        (A1(k,0) - A2(m,0)) * (A1(k,0) - A2(m,0)) +
+            (A1(k,1) - A2(m,1)) * (A1(k,1) - A2(m,1))
+    );
+}
+//--------------------------------------------------------------------------
+
+double randomtime (double p)
+    // return random event time for event with probability p 
+{
+    double minprob = 1e-5;
+    double lambda;
+    double random_U;
+    
+    if (p < minprob)
+        return(huge);                        // ignore trivial p/lambda 
+    else if (p >= 1.0)
+        return (-unif_rand());                  // trick to spread P=1 
+    else {
+        lambda   = -log(1-p);                // rate parameter 
+        random_U = unif_rand();
+        if (random_U <= 0)                   // trap for zero 
+            return(huge);
+        else
+            return (-log(random_U)/lambda);   // random exponential e.g. Ripley 1987 Algorithm 3.2 p 55 
+    }
+}
+//----------------------------------------------------------------
+
+double rcount (int binomN, double lambda, const double Tsk) {
+    
+    // Poisson 
+    if (binomN == 0) {
+        return (R::rpois(lambda * Tsk) );
+    } else { 
+        if (fabs(Tsk-1) > 1e-10) {             
+            lambda = 1 - pow(1-lambda, Tsk);   // 2012-12-18 
+        }
+        // Bernoulli 
+        if (binomN == 1) {
+            if (unif_rand() < lambda)
+                return (1);
+            else
+                return (0);
+        }
+        // binomial 
+        else {
+            return (R::rbinom(binomN, lambda) );
+        }
+    }
+}
+//----------------------------------------------------------------
+
 // [[Rcpp::export]]
 Rcpp::List CHcpp (
         const Rcpp::NumericMatrix &animals, // x-y coord
@@ -131,7 +192,7 @@ Rcpp::List CHcpp (
     int K = Tsk.nrow();
     int S = Tsk.ncol();
     int i,k,j,n,s;
-    int isk;
+    //int isk;
     double d2;
     double h0;   // intermediate value of hazard
     Rcpp::NumericMatrix hik (N1,K);
@@ -142,7 +203,9 @@ Rcpp::List CHcpp (
     double Tski = 1.0;  
 
     // return values
-    Rcpp::IntegerVector CH (N*S*K);        // return value array
+    // Rcpp::IntegerVector CH (N*S*K);        // return value array
+    arma::cube CH (N,S,K);
+    
     Rcpp::IntegerMatrix nontarget (K, S);  // return nontarget array
     
     //========================================================
@@ -287,7 +350,8 @@ Rcpp::List CHcpp (
             
             for (i=0; i<N; i++) {
                 if (intrap[i]>0) {
-                    CH[i3(i,s,intrap[i]-1, N, S)] = 1;  
+                    // CH[i3(i,s,intrap[i]-1, N, S)] = 1;  
+                    CH(i,s,intrap[i]-1) = 1;  
                 }
             }
         }
@@ -313,7 +377,8 @@ Rcpp::List CHcpp (
                     }
                 }
                 if (dettime < 1.0) {
-                    CH[i3(i, s, tnum, N, S)] = 1;
+                    // CH[i3(i, s, tnum, N, S)] = 1;
+                    CH(i, s, tnum) = 1;
                 }
             }
         }
@@ -337,7 +402,8 @@ Rcpp::List CHcpp (
                     if ((dettime < 1.0) && 
                         (dettime < inttime[k] || nontargetcode > 2)) {
                         occupied[k] = true;
-                        CH[i3(anum, s, k, N, S)] = 1;
+                        // CH[i3(anum, s, k, N, S)] = 1;
+                        CH(anum, s, k) = 1;
                     }
                 }
             }
@@ -384,7 +450,8 @@ Rcpp::List CHcpp (
                                 }                                
                             }
                             if (count>0) {
-                                CH[i3(i, s, k, N, S)] = count;
+                                // CH[i3(i, s, k, N, S)] = count;
+                                CH(i, s, k) = count;
                             }
                         }
                     }
@@ -399,12 +466,14 @@ Rcpp::List CHcpp (
             if (nontargetcode == 5 && detectorcode == 2) {
                 for (k=0; k<K; k++) {
                     for (i=0; i<N; i++) {
-                        isk = i3(i, s, k, N, S);
-                        for(j=1; j<=CH[isk]; j++) {
+                        //isk = i3(i, s, k, N, S);
+                        //for(j=1; j <= CH[isk]; j++) {
+                        for(j=1; j <= CH(i, s, k); j++) {
                             if (R::runif(0,1) < NT[k]) {
                                 // transfer from ID to nontarget
                                 nontarget(k,s)++;
-                                CH[isk]--;
+                                // CH[isk]--;
+                                CH(i, s, k)--;
                             }
                         }
                     }
@@ -419,7 +488,8 @@ Rcpp::List CHcpp (
                         if (nontargetcode == 3) {
                             // any detections erased
                             for (i=0; i<nc; i++) {
-                                CH[i3(i,s,k,N,S)] = 0;
+                                //CH[i3(i,s,k,N,S)] = 0;
+                                CH(i,s,k) = 0;
                             }  
                         }
                     }
@@ -444,6 +514,5 @@ Rcpp::List CHcpp (
             Rcpp::Named("resultcode") = 0));
     
 }
-
 
 //==============================================================================
