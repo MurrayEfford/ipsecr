@@ -1,6 +1,9 @@
+###############################################################################
+## package 'ipsecr'
+## plotProxy.R
 # 2022-07-06
+###############################################################################
 
-# default xval from +- 0.2 on link scale ? 
 plotProxy <- function (
     parameter  = 'sigma', 
     proxyfn    = proxy.ms, 
@@ -42,14 +45,14 @@ plotProxy <- function (
     detpar <- if(detectfn<14) 'g0' else 'lambda0'
     parameters <- c('D',detpar,'sigma','z')
     if (!parameter %in% parameters) stop ("parameter not recognised")
-    proxy <- names(proxyfn(captdata))[match(parameter, parameters)]
+    proxy <- names(proxyfn(secr::captdata))[match(parameter, parameters)]
     basepar[[parameter]] <- xvals
     combo <- expand.grid(basepar)
     tmp <- apply(combo, 1, onecombo)
     tmp[!is.finite(tmp)] <- NA
     dimnames(tmp) <- list(NULL, xvals)
     if (boxplot || points) {
-        trxvals <- Xtransform(xvals, link)
+        trxvals <- transform(xvals, link)
         if (!add) {
             xlab <- if (link=='identity') parameter else 
                 paste0(parameter, ' (', link, ' scale)')
@@ -64,7 +67,7 @@ plotProxy <- function (
                 ylab = proxy, 
                 axes = FALSE, 
                 ...)
-            axis(1, at = trxvals, label=xvals)
+            axis(1, at = trxvals, labels = xvals)
             axis(2)
             box()
         }
@@ -86,15 +89,3 @@ plotProxy <- function (
     }
     invisible(tmp)
 }
-
-# set.seed(123)
-# trps <- traps(captdata)
-# msk <- make.mask(trps, buffer = 100)
-# base <- list(D = 5, lambda0 = 0.2, sigma = 25)
-# par(mfrow=c(1,3), pty='s')
-# out <- plotProxy (parameter = 'D', traps = trps, mask = msk,
-#     basepar = base, boxplotargs = list(col='orange'))
-# out <- plotProxy (parameter = 'lambda0', traps = trps, mask = msk,
-#     basepar = base, boxplotargs = list(col='blue'))
-# out <- plotProxy (parameter = 'sigma', traps = trps, mask = msk,
-#     basepar = base, boxplotargs = list(col='pink'))
