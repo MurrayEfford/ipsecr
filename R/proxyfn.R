@@ -109,7 +109,7 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL, ...) {
         # prepare animaldesigndata.s
         getxys <- function(ch) as.data.frame(centroids(ch))
         xys <- lapply(capthist, getxys)
-        class(xys) <- c('popn','list')  # fool addCovariates
+        class(xys) <- c('traps','list')  # fool addCovariates secr <= 4.5.6
         if ('spatialdata' %in% names(list(...))) {
             tmp <- covariates(addCovariates(xys, ...))
             xys <- mapply(cbind, xys, tmp, SIMPLIFY = FALSE)
