@@ -8,7 +8,7 @@
 
 simCH <- function (traps, popn, detectfn, detparmat, noccasions, NT = NULL, details = list()) {
     if (ms(traps)) {
-        # detparmat should be list of lists
+        # detparmat should be list of matrices
         if (!is.list(detparmat)) detparmat <- list(detparmat)
         if (length(NT) == 0 || length(unlist(sapply(NT, length))) < length(traps)) NT <- 0
         tmp <- mapply(simCH, 
@@ -31,6 +31,10 @@ simCH <- function (traps, popn, detectfn, detparmat, noccasions, NT = NULL, deta
             multi = 0, proximity = 1, count = 2, capped = 8, 9)
         if (detectcode == 9) stop ("unsupported detector type")
         
+        if (!is.matrix(detparmat)) {
+            detparmat <- matrix(unlist(detparmat), byrow = TRUE, 
+                nrow = nrow(popn), ncol = length(unlist(detparmat)))
+        }
         # optional nontarget rate
         if (is.null(NT) || all(NT<=0)) {
             nontargetcode <- 0
