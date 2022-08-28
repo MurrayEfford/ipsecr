@@ -22,7 +22,7 @@
 Package: \tab ipsecr\cr
 Type: \tab Package\cr
 Version: \tab 1.2.0\cr
-Date: \tab 2022-07-05\cr
+Date: \tab 2022-08-27\cr
 License: \tab GNU General Public License Version 2 or later\cr
 }
 

@@ -74,8 +74,8 @@ ipsecr.fit(capthist, proxyfn = proxy.ms, model = list(D ~ 1, g0 ~ 1, sigma ~ 1),
 
 The vignette should be consulted for a full exposition.
 
-\code{details} is used for various specialized settings listed below. Some of these are
-described separately - see \code{\link{details}}.
+\code{details} is used for various specialized settings listed below. These are 
+also described separately - see \code{\link{details}}.
 
 \tabular{lll}{
   Name \tab Default \tab Description \cr
@@ -84,14 +84,14 @@ described separately - see \code{\link{details}}.
   boxtype \tab 'absolute' \tab `absolute' or `relative' \cr
   centre \tab 3 \tab number of centre points in simulation design\cr
   dev.max \tab  0.002 \tab tolerance for precision of points in predictor space \cr
-  var.nsim \tab 1000 \tab number of additional simulations to estimate variance-covariance matrix \cr
-  min.nsim \tab 10 \tab minimum number of simulations per point \cr
-  max.nsim \tab 2000 \tab maximum number of simulations per point \cr
+  var.nsim \tab 2000 \tab number of additional simulations to estimate variance-covariance matrix \cr
+  keep.sim \tab FALSE \tab if true then the variance simulations are saved \cr
+  min.nsim \tab 20 \tab minimum number of simulations per point \cr
+  max.nsim \tab 200 \tab maximum number of simulations per point \cr
   min.nbox \tab 2 \tab minimum number of attempts to `frame' solution \cr
   max.nbox \tab 5 \tab maximum number of attempts to `frame' solution \cr
   max.ntries \tab 2 \tab maximum number of attempts at each simulation \cr
   distribution \tab `poisson' \tab `poisson', `binomial' or `even' \cr
-  even \tab FALSE \tab 'binomial' or 'even' population distribution in main simulations\cr
   binomN \tab 0 \tab integer code for distribution of counts (unused) \cr
   ignorenontarget \tab FALSE \tab override nontarget attribute of capthist \cr
   ignoreusage \tab FALSE \tab override usage in traps object of capthist \cr
@@ -112,7 +112,7 @@ described separately - see \code{\link{details}}.
 
 An object of class 'ipsecr', a list comprising:
 
-  \item{call}{ the function call }
+  \item{call}{ the function call (if details$savecall)}
   \item{capthist}{input}
   \item{mask}{input}
   \item{detectfn}{input}
@@ -134,13 +134,17 @@ An object of class 'ipsecr', a list comprising:
   \item{beta}{estimates of coefficients on link scale }
   \item{beta.vcov}{variance-covariance matrix of estimates }
   \item{designbeta}{vertices of final box (design points)}
+  \item{sim.lm}{last lm model fit}
   \item{ip.nsim}{total number of simulations }
   \item{var.nsim.OK}{number of successful variance simulations}
+  \item{simulations}{ optional simulation output (see details$keep.sim)}
+  \item{parameters}{ optional simulation input (see details$keep.sim)}
   \item{variance.bootstrap}{ dataframe summarising simulations for variance estimation }
   \item{version}{package version}
   \item{starttime}{time execution started}
   \item{proctime}{ processor time (seconds) }
-
+  \item{seed}{ RNG state }
+  
 (The order and composition of the output list is subject to change).
 
 }

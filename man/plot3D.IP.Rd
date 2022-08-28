@@ -15,7 +15,8 @@ A 3-D depiction of the design (a box in parameter space) and the resulting simul
 
 \usage{
 
-plot3D.IP(object, box = 1, oldplot = NULL, plotcentre = TRUE, plotfinal = FALSE, zkludge = -0.2)
+plot3D.IP(object, box = 1, oldplot = NULL, plotcentre = TRUE, plotfinal = FALSE, 
+    zkludge = -0.2)
 
 }
 
