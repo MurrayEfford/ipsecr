@@ -1,4 +1,4 @@
-\name{newdata}
+\name{makeNewData}
 \alias{newdata}
 \alias{makeNewData.ipsecr}
 
