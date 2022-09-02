@@ -1,8 +1,10 @@
-# 2022-05-13
+## 2022-05-13
+## 2022-08-30 explicit RNGkind in set.seed
 
 # test simulations of non-target interference
 
 library(ipsecr)
+RNGkind(kind = "Mersenne-Twister", normal.kind = "Inversion", sample.kind = "Rejection")
 
 ## to avoid ASAN/UBSAN errors on CRAN, following advice of Kevin Ushey
 ## e.g. https://github.com/RcppCore/RcppParallel/issues/169
@@ -26,13 +28,19 @@ nt <- as.numeric(summ$nontarget)[1:5]
 nd <- as.numeric(summ$counts['detections',1:5])
 
 test_that("single-catch nontarget simulations", {
-    expect_equal(nt, c(25, 24, 19, 15, 17), 
+    expect_equal(nt, 
+        # c(25, 24, 19, 15, 17),  # 1.2.0
+        c(24, 26, 20, 20, 23),    # 1.2.1
         tolerance = 1e-4, check.attributes = FALSE)
 })
 test_that("single-catch simulated detections in presence of interference", {
-    expect_equal(nd, c(16, 17, 17, 22, 21), 
+    expect_equal(nd, 
+        # c(16, 17, 17, 22, 21),    # 1.2.0
+        c(15, 21, 22, 20, 21),    # 1.2.1
         tolerance = 1e-4, check.attributes = FALSE)
-    expect_equal(summ$counts$Total, c(93, 54, 54, 54, 0, 93, 93, 320), 
+    expect_equal(summ$counts$Total, 
+        # c(93, 54, 54, 54, 0, 93, 93, 320),    # 1.2.0
+        c(99, 63, 63, 63,  0, 99, 99, 320),     # 1.2.1
         tolerance = 1e-4, check.attributes = FALSE)
 })
 #------------------------------------------------------------------
@@ -118,3 +126,4 @@ test_that("capped simulated detections in presence of interference", {
         tolerance = 1e-4, check.attributes = FALSE)
 })
 #------------------------------------------------------------------
+
