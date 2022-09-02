@@ -48,3 +48,26 @@ package_coverage()
 # R/onAttach.R: 100.00%
 # src/pop.cpp: 100.00%
 # src/RPSV.cpp: 100.00%
+
+## 2022-09-02 1.2.1
+
+# ipsecr Coverage: 61.68%
+# R/plot.ipsecr.R: 0.00%
+# R/plot3D.IP.R: 0.00%
+# R/plotProxy.R: 45.61%
+# R/utility.R: 50.00%
+# R/vcov.ipsecr.R: 54.00%
+# R/makeNewdata.ipsecr.R: 60.87%
+# R/ipsecr.fit.R: 67.44%
+# R/predict.ipsecr.R: 67.65%
+# src/CH.cpp: 72.05%
+# R/simCH.R: 72.22%
+# R/nonspatial.R: 76.34%
+# R/proxyfn.R: 77.08%
+# R/print.ipsecr.R: 79.66%
+# R/summary.ipsecr.R: 87.80%
+# R/simpop.R: 91.18%
+# R/coef.ipsecr.R: 92.86%
+# R/onAttach.R: 100.00%
+# src/pop.cpp: 100.00%
+# src/RPSV.cpp: 100.00%
