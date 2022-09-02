@@ -1,7 +1,13 @@
 #include "ipsecr.h"
 using namespace Rcpp;
 
+// 2022-09-02 Rcpp::RNGScope scope; removed as inserted by compileAttributes()
+
 //===============================================================================
+
+// int i3 (int i, int j, int k, int ii, int jj) {
+//     return(ii * (jj * k + j) + i);
+// }
 
 // hazard (fn 14:19) or g (fn 0:11)
 double zcpp (
@@ -117,28 +123,6 @@ double d2cpp (
 }
 //--------------------------------------------------------------------------
 
-double randomtime (double p)
-    // return random event time for event with probability p 
-{
-    double minprob = 1e-5;
-    double lambda;
-    double random_U;
-    
-    if (p < minprob)
-        return(huge);                        // ignore trivial p/lambda 
-    else if (p >= 1.0)
-        return (-unif_rand());                  // trick to spread P=1 
-    else {
-        lambda   = -log(1-p);                // rate parameter 
-        random_U = unif_rand();
-        if (random_U <= 0)                   // trap for zero 
-            return(huge);
-        else
-            return (-log(random_U)/lambda);   // random exponential e.g. Ripley 1987 Algorithm 3.2 p 55 
-    }
-}
-//----------------------------------------------------------------
-
 double rcount (int binomN, double lambda, const double Tsk) {
     
     // Poisson 
@@ -192,7 +176,7 @@ Rcpp::List CHcpp (
     int K = Tsk.nrow();
     int S = Tsk.ncol();
     int i,k,j,n,s;
-    //int isk;
+    // int isk;
     double d2;
     double h0;   // intermediate value of hazard
     Rcpp::NumericMatrix hik (N1,K);
@@ -204,7 +188,7 @@ Rcpp::List CHcpp (
 
     // return values
     // Rcpp::IntegerVector CH (N*S*K);        // return value array
-    arma::cube CH (N,S,K);
+    arma::icube CH (N,S,K);
     
     Rcpp::IntegerMatrix nontarget (K, S);  // return nontarget array
     
@@ -256,8 +240,6 @@ Rcpp::List CHcpp (
         Rcpp::Named("nontarget") = nontarget,
         Rcpp::Named("resultcode") = 2);
     
-    Rcpp::RNGScope scope;             // Rcpp initialise and finalise random seed 
-    
     if ((detectorcode < -1) || (detectorcode > 2 && detectorcode != 8)) {
         return(nullresult);
     }
@@ -295,7 +277,12 @@ Rcpp::List CHcpp (
                         if (fabs(Tski-1) > 1e-10) {
                             h0 = Tski * h0;
                         }
-                        event_time = randomtime(1-exp(-h0));
+                        event_time = 1.0;
+                        // replaces randomtime() 2022-09-02
+                        if (h0>0) {
+                            event_time = R::rexp(1/h0);
+                        }
+                        
                         if (nontargetcode == 2)
                             maxt = inttime[k];
                         else
@@ -350,7 +337,7 @@ Rcpp::List CHcpp (
             
             for (i=0; i<N; i++) {
                 if (intrap[i]>0) {
-                    // CH[i3(i,s,intrap[i]-1, N, S)] = 1;  
+                    // CH[i3(i,s,intrap[i]-1, N, S)] = 1;
                     CH(i,s,intrap[i]-1) = 1;  
                 }
             }
@@ -466,8 +453,8 @@ Rcpp::List CHcpp (
             if (nontargetcode == 5 && detectorcode == 2) {
                 for (k=0; k<K; k++) {
                     for (i=0; i<N; i++) {
-                        //isk = i3(i, s, k, N, S);
-                        //for(j=1; j <= CH[isk]; j++) {
+                        // isk = i3(i, s, k, N, S);
+                        // for(j=1; j <= CH[isk]; j++) {
                         for(j=1; j <= CH(i, s, k); j++) {
                             if (R::runif(0,1) < NT[k]) {
                                 // transfer from ID to nontarget
@@ -488,7 +475,7 @@ Rcpp::List CHcpp (
                         if (nontargetcode == 3) {
                             // any detections erased
                             for (i=0; i<nc; i++) {
-                                //CH[i3(i,s,k,N,S)] = 0;
+                                // CH[i3(i,s,k,N,S)] = 0;
                                 CH(i,s,k) = 0;
                             }  
                         }
