@@ -17,7 +17,6 @@ Rcpp::NumericMatrix popcpp (
         Rcpp::NumericVector &prob,     // cell probability)
         double &maskspacing,
         int &N) {
-    Rcpp::RNGScope scope;             // Rcpp initialise and finalise random seed 
     
     int M = mask.nrow();
     Rcpp::IntegerVector nm(M);
@@ -42,7 +41,6 @@ Rcpp::NumericMatrix popcpp (
 Rcpp::NumericMatrix popevencpp (
         const Rcpp::NumericMatrix &bounds,  // x-y coord
         int &N) {
-    Rcpp::RNGScope scope;             // Rcpp initialise and finalise random seed 
     // not to be called with N < 1
     if (N<1) Rcpp::stop ("zero population requested");
     Rcpp::NumericMatrix animals (N,2);
