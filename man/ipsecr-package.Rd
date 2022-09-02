@@ -8,7 +8,7 @@
 
 \description{
 
-  Functions to estimate the density and size of a spatially
+  Functions to estimate the density of a spatially
   distributed animal population sampled with an array of passive
   detectors, such as traps. \pkg{ipsecr} addresses `difficult' models that 
   strictly cannot be fitted by maximum likelihood in the larger parent package 
@@ -21,8 +21,8 @@
 \tabular{ll}{
 Package: \tab ipsecr\cr
 Type: \tab Package\cr
-Version: \tab 1.2.0\cr
-Date: \tab 2022-08-29\cr
+Version: \tab 1.2.1\cr
+Date: \tab 2022-09-02\cr
 License: \tab GNU General Public License Version 2 or later\cr
 }
 
@@ -33,13 +33,14 @@ detection histories of individually marked
 animals. Individual histories are stored in an object of class
 `capthist' that includes the relevant `traps' object.
 
-Models for population density (animals per hectare) and detection are
-defined in \pkg{ipsecr} using symbolic formula notation (but only constant models are allowed for detection parameters in \pkg{ipsecr} 1.1) Density models
-may include spatial trend. Habitat is distinguished from
-nonhabitat with an object of class `mask'.
+Models for population density (animals per hectare) and detection are defined 
+in \pkg{ipsecr} using symbolic formula notation. The set of possible models 
+overlaps with \pkg{secr} (some for models for varying detection parameters are 
+excluded, e.g., ~t, ~b). Density models may include spatial trend. Habitat 
+is distinguished from nonhabitat with an object of class `mask'.
 
-Models are fitted in \pkg{ipsecr} by simulation and inverse prediction (Efford 2004).
-A model fitted with \code{\link{ipsecr.fit}} is an object
+Models are fitted in \pkg{ipsecr} by simulation and inverse prediction 
+(Efford 2004). A model fitted with \code{\link{ipsecr.fit}} is an object
 of class \code{ipsecr}. Generic methods (plot, print, summary, etc.) are
 provided.
 
@@ -56,11 +57,10 @@ the Google group \href{https://groups.google.com/forum/#!forum/secrgroup}{secrgr
 on the software is also welcome, including suggestions for additional
 documentation or new features consistent with the overall design.
 
-
 `Inverse prediction' uses methods from multivariate calibration (Brown
 1982). The goal is to estimate population density (D) and the parameters
 of a detection function (usually g0 or lambda0 and sigma) by `matching' statistics
-from \code{proxyfn(capthist)} (the target vector) and statistics
+from \code{proxyfn(capthist)} (the target vector) to statistics
 from simulations of a 2-D population using the postulated detection
 model. Statistics (see Note) are defined by the proxy function,
 which should return a vector equal in length to the number of parameters
@@ -93,7 +93,7 @@ estimate the variance-covariance matrix. These also provide a parametric
 bootstrap sample to evaluate possible bias. Set var.nsim = 0
 to suppress the variance step.
 
-See Efford et al. (2004) for another description of the method, and
+See Efford et al. (2004) for an early description of the method, and
 Efford et al. (2005) for an application.
 
 If not provided, the starting values are determined automatically

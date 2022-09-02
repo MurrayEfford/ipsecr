@@ -1,3 +1,15 @@
+Changes in version 1.2.1 (2022-09-02)
+
+New features or changed behaviour of old functions
+    o   improved simulator for single-catch traps
+
+Bugs fixed
+    o   inconsistent single-catch results on macos-arm64 (M1 Big Sur) 
+
+Other
+    o   explicit RNGkind in tests
+    o   vignette edits
+
 Changes in version 1.2.0 (2022-08-29)
 
 New features or changed behaviour of old functions
