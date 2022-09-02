@@ -1,6 +1,7 @@
 // Simulate capture histories from model
 // ******************* indicates weakness
 
+
 #include <Rcpp.h>
 #include "ipsecr.h"
 using namespace Rcpp;
