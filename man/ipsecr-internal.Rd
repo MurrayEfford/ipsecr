@@ -13,7 +13,8 @@
 
 \description{ 
 
-Functions called internally by \pkg{ipsecr}.
+Functions called internally by \pkg{ipsecr}. 
+These are exported and may be called separately for testing.
 
 }
 
@@ -36,7 +37,7 @@ rpsvi(capthist)
   \item{capthist}{secr capthist object}
   \item{model}{named list of model formulae (see \code{\link{ipsecr.fit}})}
   \item{trapdesigndata}{dataframe with one row for each detector and session}
-  \item{...}{other arguments (not used)}
+  \item{...}{other arguments}
   \item{N.estimator}{character name of closed-population estimator}
  
   \item{mask}{ secr mask object}
@@ -55,7 +56,7 @@ rpsvi(capthist)
 
 \details{
 
-  \code{proxy.ms} is the default proxyfn used by \code{\link{ipsecr.fit}}. When used internally by \code{\link{ipsecr.fit}}, `model' and `trapdesigndata' are passed automatically.
+  \code{proxy.ms} is the default proxyfn used by \code{\link{ipsecr.fit}}. When used internally by \code{\link{ipsecr.fit}}, `model' and `trapdesigndata' are passed automatically. The \dots argument of \code{proxy.ms} may be used to pass arguments to \code{\link{addCovariates}}, especially `spatialdata'.
 
   \code{simpop} is used by \code{\link{ipsecr.fit}} for popmethod 'internal'. It is faster and simpler than the \pkg{secr} function \code{\link{sim.popn}}. The details component 'distribution' is a character value that may be `poisson' (default) or `even.
 
