@@ -63,6 +63,24 @@ ipsecr.fit <- function (
         mask <- make.mask(trps, buffer = buffer, nx = 64)
     }
     
+    ##########################
+    # set random seed
+    # (from simulate.lm)
+    ##########################
+    
+    if (!exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+        runif(1)
+    }
+    if (is.null(seed)) {
+        RNGstate <- get(".Random.seed", envir = .GlobalEnv)
+    }
+    else {
+        R.seed <- get(".Random.seed", envir = .GlobalEnv)
+        set.seed(seed)
+        RNGstate <- structure(seed, kind = as.list(RNGkind()))
+        on.exit(assign(".Random.seed", R.seed, envir = .GlobalEnv))
+    }
+    
     #################################################
     ## detection function
     #################################################
@@ -437,16 +455,30 @@ ipsecr.fit <- function (
                 predicted <- rep(NA, NP)
             }
             if (details$debug) {
-                cat ('saving ch to ch.RDS\n')
-                saveRDS(ch, file='ch.RDS')
-                cat('N ', N, '\n')
-                cat('detparmat', unlist(detparmat), '\n')
-                cat('detectfn', detectfn, '\n')
-                print(summary(ch))
-                cat('\nproxyfn\n')
-                print(proxyfn)
-                cat('\npredicted', predicted, '\n')
-                stop()
+                # conditional on specified design point 
+                # (fails with ncores>1)
+                debug <- as.numeric(details$debug)
+                if (abs(debug)==1 || 
+                        (abs(debug)>1 && 
+                                isTRUE(all.equal(designbeta[abs(debug),], 
+                                    beta, tolerance = 1e-4)))) 
+                {
+                    cat('debug point ', abs(debug), '\n')
+                    cat('designbeta ', unlist(designbeta[abs(debug),]), '\n')
+                    cat('N ', N, '\n')
+                    cat('detparmat', unlist(detparmat), '\n')
+                    cat('detectfn', detectfn, '\n')
+                    print(summary(popn))
+                    print(summary(ch))
+                    cat('\npredicted', predicted, '\n')   # proxy vector
+                    
+                    # cat ('saving ch to ch.RDS\n')
+                    # saveRDS(ch, file='ch.RDS')
+                    # cat('\nproxyfn\n')
+                    # print(proxyfn)
+                    
+                    if (debug<0) stop()
+                }
             }
             attempts <- attempts+1
             
@@ -509,24 +541,6 @@ ipsecr.fit <- function (
         ## drop unwanted betas; remember later to adjust parameter count
         start <- start[is.na(fb)]
         NP <- length(start)
-    }
-    
-    ##########################
-    # set random seed
-    # (from simulate.lm)
-    ##########################
-
-    if (!exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
-        runif(1)
-    }
-    if (is.null(seed)) {
-        RNGstate <- get(".Random.seed", envir = .GlobalEnv)
-    }
-    else {
-        R.seed <- get(".Random.seed", envir = .GlobalEnv)
-        set.seed(seed)
-        RNGstate <- structure(seed, kind = as.list(RNGkind()))
-        on.exit(assign(".Random.seed", R.seed, envir = .GlobalEnv))
     }
     
     ###########################################
