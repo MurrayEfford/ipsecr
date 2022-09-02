@@ -114,15 +114,18 @@ An object of class 'ipsecr', a list comprising:
 
   \item{call}{ the function call (if details$savecall)}
   \item{capthist}{input}
+  \item{proxyfn}{input}
+  \item{model}{input} 
   \item{mask}{input}
   \item{detectfn}{input}
-  \item{timecov}{input}
   \item{start}{input}
   \item{link}{input}
   \item{fixed}{input}
-  \item{model}{input} 
+  \item{timecov}{input}
+  \item{sessioncov}{input}
   \item{details}{input}
   \item{designD}{list of design data for density}
+  \item{trapdesigndata}{list of design data for trap-specific models}
   \item{parindx}{mapping of coefficients (beta parameters) to real parameters}
   \item{vars}{names of covariates in model}
   \item{betanames}{names of coefficients}
@@ -145,7 +148,7 @@ An object of class 'ipsecr', a list comprising:
   \item{proctime}{ processor time (seconds) }
   \item{seed}{ RNG state }
   
-(The order and composition of the output list is subject to change).
+(The order and composition of the output list may change).
 
 }
 
