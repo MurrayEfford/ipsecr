@@ -41,7 +41,7 @@ The monotonic relationship is demonstrated by simulation in the following figure
 
 ![](linearityplot.png)
 
-**Fig.** Monotonic relationships between parameters (x-axis, log scale) and their default proxies (y-axis). 100 single-catch traps at 20-m spacing on a square grid. 50 simulations for each level, with other parameters held at their central value. Red line follows mean.
+**Fig. 1** Monotonic relationships between parameters (x-axis, log scale) and their default proxies (y-axis). 100 single-catch traps at 20-m spacing on a square grid. 50 simulations for each level, with other parameters held at their central value. Red line follows mean.
 
 The algorithm includes these steps
 
@@ -62,7 +62,8 @@ oldplot <- plot3D.IP(ipsecrdemo)
 plot3D.IP(ipsecrdemo, box=2, oldplot)
 mtext(outer=TRUE, side=3, c('Parameter space','Proxy space'), adj=c(0.21,0.77))
 ```
-**Fig.** Schematic process of fitting in `ipsecr.fit`.
+
+**Fig. 2** Schematic process of fitting in `ipsecr.fit`.
 
 # Simple example
 
@@ -101,9 +102,9 @@ The proxy function takes an **secr** capthist object as its first argument. It r
 proxy.ms(captdata)
 ```
 
-`proxy.ms` works for models with variation in parameters D and NT. Users are free to define their own proxyfn.
+`proxy.ms` works for models with variation in parameters D and NT. Detection parameters may vary spatially and by session. Users are free to define their own proxyfn.
 
-Changing the proxy function may have little effect on the estimates. Here we demonstrate an older builtin proxy function `proxyfn0`:
+Changing the proxy function may have little effect on the estimates. Here we demonstrate an older builtin proxy function `proxyfn0` (not included in **ipsecr** 1.2):
 
 
 ```{r compareproxy0, eval = runall, purl = FALSE}
@@ -169,7 +170,8 @@ abline(-265/20,0.05) # true linear trend
 rug(unique(tr$x))    # trap locations
 par(oldpar)
 ```
-Figure: Estimated trend in density from log-linear model (red). Actual trend shown as black line.
+
+**Fig. 3** Estimated trend in density from log-linear model (red). Actual trend shown as black line.
 
 # Non-target interference
 
@@ -333,7 +335,8 @@ Functions from **secr** that work on fitted 'ipsecr' objects as-is
 
 **ipsecr 1.2** is not intended for models with many sessions or many covariates. 
 
-This version does not allow for any variation in detection parameters (g0, lambda0, sigma).
+This version does not allow for variation in detection parameters 
+(g0, lambda0, sigma) among occasions (e.g., g0~t, g0~b, g0~bk).
 
 ## Sparse data
 
@@ -350,7 +353,8 @@ Review the 'Variance bootstrap' table of verbose output.
 
 ## "solution not found after 5 attempts"
 
-It seems ipsecr is not converging on the right part of the parameter space. Try specifying a wider boxsize1 for the first box, or set starting values. 
+It seems ipsecr.fit is not converging on the right part of the parameter space. 
+Try specifying a wider boxsize1 for the first box, or set starting values. 
 
 # References
 
