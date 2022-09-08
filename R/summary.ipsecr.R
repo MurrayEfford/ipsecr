@@ -22,13 +22,6 @@ summary.ipsecr <- function (object, newdata = NULL, alpha = 0.05, ...) {
         out$detector <- detector(trp)
     out$capthist <- summary(object$capthist, terse = TRUE, moves = TRUE)
     
-    # if (any(out$detector %in% .localstuff$countdetectors)) {
-    #     out$countmodel <- if (object$details$binomN == 0) 'Poisson'
-    #     else if (object$details$binomN == 1) 'Binomial, size from usage'
-    #     else if (object$details$binomN < 0) paste0('Negative binomial k = ', abs(object$details$binomN))
-    #     else if (object$details$binomN > 1) paste0('Binomial', object$details$binomN)
-    # }
-    
     out$mask <- data.frame(Cells = nrow(object$mask), Spacing = spacing(object$mask))
     if (length(maskarea(object$mask))==0)
         out$mask <- cbind(out$mask, Length = masklength(object$mask))
