@@ -230,41 +230,18 @@ CN <- function (r, pars, cutval) {
     x <- z * (r - sigma)
     g0 * (1 + (1 - exp(x)) / (1 + exp(x)))/2
 }
+
 BSS <- function (r, pars, cutval) {
-    b0 <- pars[1]; b1 <- pars[2]
-    gam <- -(b0 + b1 * r);
-    pnorm (gam, mean=0, sd=1, lower.tail=FALSE)
 }
 SS <- function (r, pars, cutval) {
-    beta0 <- pars[1]; beta1 <- pars[2]; sdS <- pars[3]
-    if (is.null(cutval))
-        stop ("require 'details$cutval' for signal strength plot")
-    mu <- beta0 + beta1 * r
-    1 - pnorm (q=cutval, mean=mu, sd=sdS)
 }
 SSS <- function (r, pars, cutval) {
-    beta0 <- pars[1]; beta1 <- pars[2]; sdS <- pars[3]
-    if (is.null(cutval))
-        stop ("require 'details$cutval' for signal strength plot")
-    ## spherical so assume distance r measured from 1 m
-    mu <- beta0 - 10 * log ( r^2 ) / 2.302585 + beta1 * (r-1)
-    mu[r<1] <- beta0
-    1 - pnorm (q=cutval, mean=mu, sd=sdS)
 }
 SN <- function (r, pars, cutval) {
-    beta0 <- pars[1]; beta1 <- pars[2]; sdS <- pars[3];
-    muN <- pars[4]; sdN <- pars[5]
-    muS <- beta0 + beta1 * r
-    1 - pnorm (q=cutval, mean=muS-muN, sd=sqrt(sdS^2+sdN^2))
 }
 SNS <- function (r, pars, cutval) {
-    beta0 <- pars[1]; beta1 <- pars[2]; sdS <- pars[3];
-    muN <- pars[4]; sdN <- pars[5]
-    ## spherical so assume distance r measured from 1 m
-    muS <- beta0 - 10 * log ( r^2 ) / 2.302585 + beta1 * (r-1)
-    muS[r<1] <- beta0
-    1 - pnorm (q=cutval, mean=muS-muN, sd=sqrt(sdS^2+sdN^2))
 }
+
 HHN <- function (r, pars, cutval) {
     lambda0 <- pars[1]; sigma <- pars[2]
     1 - exp(-lambda0 * exp (-r^2 / 2 / sigma^2))
