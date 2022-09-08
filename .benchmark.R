@@ -2,8 +2,6 @@
 
 library(rbenchmark)
 
-# in progress
-
 library(ipsecr)
 set.seed(1235)
 benchmark(
@@ -22,3 +20,10 @@ benchmark(
 # 1 ncores1           10 1245.25    1.340   1220.50     7.34         NA        NA
 # 2 ncores2           10  929.62    1.000      4.54     2.28         NA        NA
 # 3 ncores7           10  999.08    1.075     10.20     8.33         NA        NA
+
+# 2022-09-07 ipsecr 1.3.0
+
+#      test replications elapsed relative user.self sys.self user.child sys.child
+# 1 ncores1           10 1112.97    1.292   1236.41    12.84         NA        NA
+# 2 ncores2           10  861.53    1.000      4.36     2.35         NA        NA
+# 3 ncores7           10 1030.96    1.197     10.05     8.40         NA        NA
