@@ -41,7 +41,7 @@ The monotonic relationship is demonstrated by simulation in the following figure
 
 ![](linearityplot.png)
 
-**Fig. 1** Monotonic relationships between parameters (x-axis, log scale) and their default proxies (y-axis). 100 single-catch traps at 20-m spacing on a square grid. 50 simulations for each level, with other parameters held at their central value. Red line follows mean.
+**Figure 1.** Monotonic relationships between parameters (x-axis, log scale) and their default proxies (y-axis). 100 single-catch traps at 20-m spacing on a square grid. 50 simulations for each level, with other parameters held at their central value. Red line follows mean.
 
 The algorithm includes these steps
 
@@ -55,15 +55,18 @@ The algorithm includes these steps
 
 \* including some centre points
 
-```{r schematic, fig.width=6, fig.height=6, message = FALSE}
+```{r schematic, fig.width=6.5, fig.height=6.5, message = FALSE, echo = FALSE}
 library(ipsecr)
-par(mfrow=c(2,2), mar=c(1,1,1,1), oma=c(1,1,2,1))
-oldplot <- plot3D.IP(ipsecrdemo)
-plot3D.IP(ipsecrdemo, box=2, oldplot)
-mtext(outer=TRUE, side=3, c('Parameter space','Proxy space'), adj=c(0.21,0.77))
+if (requireNamespace('plot3D')) {
+    par(mfrow=c(2,2), mar=c(1,1,1,1), oma=c(1,1,2,1))
+    oldplot <- plot3D.IP(ipsecrdemo)
+    plot3D.IP(ipsecrdemo, box=2, oldplot)
+    mtext(outer = TRUE, side = 3, c('Parameter space','Proxy space'), 
+        adj = c(0.21,0.77))
+}
 ```
 
-**Fig. 2** Schematic process of fitting in `ipsecr.fit`.
+**Figure 2.** Schematic process of fitting in `ipsecr.fit` (requires package plot3D). Simulations are conducted at the vertices of a box in parameter space (top left; link scale) centred on an initial guess (blue diamond). The results in proxy space (top right; frame connects design point means, centre omitted for clarity) support a linear model for proxies as a function of parameters. The model is inverted and applied to the observed proxy vector (yellow square) giving the centre of a new, smaller box in parameter space (bottom left). The model is refined by further simulations (bottom right) from which the final estimate is inferred (white square, bottom left)
 
 # Simple example
 
@@ -171,7 +174,7 @@ rug(unique(tr$x))    # trap locations
 par(oldpar)
 ```
 
-**Fig. 3** Estimated trend in density from log-linear model (red). Actual trend shown as black line.
+**Figure 3.** Estimated trend in density from log-linear model (red). Actual trend shown as black line.
 
 # Non-target interference
 
@@ -367,7 +370,7 @@ Distiller, G. and Borchers, D. L. (2015) A spatially explicit capture--recapture
 Efford, M. G. (2004) Density estimation in live-trapping studies. *Oikos* **106**, 598--610.
 
 Efford, M. G. (2022). secr: Spatially explicit capture--recapture models. R package version
-  4.5.4. https://CRAN.R-project.org/package=secr/
+  4.5.6. https://CRAN.R-project.org/package=secr/
 
 Efford, M. G., Dawson, D. K. and Robbins C. S. (2004) DENSITY: software
 for analysing capture-recapture data from passive detector arrays.
