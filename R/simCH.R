@@ -2,11 +2,13 @@
 ## package 'ipsecr'
 ## simCH.R
 ## 2022-05-10, 2022-06-12, 2022-06-14, 2022-06-16
+## 2022-09-07 RcppArmadillo armaCHcpp()
 ###############################################################################
 
 # function simCH is used by ipsecr.fit for CHmethod 'internal'
 
-simCH <- function (traps, popn, detectfn, detparmat, noccasions, NT = NULL, details = list()) {
+simCH <- function (traps, popn, detectfn, detparmat, noccasions, NT = NULL, 
+    details = list()) {
     if (ms(traps)) {
         # detparmat should be list of matrices
         if (!is.list(detparmat)) detparmat <- list(detparmat)
@@ -37,6 +39,8 @@ simCH <- function (traps, popn, detectfn, detparmat, noccasions, NT = NULL, deta
         }
         # optional nontarget rate
         if (is.null(NT) || all(NT<=0)) {
+            if (is.null(NT)) NT <- 0
+            NT <- rep(NT, length.out = K)
             nontargetcode <- 0
         }
         else {
@@ -48,34 +52,48 @@ simCH <- function (traps, popn, detectfn, detparmat, noccasions, NT = NULL, deta
                 warning("exclusive interference not possible with detector type, assuming 'truncated'")
                 nontargetcode <- 2  # truncated
             }
-            NT <- pmax(NT,0)    # ensure non-negative
-            NT <- rep(NT,length.out = K)
+            NT <- pmax(NT, 0)    # ensure non-negative
+            NT <- rep(NT, length.out = K)
         }
 
-        temp <- CHcpp(
-            as.matrix(popn), 
-            as.matrix(traps), 
+        binomN <- 0  # Poisson count if count detector
+        binomN <- rep(binomN, length.out = noccasions)
+        
+        #-----------------------------------------------------------
+        # new code 1.3.0 2022-09-07
+        
+        w <- armaCHcpp(
+            as.matrix(edist(popn, traps)),
             as.matrix(usge),
-            as.matrix(detparmat),  # matrix 2022-07-04
-            as.double(NT),         # vector 2022-06-13
-            as.integer(detectfn), 
-            as.integer(detectcode), 
-            as.integer(nontargetcode),
-            0, 
-            0, 
-            rep(0, noccasions))    # binomN 0 = Poisson count if count detector
-     
-        if (temp$resultcode != 0) {
-            stop ("simulated detection failed, code ", temp$resultcode)
+            as.matrix(detparmat),
+            as.double(NT),
+            as.integer(binomN),
+            as.integer(detectfn),
+            as.integer(detectcode),
+            as.integer(nontargetcode))
+        
+        dimnames(w) <- list(1:nrow(w), 1:noccasions, NULL)
+        if (nrow(w)>0) {
+            ## strip nontarget detections from last row of array
+            if (nontargetcode>0) {
+                nontarget <- t(array(w[nrow(w),,], dim=dim(w)[2:3]))
+                w <- w[-nrow(w),,, drop = FALSE]
+            }
+            else {
+                nontarget <- NULL
+            }
         }
-        w <- array(temp$CH, dim = c(nrow(popn), noccasions, K),
-            dimnames = list(1:nrow(popn), 1:noccasions, NULL))
-        w <- w[apply(w,1,sum)>0,,, drop = FALSE] 
+        #-----------------------------------------------------------
+        
+        ## drop empty capture histories
+        w <- w[apply(w,1,sum)>0,,, drop = FALSE]
+        
         class(w)   <- 'capthist'
         if (nontargetcode > 0) {
-            attr(w, 'nontarget') <- temp$nontarget
+            attr(w, 'nontarget') <- nontarget
         }
         traps(w)   <- traps
         w
+      
     }
 }
