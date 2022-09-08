@@ -158,7 +158,7 @@ ipsecr.fit <- function (
             details$nontargettype <- 'truncated'   # downgrade for these detectors
         }
     }
-    
+
     sessionlevels <- session(capthist)
     if (ms(capthist)) {
         nsessions <- length(capthist)

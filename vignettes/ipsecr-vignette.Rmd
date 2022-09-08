@@ -1,5 +1,5 @@
 ---
-title: '**ipsecr** 1.2 - spatially explicit capture--recapture by inverse prediction'
+title: '**ipsecr** 1.3 - spatially explicit capture--recapture by inverse prediction'
 author: "Murray Efford"
 date: "`r Sys.Date()`"
 output: 
@@ -16,11 +16,11 @@ header-includes:
 
 \vspace{12pt}
 
-This document provides an overview of **ipsecr** 1.2, an R package for spatially explicit capture--recapture analysis (SECR) that uses simulation and inverse prediction instead of maximum likelihood, as in **secr** (Efford 2022), or MCMC, as in various Bayesian approaches. The parent package **secr** included the function `ip.secr`; **ipsecr** extends the capability of that function in its central function `ipsecr.fit` whose arguments are closely modelled on `secr.fit` from **secr**. 
+This document provides an overview of **ipsecr** 1.3, an R package for spatially explicit capture--recapture analysis (SECR) that uses simulation and inverse prediction instead of maximum likelihood, as in **secr** (Efford 2022), or MCMC, as in various Bayesian approaches. The parent package **secr** included the function `ip.secr`; **ipsecr** extends the capability of that function in its central function `ipsecr.fit` whose arguments are closely modelled on `secr.fit` from **secr**. 
 
 Simulation and inverse prediction allows some models to be fitted that strictly cannot be fitted by other methods. Single-catch traps are a common example.
 
-There are limitations: **ipsecr** 1.2 allows variation in detection parameters (e.g., $\lambda_0$, $\sigma$) only with respect to individual and session. This excludes variation with respect to occasion, detector or previous detection (e.g., ~t, ~b or ~bk as allowed in **secr**). **ipsecr** does allow variation in $\lambda_0$ and $\sigma$ that depends on the location of each animal's activity centre, which is not allowed in **secr**.  
+There are limitations: **ipsecr** 1.3 allows variation in detection parameters (e.g., $\lambda_0$, $\sigma$) only with respect to individual and session. This excludes variation with respect to occasion, detector or previous detection (e.g., ~t, ~b or ~bk as allowed in **secr**). **ipsecr** does allow variation in $\lambda_0$ and $\sigma$ that depends on the location of each animal's activity centre, which is not allowed in **secr**.  
 
 # Inverse prediction for capture--recapture estimation
 
@@ -107,22 +107,22 @@ proxy.ms(captdata)
 
 `proxy.ms` works for models with variation in parameters D and NT. Detection parameters may vary spatially and by session. Users are free to define their own proxyfn.
 
-Changing the proxy function may have little effect on the estimates. Here we demonstrate an older builtin proxy function `proxyfn0` (not included in **ipsecr** 1.2):
+Changing the proxy function may have little effect on the estimates. Here we demonstrate an older builtin proxy function `proxyfn1`:
 
 
 ```{r compareproxy0, eval = runall, purl = FALSE}
-ip.single.0 <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN', proxyfn = proxyfn0, 
-  verbose = FALSE)
+ip.single.1 <- ipsecr.fit(captdata, buffer = 100, detectfn = 'HHN', proxyfn = proxyfn1, 
+    N.estimator = "null", verbose = FALSE)
 ```
 
 ```{r compareproxy1}
 # secr function 'collate' works for both secr and ipsecr fits 
-collate(ip.single, ip.single.0)[1,,,]
+collate(ip.single, ip.single.1)[1,,,]
 ```
 
 # Multi-session models
 
-Data may take the form of independent samples. Models are constructed as in **secr** ([secr-multisession.pdf]). In **ipsecr  1.2**, density D, detection parameters, and non-target NT parameters may all depend on session or session covariates as in **secr**.
+Data may take the form of independent samples. Models are constructed as in **secr** ([secr-multisession.pdf]). In **ipsecr  1.3**, density D, detection parameters, and non-target NT parameters may all depend on session or session covariates as in **secr**.
 
 # Fitting a density gradient
 
@@ -158,7 +158,7 @@ plot(tr, add = TRUE)
 plotMaskEdge(ipx$mask, add=T)
 ```
 
-The fitted relationship is linear on the log scale, whereas it was simulated as linear on the natural scale. To better match the original it is possible to use an identity link for D. 
+The fitted relationship is linear on the log scale, whereas it was simulated as linear on the natural scale. To better match the original trend it is possible to use an identity link for D. 
 
 ```{r Dsurfacetrend, fig.width = 6, fig.height = 4}
 oldpar <- par(mar = c(4,6,4,4))
@@ -298,7 +298,7 @@ The first and last rows are centre points.
 For other designs you may specify the desired arguments of FrF2 as a list e.g., `details = list(factorial = 'fractional', FrF2args = list(nruns = 4, nfactors = 3, ncenter = 3))`. 
 
 ```{r saveall, echo = FALSE, eval = runall}
-save(ip.single, ip.single.0, ip.single.nontarget, ipx, 
+save(ip.single, ip.single.1, ip.single.nontarget, ipx, 
       file = 'd:/density secr 4.5/ipsecr/inst/example/fittedmodels.RData')
 save(ip.Fr, file = 'd:/density secr 4.5/ipsecr/inst/example/ip.Fr.RData')
 tools::resaveRdaFiles(paste0('d:/density secr 4.5/ipsecr/inst/example'),'xz')
@@ -336,10 +336,12 @@ Functions from **secr** that work on fitted 'ipsecr' objects as-is
 
 # Troubleshooting and limitations
 
-**ipsecr 1.2** is not intended for models with many sessions or many covariates. 
+**ipsecr 1.3** is not intended for models with many sessions or many covariates. 
 
 This version does not allow for variation in detection parameters 
 (g0, lambda0, sigma) among occasions (e.g., g0~t, g0~b, g0~bk).
+
+Only 2-parameter detection functions are allowed in `ipsecr.fit` (HN, EX, UN, HHN, HEX) (see ?detectfn). 3-parameter functions are simulated by `simCH`, but proxies for the shape parameter have not been explored (maybe some sample measure of bivariate skewness or tail weight).
 
 ## Sparse data
 
