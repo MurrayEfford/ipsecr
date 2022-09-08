@@ -46,7 +46,7 @@ simpop <- function (mask, D, N, details = list()) {
         
         # add mask covariates (could make conditional on details argument)
         if (!is.null(covariates(mask))) {
-            class(pop) <- 'traps'  # fool addCovariates secr <= 4.5.6
+            class(pop) <- c('traps', 'data.frame')  # fool addCovariates secr <= 4.5.6
             pop <- addCovariates(pop, mask)   # add all
             class(pop) <- c('popn','data.frame')
         }
