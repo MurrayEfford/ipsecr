@@ -1,4 +1,4 @@
-# 2022-03-31, 2022-04-19, 2022-07-06, 2022-08-25
+# 2022-03-31, 2022-04-19, 2022-07-06, 2022-08-25, 2022-09-07
 
 import (secr)
 import (parallel)
@@ -69,5 +69,6 @@ S3method(vcov, ipsecr)
 importFrom (Rcpp, evalCpp)
 
 useDynLib (ipsecr, .registration = TRUE)
+
 ## DEBUGGING ONLY (cpp functions not documented)
 ## exportPattern("*cpp")
