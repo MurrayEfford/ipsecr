@@ -88,7 +88,7 @@ ipsecr.fit <- function (
     if (is.character(detectfn)) {
         detectfn <- detectionfunctionnumber(detectfn)
     }
-    if (!(detectfn %in% c(0,2,4, 14,16))) {
+    if (!(detectfn %in% c(0,2,4,14,16))) {
         stop (detectionfunctionname(detectfn),
             " detection function not implemented in ipsecr.fit")
     }
@@ -639,7 +639,9 @@ ipsecr.fit <- function (
         sim <- NULL
         alldesignbeta <- NULL
         tempdistn <- if (details$distribution == 'even') 'even' else 'binomial'
+        
         basedesign <- designbeta[rep(1:nrow(designbeta), details$min.nsim),]
+
         # accumulate simulations until reach precision target or exceed max.nsim
         tries <- 0
         repeat {
@@ -684,7 +686,8 @@ ipsecr.fit <- function (
                 dev <- sapply(sum.sim.lm, function(x) x$sigma) / y / sqrt(nrow(sim))
             }
             # break if have achieved target precision
-            if (!is.null(dev) && !any(is.na(dev)) && all(dev <= dev.max[m])) break
+            devOK <- dev <= dev.max[m]
+            if (!is.null(dev) && !any(is.na(dev)) && all(devOK)) break
             #-------------------------------------------------------------------
         }
         
@@ -799,11 +802,6 @@ ipsecr.fit <- function (
 
         bootstrap <- data.frame (target = y, nsim = nsim, simulated = ymean,
             SE.simulated = yse, q025 = yq[1,], median = yq[2,], q975 = yq[3,])
-        
-        ## biasest not reported, yet
-        # yest <- as.numeric(B %*% matrix((ymean - lambda), ncol = 1))
-        # biasest <- data.frame (estimate = 100 * (beta - yest) / yest,
-        #     SE = 100 * (beta - yest) / yest)
         
     } 
     else {

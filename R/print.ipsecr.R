@@ -32,7 +32,6 @@ print.ipsecr <- function (x, newdata = NULL, alpha = 0.05, call = TRUE, ...) {
         cat ('Count model     :  ')
         if (x$details$binomN == 0) cat ('Poisson \n')
         else if (x$details$binomN == 1) cat ('Binomial, size from usage\n')
-        else if (x$details$binomN < 0) cat ('Negative binomial k = ', abs(x$details$binomN), '\n')
         else if (x$details$binomN > 1) cat('Binomial', x$details$binomN, '\n')
     }
     
