@@ -14,7 +14,7 @@ Rcpp::IntegerVector oneMultinomCall(Rcpp::NumericVector probs, int N) {
 // [[Rcpp::export]]
 Rcpp::NumericMatrix popcpp (
         const Rcpp::NumericMatrix &mask,  // x-y coord
-        Rcpp::NumericVector &prob,     // cell probability)
+        Rcpp::NumericVector &prob,        // cell probability)
         double &maskspacing,
         int &N) {
     
