@@ -49,3 +49,4 @@ test_that("simulated Poisson and even populations have expected spacing", {
         tolerance = 1e-4, check.attributes = FALSE)
 })
 ###############################################################################
+
