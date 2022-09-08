@@ -1,14 +1,15 @@
-Changes in version 1.2.1 (2022-09-02)
+Changes in version 1.3.0 (2022-09-07)
 
 New features or changed behaviour of old functions
-    o   improved simulator for single-catch traps
+    o   improved simulator (estimates differ slightly)
 
 Bugs fixed
-    o   inconsistent single-catch results on macos-arm64 (M1 Big Sur) 
+    o   inconsistent single-catch results on arm64 ('M1') Mac
 
 Other
     o   explicit RNGkind in tests
     o   vignette edits
+    o   simCH uses RcppArmadillo
 
 Changes in version 1.2.0 (2022-08-29)
 
