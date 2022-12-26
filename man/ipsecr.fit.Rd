@@ -103,6 +103,7 @@ also described separately - see \code{\link{details}}.
   CHmethod \tab `internal' \tab `internal' or `sim.capthist' or a user-provided function \cr
   factorial \tab `full' \tab `full' or `fractional' design \cr
   FrF2args \tab NULL \tab arguments for FrF2 when factorial = 'fractional' \cr
+  extraparam \tab NULL \tab list of starting values for extra parameters (see vignette) \cr
 
 }
 

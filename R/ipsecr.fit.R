@@ -3,6 +3,7 @@
 ## ipsecr.fit.R
 ## 2022-04-01,18,19, 2022-05-08, 2022-06-11
 ## 2022-06-13 lambdak renamed NT
+## 2022-12-21 etc. allow extra parameters
 ###############################################################################
 
 ipsecr.fit <- function (
@@ -124,7 +125,8 @@ ipsecr.fit <- function (
         factorial    = 'full',
         FrF2args     = NULL,
         YonX         = TRUE,
-        param        = 0               ## needed by 'secr'
+        param        = 0,               ## needed by 'secr'
+        extraparam   = NULL
     )
     if (any(!(names(details) %in% names(defaultdetails)))) {
         stop ("details list includes invalid name")
@@ -163,8 +165,8 @@ ipsecr.fit <- function (
     if (ms(capthist)) {
         nsessions <- length(capthist)
         noccasions <- sapply(capthist, ncol)
-        if (details$popmethod == 'sim.pop' && packageVersion('secr') < '4.5.6') {
-            stop ("simulation of multi-session population with sim.pop requires secr >= 4.5.6")
+        if (details$popmethod == 'sim.popn' && packageVersion('secr') < '4.5.6') {
+            stop ("simulation of multi-session population with sim.popn requires secr >= 4.5.6")
         }
         if (!is.null(mask) && !ms(mask)) {
             ## inefficiently replicate mask for each session!
@@ -236,19 +238,25 @@ ipsecr.fit <- function (
     fnames <- names(fixed)
     
     #################################################
+    ## parameter names
+    #################################################
+    pnames <- valid.pnames (details, FALSE, detectfn, FALSE, FALSE, 1)
+    extrapnames <- extraParNames(details, fixed)  # estimated user parameters
+    if (modelnontarget) pnames <- c(pnames, 'NT')
+
+    #################################################
     ## build default model and update with user input
     #################################################
     
     defaultmodel <- list(D=~1, g0=~1, lambda0=~1, sigma=~1, z=~1, w=~1, NT=~1)
     defaultmodel <- replace (defaultmodel, names(model), model)
-    
-    #################################################
-    ## parameter names
-    #################################################
-    
-    pnames <- valid.pnames (details, FALSE, detectfn, FALSE, FALSE, 1)
-    if (modelnontarget) pnames <- c(pnames, 'NT')
-    
+    for (p in extrapnames) {
+        defaultmodel[[p]] <- ~1
+    }
+    for (f in fnames) {
+        if (f %in% names(details$extraparam)) details$extraparam[[f]] <- fixed[[f]]
+    }
+
     #################################################
     ## test for irrelevant parameters in user's model
     #################################################
@@ -276,7 +284,8 @@ ipsecr.fit <- function (
     #################################################
     
     defaultlink <- list(D = 'log', g0 = 'logit', lambda0 = 'log', sigma = 'log', NT = 'log')
-    link <- replace (defaultlink, names(link), link)
+    defaultextralink <- setNames(as.list(rep('log',length(extrapnames))), extrapnames)
+    link <- replace (c(defaultlink, defaultextralink), names(link), link)
     link[!(names(link) %in% pnames)] <- NULL
     
     ############################################
@@ -336,7 +345,14 @@ ipsecr.fit <- function (
     detbetanames <- detBetaNames(popn, model, detectfn, sessionlevels, fixed, details)
     nDetectionParameters <- sapply(detbetanames, length)
     
-    np <- c(D = nDensityParameters, nDetectionParameters, NT = nNTParameters)
+    if (length(extrapnames)>0) {
+        nExtraParameters <- sapply(extrapnames, length)
+    }
+    else {
+        nExtraParameters <- 0
+    }
+    
+    np <- c(D = nDensityParameters, nDetectionParameters, NT = nNTParameters, nExtraParameters)
     NP <- sum(np)
     parindx <- split(1:NP, rep(1:length(np), np))
     names(parindx) <- names(np)[np>0]
@@ -350,6 +366,10 @@ ipsecr.fit <- function (
     if (nNTParameters>0) {
         betanames <- c(betanames, paste('NT', NTnames, sep='.'))
     }
+    if (any(nExtraParameters>0)) {
+        betanames <- c(betanames, extrapnames)  # assume one beta per extrapname
+    }
+    
     betanames <- sub('..(Intercept))','',betanames)
     
     ###########################################
@@ -388,6 +408,12 @@ ipsecr.fit <- function (
             NT <- NULL
         }
         
+        if (any(nExtraParameters>0)) {
+            for (parm in extrapnames) {
+                details$extraparam[[parm]] <- untransform (beta[parm], link[[parm]])
+            }
+        }
+       
         repeat {
             
             #------------------------------------------------
@@ -402,6 +428,10 @@ ipsecr.fit <- function (
                 popn <- sim.popn (D = as.data.frame(D), core = mask, 
                     model2D = 'IHP', Ndist = Ndist, nsessions = nsessions)
             }
+            
+            if (details$debug) print(summary(popn))
+            
+            
             # abort if no animals to sample
             if ((nsessions == 1 && length(popn)<2) || (nsessions>1 && any(sapply(popn,length)<2))) {
                 warning ("ipsecr.fit: no animals in simulated population", call. = FALSE)
@@ -521,15 +551,17 @@ ipsecr.fit <- function (
     ##########################################
     ## starting values
     ##########################################
-    ## ad hoc exclusion of NT 2022-05-06
+    ## ad hoc exclusion of NT and extra parameters
     details$trace <- verbose  # as used by makeStart
-    start <- makeStart(start, parindx[names(parindx) != 'NT'], 
-        capthist, mask, detectfn, link, details, fixed)
+    start <- makeStart(start, parindx[!(names(parindx) %in% c('NT', extrapnames))], 
+        capthist, mask, detectfn, link, details[names(details) != 'extraparam'], fixed)
     if (modelnontarget) {
         start <- c(start, y[parindx$NT])
     }
-    
-    ############################################
+    if (length(extrapnames)>0) {
+        extrastart <- mapply(transform, details$extraparam[extrapnames], link[extrapnames], SIMPLIFY = FALSE)
+        start <- c(start, unlist(extrastart))
+    }
     # Fixed beta parameters
     ############################################
     fb <- details$fixedbeta
@@ -562,9 +594,9 @@ ipsecr.fit <- function (
                 "model", "trapdesigndata", "parindx", 
                 "designD", "designNT", "modelnontarget", "cellarea"
                 # following are exported only during testing
-                # ,"getD", "untransform", "simpop", "simCH", "ms", "getDetParMat", 
-                # "parnames", "getDetDesignData", "covariates", "invlogit", 
-                # "usage", "detector", "CHcpp", "traps<-", "MS.capthist"
+                # ,"getD", "untransform", "simpop", "simCH", "ms", "getDetParMat",
+                # "parnames", "getDetDesignData", "covariates", "invlogit",
+                # "usage", "detector", "armaCHcpp", "traps<-", "MS.capthist"
                 ), 
                 environment())
         }

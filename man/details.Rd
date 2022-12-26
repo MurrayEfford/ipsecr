@@ -57,6 +57,8 @@ density. The component `distribution' may also
 take a numeric value larger than nrow(capthist), rather than "binomial"
 or "poisson". 
 
+\code{extraparam} is a list of starting values for extra 'real' parameters that may be needed for some user-specified models. See the vignette for explanation and an example.
+
 \code{factorial} (default "full") chooses between "full" or "fractional" design. Fractional requires the package **FrF2** (Groemping 2014).
 
 \code{FrF2args} (default NULL) provides a list of arguments defining a fractional design.

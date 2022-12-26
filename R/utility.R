@@ -2,7 +2,7 @@
 ## ipsecr/R/utility.R
 #######################################################################################
 
-## 2022-04-04, 2022-05-04, , 2022-05-09
+## 2022-04-04, 2022-05-04, 2022-05-09, 2022-12-26
 #######################################################################################
 
 # Global variables in namespace
@@ -11,8 +11,8 @@
 
 .localstuff <- new.env()
 
-## .localstuff$packageType <- ' pre-release'
-.localstuff$packageType <- ''
+.localstuff$packageType <- ' pre-release'
+##.localstuff$packageType <- ''
 
 .localstuff$countdetectors <- c('count','polygon','transect','unmarked','telemetry')
 .localstuff$detectionfunctions <-
@@ -109,15 +109,11 @@ valid.pnames <- function (details, CL, detectfn, alltelem, sighting, nmix) {
         c('lambda0','sigma','z'),  # 19
         c('lambda0','sigma'))      # 20 hazard pixelar 2021-03-25    
 
-    if (details$param %in% c(2,6))
-        pnames[1] <- 'esa'
-    if (details$param %in% c(3,5))
-        pnames[1] <- 'a0'
-    if (details$param %in% 4:6) {
-        pnames[2] <- 'sigmak'
-        pnames <- c(pnames, 'c')
-        pnames <- c(pnames, 'd')
+    # 2022-12-21 extended to allow user-defined parameters
+    if (!is.null(details$extraparam)) {
+        pnames <- c(pnames, names(details$extraparam))
     }
+    if (details$param>0) warning ("details$param>0 is not recognised by ipsecr.fit")
     c('D', pnames)
 }
 #-------------------------------------------------------------------------------
@@ -630,6 +626,17 @@ detBetaNames <- function(popn, model, detectfn, sessionlevels, fixed = NULL,
     names(out) <- detectparnames
     out
     
+}
+################################################################################
+
+# return names of extra parameters 2022-12-21
+extraParNames <- function (details, fixed) {
+    if (!is.null(details$extraparam)) {
+        out <- names(details$extraparam)
+        out <- out[!(out %in% names(fixed))]
+        out
+    }
+    else character(0)
 }
 ################################################################################
 
