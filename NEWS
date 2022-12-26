@@ -1,7 +1,10 @@
-Changes in version 1.3.1 (2022-09-08)
+Changes in version 1.4.0 (2022-12-27)
 
 New features or changed behaviour of old functions
-    o   none
+    o   user-defined extra parameters in ipsecr.fit
+
+Other
+    o   suggests spatstat (for example in vignette)
 
 Changes in version 1.3.0 (2022-09-07)
 
