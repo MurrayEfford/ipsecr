@@ -1,5 +1,5 @@
 ---
-title: '**ipsecr** 1.3 - spatially explicit capture--recapture by inverse prediction'
+title: '**ipsecr** 1.4 - spatially explicit capture--recapture by inverse prediction'
 author: "Murray Efford"
 date: "`r Sys.Date()`"
 output: 
@@ -16,11 +16,11 @@ header-includes:
 
 \vspace{12pt}
 
-This document provides an overview of **ipsecr** 1.3, an R package for spatially explicit capture--recapture analysis (SECR) that uses simulation and inverse prediction instead of maximum likelihood, as in **secr** (Efford 2022), or MCMC, as in various Bayesian approaches. The parent package **secr** included the function `ip.secr`; **ipsecr** extends the capability of that function in its central function `ipsecr.fit` whose arguments are closely modelled on `secr.fit` from **secr**. 
+This document provides an overview of **ipsecr** 1.4, an R package for spatially explicit capture--recapture analysis (SECR) that uses simulation and inverse prediction instead of maximum likelihood, as in **secr** (Efford 2022), or MCMC, as in various Bayesian approaches. The parent package **secr** included the function `ip.secr`; **ipsecr** extends the capability of that function in its central function `ipsecr.fit` whose arguments are closely modelled on `secr.fit` from **secr**. 
 
 Simulation and inverse prediction allows some models to be fitted that strictly cannot be fitted by other methods. Single-catch traps are a common example.
 
-There are limitations: **ipsecr** 1.3 allows variation in detection parameters (e.g., $\lambda_0$, $\sigma$) only with respect to individual and session. This excludes variation with respect to occasion, detector or previous detection (e.g., ~t, ~b or ~bk as allowed in **secr**). **ipsecr** does allow variation in $\lambda_0$ and $\sigma$ that depends on the location of each animal's activity centre, which is not allowed in **secr**.  
+There are limitations: **ipsecr** 1.4 allows variation in detection parameters (e.g., $\lambda_0$, $\sigma$) only with respect to individual and session. This excludes variation with respect to occasion, detector or previous detection (e.g., ~t, ~b or ~bk as allowed in **secr**). **ipsecr** does allow variation in $\lambda_0$ and $\sigma$ that depends on the location of each animal's activity centre, which is not allowed in **secr**.  
 
 # Inverse prediction for capture--recapture estimation
 
@@ -122,7 +122,7 @@ collate(ip.single, ip.single.1)[1,,,]
 
 # Multi-session models
 
-Data may take the form of independent samples. Models are constructed as in **secr** ([secr-multisession.pdf]). In **ipsecr  1.3**, density D, detection parameters, and non-target NT parameters may all depend on session or session covariates as in **secr**.
+Data may take the form of independent samples. Models are constructed as in **secr** ([secr-multisession.pdf]). In **ipsecr  1.4**, density D, detection parameters, and non-target NT parameters may all depend on session or session covariates as in **secr**.
 
 # Fitting a density gradient
 
@@ -297,12 +297,85 @@ The first and last rows are centre points.
 
 For other designs you may specify the desired arguments of FrF2 as a list e.g., `details = list(factorial = 'fractional', FrF2args = list(nruns = 4, nfactors = 3, ncenter = 3))`. 
 
-```{r saveall, echo = FALSE, eval = runall}
-save(ip.single, ip.single.1, ip.single.nontarget, ipx, 
-      file = 'd:/density secr 4.5/ipsecr/inst/example/fittedmodels.RData')
-save(ip.Fr, file = 'd:/density secr 4.5/ipsecr/inst/example/ip.Fr.RData')
-tools::resaveRdaFiles(paste0('d:/density secr 4.5/ipsecr/inst/example'),'xz')
+# Models with extra parameters
+
+Extensions of **ipsecr** may involve the estimation of additional 'real' parameters (i.e. parameters other than D, g0, lambda0, sigma or NT). Extra parameters should be specified in the details argument 'extraparam', a named list with the numeric starting value of each parameter. Extra parameters are assumed to be constant: their corresponding models are set automatically to ~1. Extra parameters are passed internally to user-defined simulation functions via the 'details' argument.
+
+Our example fits a clumped distribution of activity centres instead of the usual Poisson distribution. This uses a form of Neyman-Scott clustering (a Thomas distribution). The Thomas distribution draws cluster 'parent' points from a uniform (Poisson) distribution and places a Poisson random number of centres in a bivariate normal pattern around each parent. Parameters to be estimated are the overall intensity (density D), the expected number of centres per parent (mu), and the spatial spread of each cluster (named hsigma, following the cluster option in `secr::sim.popn`). Experimentation suggests that SECR data are usually inadequate to estimate both mu and hsigma, but there are biologically interesting scenarios for which hsigma may be considered known: specifically, clumped groups of animals sharing an activity centre may be modelled with hsigma = $\epsilon$ where $\epsilon$ is a small positive distance (e.g. 1 metre).
+
+We proceed to estimate mu and fix hsigma. This requires a custom function for simulation and a custom proxy function. Simulation is straightforward - just a wrapper around the function from secr. For a cluster proxy we fit a Thomas distribution in **spatstat** (Baddeley and Turner 2005). This proxy is one of several possibilities, none obviously better than the rest. This requires that **spatstat** has been installed. Note the use of '::' and the full name of external functions (including from **secr**).
+
+
+```{r extraparamfn}
+# user function to simulate Neyman-Scott distribution of activity centres
+# expect parameters mu and hsigma in list 'details$extraparam'
+simclusterpop <- function (mask, D, N, details) {
+    secr::sim.popn(
+        D = D[1], 
+        core = mask, 
+        buffer = 0, 
+        Ndist = 'poisson',    # necessary for N-S cluster process
+        model2D = 'cluster', 
+        details = details$extraparam)
+}
+
+# extend the built-in proxy with clumping argument mu
+# spatstat fits Thomas process parameters kappa and scale = hsigma^2
+# mu is a model parameter derived from mu = D / kappa
+clusterproxyT <- function (capthist, ...) {
+    pr <- ipsecr::proxy.ms(capthist)
+    pp <- spatstat.geom::as.ppp(secr::centroids(capthist), 
+        W = as.numeric(apply(secr::traps(capthist),2,range)))
+    tfit <- spatstat.core::thomas.estK(pp)
+    c(pr, logmu = log(tfit$modelpar['mu']))
+}
 ```
+
+Simulate some test data:
+
+```{r extraparamdata}
+grid <- make.grid(nx = 10, ny = 10, spacing = 20, detector = 'proximity')
+msk <- make.mask(grid, buffer = 100)
+set.seed(123)
+pop <- sim.popn(D = 20, core = grid, buffer = 100, model2D = 'cluster', 
+    details = list(mu = 5, hsigma = 1))
+ch <- sim.capthist(grid, pop, detectfn = 14, detectpar = 
+        list(lambda0 = 0.2, sigma = 20), noccasions = 5)
+plot(ch, border = 20)
+```
+
+Next, call `ipsecr.fit` with these customizations:
+
+* user proxyfn    : clusterproxyT
+* user popmethod  : simclusterpop
+* user parameters : mu, hsigma
+* fixed parameter : hsigma = 1
+
+```{r extraparamdemo, eval = requireNamespace("spatstat") && runall}
+clusterfitT <- ipsecr.fit(ch, proxyfn = clusterproxyT, mask = msk, 
+    detectfn = 'HHN', details = list(popmethod = simclusterpop, 
+    extraparam = list(mu = 5, hsigma = NA)), fixed = list(hsigma = 1))
+```
+
+```{r clusterresults}
+predict(clusterfitT)
+```
+
+The results are not very impressive (wide confidence intervals on both $\hat D$ and $\hat \mu$), but at least mu can be estimated. Let's compare with the MLE assuming a Poisson distribution of activity centres:
+
+```{r clusterfitML, eval = runall}
+clusterfitML <- secr.fit(ch, mask = msk, detectfn = 'HHN', trace = FALSE)
+```
+```{r clustercompareML}
+predict(clusterfitML)
+```
+
+If the concern is to correct for the effect of clumping on the confidence interval for overall density then we would be better to apply a simple adjustment for overdispersion. Fletcher's c-hat (computed from the number of animals per detector) is 2.98, which suggests a more modest inflation of the variance estimate (below). Time-consuming simulations would be needed to determine which is the better approach, but I'm guessing it is Fletcher's c-hat.
+
+```{r adjustvard}
+secr::adjustVarD(clusterfitML)
+```
+ 
 
 # Relationship to package **secr** {#methods}
 
@@ -336,7 +409,7 @@ Functions from **secr** that work on fitted 'ipsecr' objects as-is
 
 # Troubleshooting and limitations
 
-**ipsecr 1.3** is not intended for models with many sessions or many covariates. 
+**ipsecr 1.4** is not intended for models with many sessions or many covariates. 
 
 This version does not allow for variation in detection parameters 
 (g0, lambda0, sigma) among occasions (e.g., g0~t, g0~b, g0~bk).
@@ -361,7 +434,17 @@ Review the 'Variance bootstrap' table of verbose output.
 It seems ipsecr.fit is not converging on the right part of the parameter space. 
 Try specifying a wider boxsize1 for the first box, or set starting values. 
 
+```{r saveall, echo = FALSE, eval = runall}
+save(ip.single, ip.single.1, ip.single.nontarget, ipx, clusterfitT, clusterfitML,
+      file = 'd:/density secr 4.5/ipsecr/inst/example/fittedmodels.RData')
+save(ip.Fr, file = 'd:/density secr 4.5/ipsecr/inst/example/ip.Fr.RData')
+tools::resaveRdaFiles(paste0('d:/density secr 4.5/ipsecr/inst/example'),'xz')
+```
+
 # References
+
+Baddeley, A. and Turner, R. (2005) spatstat: An R package for analyzing spatial point
+  patterns. *Journal of Statistical Software* **12**, 1--42. DOI: 10.18637/jss.v012.i06
 
 Borchers, D. L. and Efford, M. G. (2008) Spatially explicit maximum likelihood methods for capture--recapture studies. *Biometrics* **64**, 377--385.
 
