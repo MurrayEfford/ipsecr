@@ -2,7 +2,7 @@ Package: ipsecr
 Type: Package
 Title: Spatially Explicit Capture-Recapture by Inverse Prediction
 Version: 1.4.0
-Date: 2022-12-27
+Date: 2023-01-01
 Description: Estimates the density of a spatially distributed animal population 
   sampled with an array of passive detectors, such as traps. Models incorporating 
   distance-dependent detection are fitted by simulation and inverse prediction 
@@ -31,7 +31,8 @@ Suggests:
     plot3D , 
     rmarkdown, 
     sf,   
-    spatstat,
+    spatstat.core,
+    spatstat.geom,
     testthat (>= 0.11.0)
 LinkingTo: 
     BH,
