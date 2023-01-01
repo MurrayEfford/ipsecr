@@ -1,6 +1,5 @@
 #include "ipsecr.h"
 using namespace Rcpp;
-using std::exp;
 
 // use R random number functions to control the seed
 
@@ -114,10 +113,22 @@ arma::ucube armaCHcpp(
     if (detectfn < 14 && !binomial) {
         // convert detectfn p to hazard; may be zero
         hik = -arma::log(1-hik);
+        // for safety, given drama with arma::exp 2023-01-01
+        for (i=0; i<N; i++) {
+            for (k=0; k<K; k++) {
+                hik(i,k) = -std::log(1 - hik(i,k));
+            }
+        }
     }
     if (detectfn >= 14 && binomial) {
-        // convert hazard to detectfn p t
-        hik = 1 - arma::exp(-hik);
+        // convert detectfn hazard to probability
+        // hik = 1 - arma::exp(-hik);
+        // for safety, given drama with arma::exp 2023-01-01
+        for (i=0; i<N; i++) {
+            for (k=0; k<K; k++) {
+                hik(i,k) = 1 - std::exp(- hik(i,k));
+            }
+        }
     }
     
     if(debug) Rprintf("arma check 3\n");
