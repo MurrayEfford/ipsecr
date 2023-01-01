@@ -8,7 +8,7 @@
 # 2022-07-04 distribution replaced by details$distribution
 # 2022-07-04 class popn
 
-simpop <- function (mask, D, N, details = list()) {
+simpop <- function (mask, D, N, details = list(), ...) {
     if (ms(mask)) {
         tmp <- mapply(simpop, 
             mask = mask, 

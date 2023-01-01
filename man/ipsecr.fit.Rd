@@ -74,6 +74,11 @@ ipsecr.fit(capthist, proxyfn = proxy.ms, model = list(D ~ 1, g0 ~ 1, sigma ~ 1),
 
 The vignette should be consulted for a full exposition.
 
+\subsection{Parallel computation}{
+\code{ncores} determines the number of worker processes in a cluster created by \code{\link{makeCluster}} (default type "FORK" on Unix platforms, otherwise "PSOCK"). If \code{ncores = NULL} this defaults to the value from \code{\link{setNumThreads}}. Simulations are distributed over worker processes using \code{\link{parRapply}}. There are substantial overheads in running multiple processes: using too many will slow down fitting. With PSOCK clusters (i.e. on Windows) fitting is very often fastest with ncores = 1.
+}
+
+\subsection{The `details' argument}{
 \code{details} is used for various specialized settings listed below. These are 
 also described separately - see \code{\link{details}}.
 
@@ -97,14 +102,15 @@ also described separately - see \code{\link{details}}.
   ignoreusage \tab FALSE \tab override usage in traps object of capthist \cr
   debug \tab FALSE \tab stop at arbitrary points in execution (varies) \cr
   savecall \tab TRUE \tab optionally suppress saving of call \cr
-  newdetector \tab NULL \tab detector type to override detector(traps(capthist)) \cr
+  newdetector \tab NULL \tab detector type that overrides detector(traps(capthist)) \cr
   contrasts \tab NULL \tab coding of factor predictors \cr
   popmethod \tab `internal' \tab `internal' or `sim.popn' or a user-provided function \cr
   CHmethod \tab `internal' \tab `internal' or `sim.capthist' or a user-provided function \cr
   factorial \tab `full' \tab `full' or `fractional' design \cr
   FrF2args \tab NULL \tab arguments for FrF2 when factorial = 'fractional' \cr
   extraparam \tab NULL \tab list of starting values for extra parameters (see vignette) \cr
-
+  forkonunix \tab TRUE \tab logical choice between FORK and PSOCK cluster types (not Windows) \cr
+}
 }
 
 }

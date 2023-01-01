@@ -24,8 +24,9 @@ proxy.ms(capthist, model = NULL, trapdesigndata = NULL, ...)
 
 proxyfn1(capthist, N.estimator =  c("n", "null","zippin","jackknife"), ...)
 
-simpop(mask, D, N, details = list())
-simCH(traps, popn, detectfn, detparmat, noccasions, NT = NULL, details = list())
+simpop(mask, D, N, details = list(), ...)
+simCH(traps, popn, detectfn, detparmat, noccasions, NT = NULL, details = 
+    list(), ...)
       
 rpsv(capthist)
 rpsvi(capthist)
@@ -37,7 +38,7 @@ rpsvi(capthist)
   \item{capthist}{secr capthist object}
   \item{model}{named list of model formulae (see \code{\link{ipsecr.fit}})}
   \item{trapdesigndata}{dataframe with one row for each detector and session}
-  \item{...}{other arguments}
+  \item{...}{other arguments, mostly unused}
   \item{N.estimator}{character name of closed-population estimator}
  
   \item{mask}{ secr mask object}

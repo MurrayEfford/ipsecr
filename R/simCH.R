@@ -8,7 +8,7 @@
 # function simCH is used by ipsecr.fit for CHmethod 'internal'
 
 simCH <- function (traps, popn, detectfn, detparmat, noccasions, NT = NULL, 
-    details = list()) {
+    details = list(), ...) {
     if (ms(traps)) {
         # detparmat should be list of matrices
         if (!is.list(detparmat)) detparmat <- list(detparmat)
@@ -24,6 +24,7 @@ simCH <- function (traps, popn, detectfn, detparmat, noccasions, NT = NULL,
         MS.capthist(tmp)
     }
     else {
+        if (is.null(details$debug)) details$debug <- FALSE
         K <- nrow(traps)
         usge <- usage(traps)
         if (is.null(usge)) {
@@ -58,21 +59,36 @@ simCH <- function (traps, popn, detectfn, detparmat, noccasions, NT = NULL,
 
         binomN <- 0  # Poisson count if count detector
         binomN <- rep(binomN, length.out = noccasions)
-        
+        ptdist <- edist(popn, traps)
         #-----------------------------------------------------------
         # new code 1.3.0 2022-09-07
         
+         if (details$debug) {
+             cat ('starting armaCHcpp\n')
+             cat ('dim p-t dist   ', dim(ptdist), '\n')
+             cat ('range p-t dist ', range(ptdist), '\n')
+             cat ('dim usge       ', dim(usge), '\n')
+             cat ('dim detparmat  ', dim(detparmat), '\n')
+             cat ('sum (usge)     ', sum(usge), '\n')
+             cat ('meandetparmat  ', apply(detparmat,2,mean), '\n')
+        }
         w <- armaCHcpp(
-            as.matrix(edist(popn, traps)),
+            as.matrix(ptdist),
             as.matrix(usge),
             as.matrix(detparmat),
             as.double(NT),
             as.integer(binomN),
             as.integer(detectfn),
             as.integer(detectcode),
-            as.integer(nontargetcode))
+            as.integer(nontargetcode),
+            as.integer(details$debug))
         
-        dimnames(w) <- list(1:nrow(w), 1:noccasions, NULL)
+        if (details$debug) {
+            cat ('completed armaCHcpp\n')
+            cat ('sum w\n ', sum(w), '\n')
+        }
+        
+        dimnames(w) <- list(seq_len(nrow(w)), 1:noccasions, NULL)
         if (nrow(w)>0) {
             ## strip nontarget detections from last row of array
             if (nontargetcode>0) {

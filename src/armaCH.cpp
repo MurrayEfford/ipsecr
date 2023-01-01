@@ -1,5 +1,8 @@
 #include "ipsecr.h"
 using namespace Rcpp;
+using std::exp;
+
+// use R random number functions to control the seed
 
 // [[Rcpp::export]]
 arma::ucube armaCHcpp( 
@@ -8,9 +11,10 @@ arma::ucube armaCHcpp(
         const arma::mat &detpar,    // detection parameters N x np
         const arma::vec &NT,        // interference hazard K
         const arma::ivec &binomN,   // count distribution S (0 Poisson etc.)
-        int detectfn,               // integer code for detection function
-        int detectorcode,           // integer code for detector type
-        int nontargetcode) {        // integer code for non-target interference type
+        const int detectfn,         // integer code for detection function
+        const int detectorcode,     // integer code for detector type
+        const int nontargetcode,    // integer code for non-target interference type
+        const int debug) {
     
     if (!(detectorcode <= 2 || detectorcode == 8)) {    
         Rcpp::stop ("detectorcode not available");
@@ -22,7 +26,8 @@ arma::ucube armaCHcpp(
     arma::uword N = d.n_rows;
     arma::uword K = d.n_cols;
     arma::uword S = Tsk.n_cols;
-    arma::uword N1 = N + (nontargetcode>0);  // increment for interference process
+    arma::uword N1 = N;
+    if (nontargetcode>0) N1++;  // increment for interference process
     
     arma::mat hik (N,K); 
     arma::mat hiks;
@@ -37,58 +42,86 @@ arma::ucube armaCHcpp(
     arma::umat indmat;
     arma::mat capture_time;
     
+    double tmp;
+
     //-------------------------------------------------------------------------
     // each N,K parameter matrix 
     // varying by individual, constant across detectors and times
-    arma::mat par0 = repmat(detpar.col(0), 1, K);
-    arma::mat par1 = repmat(detpar.col(1), 1, K);
-    arma::mat par2;
-    if (detpar.n_cols == 3) {
-        par2 = repmat(detpar.col(2), 1, K);
-    }
+    // arma::mat par0 = repmat(detpar.col(0), 1, K);
+    // arma::mat par1 = repmat(detpar.col(1), 1, K);
+    // arma::mat par2;
+    // if (detpar.n_cols == 3) {
+    //     par2 = repmat(detpar.col(2), 1, K);
+    // }
     
+    if(debug) Rprintf("arma check 1\n");
+
     if (detectfn == 0 || detectfn == 14) {  // HHN
-        hik = par0 % exp(-square(d) / 2 / square(par1));
+        // 2022-12-31 element-wise arma::exp sometimes hangs, so we revert to
+        // element-by-element assignment of hik for all detectfn
+        // hik = par0 % arma::exp(-square(d) / 2 / square(par1));
+        for (i=0; i<N; i++) {
+            for (k=0; k<K; k++) {
+                tmp = d(i,k) / detpar(i,1); 
+                hik(i,k) = detpar(i,0) * std::exp(- tmp * tmp / 2);
+            }
+        }
     }
     else if (detectfn == 1 || detectfn == 15) {  // HHR
         for (i=0; i<N; i++) {
             for (k=0; k<K; k++) {
-                hik(i,k) = par0(i,k) * (1 - exp(- pow(d(i,k) /par1(i,k), -par2(i,k))));
+                hik(i,k) = detpar(i,0) * (1 - std::exp(- pow(d(i,k) / detpar(i,1), - detpar(i,2))));
             }
         }
     } 
     else if (detectfn == 2 || detectfn == 16) {  // HEX
-        hik = par0 % exp(-d / par1);
+        // hik = par0 % arma::exp(-d / par1);
+        for (i=0; i<N; i++) {
+            for (k=0; k<K; k++) {
+                hik(i,k) = detpar(i,0) * std::exp(-d(i,k) / detpar(i,1));
+            }
+        }
     } 
     else if (detectfn == 6 || detectfn == 17) {  // HAN
-        hik = par0 % exp(-square(d-par2) / 2 / square(par1));
+        // hik = par0 % arma::exp(-square(d-par2) / 2 / square(par1));
+        for (i=0; i<N; i++) {
+            for (k=0; k<K; k++) {
+                tmp = (d(i,k) - detpar(i,2)) / detpar(i,1);
+                hik(i,k) = detpar(i,0) * std::exp(- tmp * tmp / 2);
+            }
+        }
     } 
     else if (detectfn == 8 || detectfn == 18) {  // HCG
         for (i=0; i<N; i++) {
             for (k=0; k<K; k++) {
-                boost::math::gamma_distribution<> gam(par2(i,k), par1(i,k)/par2(i,k));
-                hik(i,k) = par0(i,k) * boost::math::cdf(complement(gam,d(i,k)));
+                boost::math::gamma_distribution<> gam(detpar(i,2), detpar(i,1)/detpar(i,2));
+                hik(i,k) = detpar(i,0) * boost::math::cdf(complement(gam,d(i,k)));
             }
         }
     } 
     else if (detectfn == 19) {  // HVP
         for (i=0; i<N; i++) {
             for (k=0; k<K; k++) {
-                hik(i,k) = par0(i,k) * exp(- pow(d(i,k) /par1(i,k), par2(i,k)));
+                hik(i,k) = detpar(i,0) * std::exp(- pow(d(i,k) / detpar(i,1), detpar(i,2)));
             }
         }
     }
     else Rcpp::stop ("detectfn not implemented");
     
+    if(debug) Rprintf("arma check 2\n");
+    
     bool binomial = (detectorcode == 2) && (binomN(0) > 0);
     if (detectfn < 14 && !binomial) {
         // convert detectfn p to hazard; may be zero
-        hik = -log(1-hik);
+        hik = -arma::log(1-hik);
     }
     if (detectfn >= 14 && binomial) {
         // convert hazard to detectfn p t
-        hik = 1 - exp(-hik);
+        hik = 1 - arma::exp(-hik);
     }
+    
+    if(debug) Rprintf("arma check 3\n");
+    
     //-------------------------------------------------------------------------
     
     // optional non-target animal with trap-specific lambda in NT
@@ -107,8 +140,12 @@ arma::ucube armaCHcpp(
     arma::uvec an_avail (hik.n_rows);   // N or N+1
     arma::uvec tr_avail (K);
     
+    if(debug) Rprintf("arma check 4\n");
+    
     for(i=0; i<animal0.n_rows; i++) animal0.row(i).fill(i);
     for(k=0; k<K; k++) trap0.col(k).fill(k);
+
+    if(debug) Rprintf("arma check 5\n");
     
     for (s=0; s<S; s++) {
         // counts (2)
@@ -147,13 +184,15 @@ arma::ucube armaCHcpp(
             hiks.replace(0, arma::datum::eps);
             
             // random exponential latent capture times
-            event_time.randu();
-            event_time = -log(event_time) / hiks;
+            // event_time.randu();
+            // event_time = -log(event_time) / hiks;
             
             // alternative random exponential (safer)
-            // for (i=0; i<N1; i++)
-            //     for (k=0; k<K; k++)
-            //         event_time(i,k) = R::rexp(1 / hiks(i,k));
+            // reverted to this 2022-12-30
+            // better seed control
+            for (i=0; i<N1; i++)
+                for (k=0; k<K; k++)
+                    event_time(i,k) = R::rexp(1 / hiks(i,k));
             
             // select latent captures in unit time
             ids = find(event_time<1);             
@@ -193,6 +232,7 @@ arma::ucube armaCHcpp(
                     }
                 }
             }
+            if(debug) Rprintf("arma check 6 on occasion %d\n",s);
             
             // store captures
             ids = find(capture_time>0);

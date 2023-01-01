@@ -305,7 +305,6 @@ Our example fits a clumped distribution of activity centres instead of the usual
 
 We proceed to estimate mu and fix hsigma. This requires a custom function for simulation and a custom proxy function. Simulation is straightforward - just a wrapper around the function from secr. For a cluster proxy we fit a Thomas distribution in **spatstat** (Baddeley and Turner 2005). This proxy is one of several possibilities, none obviously better than the rest. This requires that **spatstat** has been installed. Note the use of '::' and the full name of external functions (including from **secr**).
 
-
 ```{r extraparamfn}
 # user function to simulate Neyman-Scott distribution of activity centres
 # expect parameters mu and hsigma in list 'details$extraparam'

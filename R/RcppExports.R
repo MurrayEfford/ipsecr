@@ -5,8 +5,8 @@ rpsvcpp <- function(sk, traps) {
     .Call(`_ipsecr_rpsvcpp`, sk, traps)
 }
 
-armaCHcpp <- function(d, Tsk, detpar, NT, binomN, detectfn, detectorcode, nontargetcode) {
-    .Call(`_ipsecr_armaCHcpp`, d, Tsk, detpar, NT, binomN, detectfn, detectorcode, nontargetcode)
+armaCHcpp <- function(d, Tsk, detpar, NT, binomN, detectfn, detectorcode, nontargetcode, debug) {
+    .Call(`_ipsecr_armaCHcpp`, d, Tsk, detpar, NT, binomN, detectfn, detectorcode, nontargetcode, debug)
 }
 
 popcpp <- function(mask, prob, maskspacing, N) {

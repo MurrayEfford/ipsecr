@@ -42,6 +42,7 @@ plotProxy <- function (
     if (is.null(xvals)) {
         xvals <- seq(0.8,1.2,0.1) * basepar[[parameter]]
     }
+ 
     detpar <- if(detectfn<14) 'g0' else 'lambda0'
     parameters <- c('D',detpar,'sigma','z')
     if (!parameter %in% parameters) stop ("parameter not recognised")
