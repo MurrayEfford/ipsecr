@@ -31,18 +31,21 @@ nd <- as.numeric(summ$counts['detections',1:5])
 test_that("single-catch nontarget simulations", {
     expect_equal(nt, 
         # c(25, 24, 19, 15, 17),  # 1.2.0
-        c(14, 23, 25, 21, 21),    # 1.3.0
+        # c(14, 23, 25, 21, 21),  # 1.3.0
+        c(19, 20, 20, 21, 25),    # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
 })
 
 test_that("single-catch simulated detections in presence of interference", {
     expect_equal(nd, 
         # c(16, 17, 17, 22, 21),    # 1.2.0
-        c(22, 14, 21, 19, 17),    # 1.3.0
+        # c(22, 14, 21, 19, 17),    # 1.3.0
+        c(20, 15, 20, 18, 12),      # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
     expect_equal(summ$counts$Total, 
         # c(93, 54, 54, 54, 0, 93, 93, 320),    # 1.2.0
-        c(93, 56, 56, 56,  0, 93, 93, 320),     # 1.3.0
+        # c(93, 56, 56, 56,  0, 93, 93, 320),   # 1.3.0
+        c(85, 57, 57, 57, 0, 85, 85, 320),     # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
 })
 #------------------------------------------------------------------
@@ -64,14 +67,17 @@ nt <- as.numeric(summ$nontarget)[1:5]
 nd <- as.numeric(summ$counts['detections',1:5])
 
 test_that("multi-catch simulated frequency of interference", {
-    expect_equal(nt, c(17, 25, 31, 25, 25), 
+    # expect_equal(nt, c(17, 25, 31, 25, 25),   # 1.3.0
+    expect_equal(nt, c(26, 25, 24, 25, 28),     # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
 })
 test_that("multi-catch simulated detections in presence of interference", {
-    expect_equal(nd, c(27, 19, 31, 28, 23), 
-        tolerance = 1e-4, check.attributes = FALSE)
-    expect_equal(summ$counts$Total, c(128, 65, 65, 65, 0, 128, 107, 320), 
-        tolerance = 1e-4, check.attributes = FALSE)
+    # expect_equal(nd, c(27, 19, 31, 28, 23),   # 1.3.0
+    expect_equal(nd, c(30, 21, 27, 27, 24),     # 1.4.0
+            tolerance = 1e-4, check.attributes = FALSE)
+    # expect_equal(summ$counts$Total, c(128, 65, 65, 65, 0, 128, 107, 320), 
+    expect_equal(summ$counts$Total, c(129, 68, 68, 68, 0, 129, 107, 320), 
+            tolerance = 1e-4, check.attributes = FALSE)
 })
 #------------------------------------------------------------------
 
@@ -91,13 +97,16 @@ nt <- as.numeric(summ$nontarget)[1:5]
 nd <- as.numeric(summ$counts['detections',1:5])
 
 test_that("proximity simulated frequency of interference", {
-    expect_equal(nt, c(17, 25, 31, 25, 25), 
+    # expect_equal(nt, c(17, 25, 31, 25, 25),   # 1.3.0
+    expect_equal(nt, c(26, 25, 24, 25, 28),     # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
 })
 test_that("proximity simulated detections in presence of interference", {
-    expect_equal(nd, c(34, 20, 35, 32, 29), 
+    # expect_equal(nd, c(34, 20, 35, 32, 29),  # 1.3.0
+    expect_equal(nd, c(33, 27, 36, 30, 25),    # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
-    expect_equal(summ$counts$Total, c(128, 65, 65, 65, 0, 150, 119, 320), 
+    # expect_equal(summ$counts$Total, c(128, 65, 65, 65, 0, 150, 119, 320), # 1.3.0
+    expect_equal(summ$counts$Total, c(129, 68, 68, 68, 0, 151, 123, 320),   # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
 })
 #------------------------------------------------------------------
@@ -118,13 +127,16 @@ nt <- as.numeric(summ$nontarget)[1:5]
 nd <- as.numeric(summ$counts['detections',1:5])
 
 test_that("capped nontarget simulations", {
-    expect_equal(nt, c(14, 23, 25, 21, 20), 
+    # expect_equal(nt, c(14, 23, 25, 21, 20),   # 1.3.0
+    expect_equal(nt, c(18, 20, 20, 21, 25),     # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
 })
 test_that("capped simulated detections in presence of interference", {
-    expect_equal(nd, c(26, 15, 21, 20, 20), 
+    # expect_equal(nd, c(26, 15, 21, 20, 20),  # 1.3.0
+    expect_equal(nd, c(22, 18, 21, 20, 13),    # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
-    expect_equal(summ$counts$Total, c(91, 56, 56, 56, 0, 102, 102, 320), 
+    # expect_equal(summ$counts$Total, c(91, 56, 56, 56, 0, 102, 102, 320),   # 1.3.0
+    expect_equal(summ$counts$Total, c(85, 57, 57, 57, 0, 94, 94, 320),   # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
 })
 #------------------------------------------------------------------
@@ -151,13 +163,16 @@ chv <- function(v) paste0('c(', paste(v, collapse=', '), ')')
 # chv(summ$counts$Total)
 
 test_that("count nontarget simulations", {
-    expect_equal(nt, c(36, 50, 37, 42, 34), 
+    # expect_equal(nt, c(36, 50, 37, 42, 34),  # 1.3.0
+    expect_equal(nt, c(35, 51, 35, 42, 39),    # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
 })
 test_that("count simulated detections in presence of interference", {
-    expect_equal(nd, c(42, 47, 43, 46, 47), 
+    # expect_equal(nd, c(42, 47, 43, 46, 47),  # 1.3.0
+    expect_equal(nd, c(43, 46, 44, 46, 45),    # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
-    expect_equal(summ$counts$Total, c(184, 101, 101, 101, 0, 225, 164, 320), 
+    # expect_equal(summ$counts$Total, c(184, 101, 101, 101, 0, 225, 164, 320),  # 1.3.0
+    expect_equal(summ$counts$Total, c(185, 102, 102, 102, 0, 224, 168, 320),  # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
 })
 #------------------------------------------------------------------

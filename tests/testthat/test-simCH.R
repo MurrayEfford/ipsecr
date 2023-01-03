@@ -1,4 +1,4 @@
-## 2022-09-08 1.3.0
+## 2023-01-01 1.4.0
 
 # test simulations of without non-target interference
 
@@ -23,7 +23,8 @@ chs <- simCH(
     NT = 0)
 
 test_that("RPSV of single-catch simulations, detectfn HHN", {
-    expect_equal(rpsv(chs), 18.853879,    # 1.3.0
+    # expect_equal(rpsv(chs), 18.853879,    # 1.3.0
+    expect_equal(rpsv(chs), 16.2889591,    # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
 })
 
@@ -42,7 +43,8 @@ chm <- simCH(
     NT = 0)
 
 test_that("RPSV of multi-catch simulations", {
-    expect_equal(rpsv(chm), 19.348499,    # 1.3.0
+    # expect_equal(rpsv(chm), 19.348499,    # 1.3.0
+    expect_equal(rpsv(chm), 16.81577445,    # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
 })
 #------------------------------------------------------------------
@@ -59,7 +61,8 @@ chp <- simCH(
     NT = 0)
 
 test_that("RPSV of proximity simulations", {
-    expect_equal(rpsv(chp), 20.269715,    # 1.3.0
+    # expect_equal(rpsv(chp), 20.269715,    # 1.3.0
+    expect_equal(rpsv(chp), 17.56461286,    # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
 })
 #------------------------------------------------------------------
@@ -78,7 +81,8 @@ chC <- simCH(
     NT = 0)
 
 test_that("RPSV of count simulations detectfn HN", {
-    expect_equal(rpsv(chC),  18.234897,    # 1.3.0
+    # expect_equal(rpsv(chC),  18.234897,    # 1.3.0
+    expect_equal(rpsv(chC),  17.84443647,    # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
 })
 #------------------------------------------------------------------

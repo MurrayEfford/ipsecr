@@ -38,8 +38,8 @@ fitsum <- summary(fit2)
 test_that("correct single-catch estimate", {
     expect_equal(fitsum$predicted[,'estimate'], 
         # c(6.051439, 0.247498, 28.834703),  # 1.2.0
-        c(6.063915,  0.243899, 28.850853),  # 1.3.0
-        
+        # c(6.063915,  0.243899, 28.850853),  # 1.3.0
+        c(6.068458517, 0.242541512, 29.072678603),  # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
 })
 
@@ -49,7 +49,8 @@ test_that("correct single-catch estimate", {
 test_that("correct single-catch SE", {
     expect_equal(fitsum$predicted[,'SE.estimate'], 
         # c(1.14083246, 0.04887866, 2.73538888), # 1.2.0
-        c(1.03471299, 0.06195419, 2.83387609), # 1.3.0
+        # c(1.03471299, 0.06195419, 2.83387609), # 1.3.0
+        c(1.29664149, 0.06362386, 3.56967573), # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
 })
 ###############################################################################
@@ -63,7 +64,8 @@ test_that("print.ipsecr no warnings", {
 test_that("vcov matches expectation", {
     expect_equal(unlist(vcv), 
         # c(1.27890439, 0.00234371, 7.44888511 ),  # 1.2.0
-        c(1.055340742, 0.003719571, 7.992359617),  # 1.3.0
+        # c(1.055340742, 0.003719571, 7.992359617),  # 1.3.0
+        c(1.6440297683, 0.0039147969, 12.6474855568),  # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
 })
 ###############################################################################
