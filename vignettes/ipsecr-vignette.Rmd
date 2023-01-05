@@ -16,11 +16,13 @@ header-includes:
 
 \vspace{12pt}
 
-This document provides an overview of **ipsecr** 1.4, an R package for spatially explicit capture--recapture analysis (SECR) that uses simulation and inverse prediction instead of maximum likelihood, as in **secr** (Efford 2022), or MCMC, as in various Bayesian approaches. The parent package **secr** included the function `ip.secr`; **ipsecr** extends the capability of that function in its central function `ipsecr.fit` whose arguments are closely modelled on `secr.fit` from **secr**. 
+This document provides an overview of **ipsecr** 1.4, an R package for spatially explicit capture--recapture analysis (SECR) that uses simulation and inverse prediction instead of maximum likelihood, as in **secr** (Efford 2022), or MCMC, as in various Bayesian approaches. The parent package **secr** included the function `ip.secr`, now deprecated; **ipsecr** extends that capability in its central function `ipsecr.fit` whose arguments are closely modelled on `secr.fit` from **secr**. 
 
 Simulation and inverse prediction allows some models to be fitted that strictly cannot be fitted by other methods. Single-catch traps are a common example.
 
 There are limitations: **ipsecr** 1.4 allows variation in detection parameters (e.g., $\lambda_0$, $\sigma$) only with respect to individual and session. This excludes variation with respect to occasion, detector or previous detection (e.g., ~t, ~b or ~bk as allowed in **secr**). **ipsecr** does allow variation in $\lambda_0$ and $\sigma$ that depends on the location of each animal's activity centre, which is not allowed in **secr**.  
+
+The package **plot3D** should be installed to display Fig. 2, and some results require secr >= 4.5.9.
 
 # Inverse prediction for capture--recapture estimation
 
@@ -63,7 +65,8 @@ if (requireNamespace('plot3D')) {
     plot3D.IP(ipsecrdemo, box=2, oldplot)
     mtext(outer = TRUE, side = 3, c('Parameter space','Proxy space'), 
         adj = c(0.21,0.77))
-}
+} else warning ('install package plot3D to generate Fig. 2')
+secr459 <- packageVersion('secr') >= '4.5.9'
 ```
 
 **Figure 2.** Schematic process of fitting in `ipsecr.fit` (requires package plot3D). Simulations are conducted at the vertices of a box in parameter space (top left; link scale) centred on an initial guess (blue diamond). The results in proxy space (top right; frame connects design point means, centre omitted for clarity) support a linear model for proxies as a function of parameters. The model is inverted and applied to the observed proxy vector (yellow square) giving the centre of a new, smaller box in parameter space (bottom left). The model is refined by further simulations (bottom right) from which the final estimate is inferred (white square, bottom left)
@@ -303,9 +306,9 @@ Extensions of **ipsecr** may involve the estimation of additional 'real' paramet
 
 Our example fits a clumped distribution of activity centres instead of the usual Poisson distribution. This uses a form of Neyman-Scott clustering (a Thomas distribution). The Thomas distribution draws cluster 'parent' points from a uniform (Poisson) distribution and places a Poisson random number of centres in a bivariate normal pattern around each parent. Parameters to be estimated are the overall intensity (density D), the expected number of centres per parent (mu), and the spatial spread of each cluster (named hsigma, following the cluster option in `secr::sim.popn`). Experimentation suggests that SECR data are usually inadequate to estimate both mu and hsigma, but there are biologically interesting scenarios for which hsigma may be considered known: specifically, clumped groups of animals sharing an activity centre may be modelled with hsigma = $\epsilon$ where $\epsilon$ is a small positive distance (e.g. 1 metre).
 
-We proceed to estimate mu and fix hsigma. This requires a custom function for simulation and a custom proxy function. Simulation is straightforward - just a wrapper around the function from secr. For a cluster proxy we fit a Thomas distribution in **spatstat** (Baddeley and Turner 2005). This proxy is one of several possibilities, none obviously better than the rest. This requires that **spatstat** has been installed. Note the use of '::' and the full name of external functions (including from **secr**).
+We proceed to estimate mu and fix hsigma. This requires a custom function for simulation and a custom proxy function. Simulation is straightforward - just a wrapper around the function from secr. For a cluster proxy we fit a Thomas distribution in **spatstat** (Baddeley and Turner 2005). This proxy is one of several possibilities, none obviously better than the rest. This requires that **spatstat** has been installed. Note the use of '::' and the full name of external functions (including from **secr**). The example will execute only if the **secr** version is 4.5.9 or later.
 
-```{r extraparamfn}
+```{r extraparamfn, eval = secr459}
 # user function to simulate Neyman-Scott distribution of activity centres
 # expect parameters mu and hsigma in list 'details$extraparam'
 simclusterpop <- function (mask, D, N, details) {
@@ -332,7 +335,7 @@ clusterproxyT <- function (capthist, ...) {
 
 Simulate some test data:
 
-```{r extraparamdata}
+```{r extraparamdata, eval = secr459}
 grid <- make.grid(nx = 10, ny = 10, spacing = 20, detector = 'proximity')
 msk <- make.mask(grid, buffer = 100)
 set.seed(123)
@@ -350,13 +353,13 @@ Next, call `ipsecr.fit` with these customizations:
 * user parameters : mu, hsigma
 * fixed parameter : hsigma = 1
 
-```{r extraparamdemo, eval = requireNamespace("spatstat") && runall}
+```{r extraparamdemo, eval = secr459 && requireNamespace("spatstat") && runall}
 clusterfitT <- ipsecr.fit(ch, proxyfn = clusterproxyT, mask = msk, 
     detectfn = 'HHN', details = list(popmethod = simclusterpop, 
     extraparam = list(mu = 5, hsigma = NA)), fixed = list(hsigma = 1))
 ```
 
-```{r clusterresults}
+```{r clusterresults, eval = secr459}
 predict(clusterfitT)
 ```
 
