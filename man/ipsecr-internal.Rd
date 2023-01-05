@@ -62,7 +62,7 @@ rpsvi(capthist)
 
 \details{
 
-  \code{proxy.ms} is the default proxyfn used by \code{\link{ipsecr.fit}}. When used internally by \code{\link{ipsecr.fit}}, `model' and `trapdesigndata' are passed automatically. The \dots argument of \code{proxy.ms} may be used to pass arguments to \code{\link{addCovariates}}, especially `spatialdata'. Function \code{detectionDesignData} is used internally to construct design data for non-constant detection models (lambda0, sigma). The capthist argument for \code{detectionDesignData} should always be a list (wrap a single-session capthist in list()).
+  \code{proxy.ms} is the default proxyfn used by \code{\link{ipsecr.fit}}. When used internally by \code{\link{ipsecr.fit}}, `model' and `trapdesigndata' are passed automatically. The \dots argument of \code{proxy.ms} may be used to pass arguments to \code{\link{addCovariates}}, especially `spatialdata'. Function \code{detectionDesignData} is used internally to construct design data for non-constant detection models (lambda0, sigma), used in the glm 'data' argument. The capthist argument for \code{detectionDesignData} should always be a list (wrap a single-session capthist in list()).
 
   \code{simpop} is used by \code{\link{ipsecr.fit}} for popmethod 'internal'. It is faster and simpler than the \pkg{secr} function \code{\link{sim.popn}}. The details component 'distribution' is a character value that may be `poisson' (default) or `even.
 
@@ -80,6 +80,8 @@ rpsvi(capthist)
 
 proxy.ms -- a numeric vector of length >= 3 corresponding to proxies for a wide range of models, 
     including multi-session density and non-target interference models.
+    
+detectionDesignData -- a dataframe with one row per individual per session (byoccasion = FALSE) or one row per individual per occasion per session (byoccasion = TRUE), ordered by session, occasion and individual. Columns include x and y coordinates of the individual's centroid, session, and any individual covariates.
 
 proxyfn1 -- a numeric vector of length 3 corresponding to proxies for 
     population size, capture probability intercept and scale of detection.
