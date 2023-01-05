@@ -40,9 +40,11 @@ test_that("proxy.ms correct", {
         tolerance = 1e-4, check.attributes = FALSE)
     expect_equal(p2, c(0.338209883, 0.001024622, -0.037247650, 3.243719942), 
         tolerance = 1e-4, check.attributes = FALSE)
-    expect_equal(p3, c(4.330733e+00, 4.942692e-01, -2.281577e-05, 3.243720e+00), 
+    # expect_equal(p3, c(4.330733e+00, 4.942692e-01, -2.281577e-05, 3.243720e+00),  # 1.3.0
+    expect_equal(p3, c(4.3307333403, -0.0306363980, -0.0000132122, 3.2437199416),  # 1.4.0
         tolerance = 1e-4, check.attributes = FALSE)
-    expect_equal(p4, c(4.330733e+00, -3.724765e-02, 3.159766e+00, 1.023099e-06), 
+    expect_equal(p4, c(4.330733e+00, -3.724765e-02, 3.159766e+00, 1.023099e-06), # 1.3.0, 1.4.0
+    # expect_equal(p4, c(4.330733e+00, -3.724765e-02, 3.3130523790, -0.0001442333),  # 1.4.0 test
         tolerance = 1e-4, check.attributes = FALSE)
 })
 ###############################################################################
@@ -57,12 +59,12 @@ test_that("proxy.ms spatial sigma OK for Feb96 possum data", {
     msk <- suppressWarnings(addCovariates(msk, OVforest[1:2,]))
     m5 <- list(D=~1, lambda0=~1, sigma=~forest)
     p5 <- proxy.ms(Feb96, model = m5, spatialdata = msk)
-    expect_equal(p5, c(5.40717177, -0.66005551, 3.08557700, -0.09749582), 
+    expect_equal(p5, c(5.40717177, -0.66005551, 3.08557700, -0.09749582),  # 1.3.0, 1.4.0
+    # expect_equal(p5, c(5.40717177, -0.66005551, 3.17908665, 0.01387343),  # 1.4.0 test
         tolerance = 1e-4, check.attributes = FALSE)
     
 })
 ###############################################################################
-
 
 test_that("plotProxy means match", {
     set.seed(123)
