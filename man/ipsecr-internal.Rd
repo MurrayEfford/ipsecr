@@ -2,6 +2,7 @@
 
 \alias{proxyfn1}
 \alias{proxy.ms}
+\alias{detectionDesignData}
 
 \alias{simpop}
 \alias{simCH}
@@ -22,6 +23,8 @@ These are exported and may be called separately for testing.
 
 proxy.ms(capthist, model = NULL, trapdesigndata = NULL, ...)
 
+detectionDesignData(capthist, byoccasion = FALSE, ...)
+
 proxyfn1(capthist, N.estimator =  c("n", "null","zippin","jackknife"), ...)
 
 simpop(mask, D, N, details = list(), ...)
@@ -39,6 +42,8 @@ rpsvi(capthist)
   \item{model}{named list of model formulae (see \code{\link{ipsecr.fit}})}
   \item{trapdesigndata}{dataframe with one row for each detector and session}
   \item{...}{other arguments, mostly unused}
+  \item{byoccasion}{logical; if TRUE the output rows are repeated for each occasion }
+  
   \item{N.estimator}{character name of closed-population estimator}
  
   \item{mask}{ secr mask object}
@@ -57,7 +62,7 @@ rpsvi(capthist)
 
 \details{
 
-  \code{proxy.ms} is the default proxyfn used by \code{\link{ipsecr.fit}}. When used internally by \code{\link{ipsecr.fit}}, `model' and `trapdesigndata' are passed automatically. The \dots argument of \code{proxy.ms} may be used to pass arguments to \code{\link{addCovariates}}, especially `spatialdata'.
+  \code{proxy.ms} is the default proxyfn used by \code{\link{ipsecr.fit}}. When used internally by \code{\link{ipsecr.fit}}, `model' and `trapdesigndata' are passed automatically. The \dots argument of \code{proxy.ms} may be used to pass arguments to \code{\link{addCovariates}}, especially `spatialdata'. Function \code{detectionDesignData} is used internally to construct design data for non-constant detection models (lambda0, sigma). The capthist argument for \code{detectionDesignData} should always be a list (wrap a single-session capthist in list()).
 
   \code{simpop} is used by \code{\link{ipsecr.fit}} for popmethod 'internal'. It is faster and simpler than the \pkg{secr} function \code{\link{sim.popn}}. The details component 'distribution' is a character value that may be `poisson' (default) or `even.
 

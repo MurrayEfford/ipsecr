@@ -49,6 +49,55 @@ proxyfn1 <- function (capthist, N.estimator =  c("n", "null","zippin","jackknife
 }
 ##################################################
 
+detectionDesignData <- function (capthist, byoccasion = FALSE, ...) {
+    # start with centroids
+    getxys <- function(ch) {
+        df <- as.data.frame(centroids(ch))
+        names(df) <- c('x','y')
+        df
+    }
+    xys <- lapply(capthist, getxys)
+    
+    # add covariates from spatial data source if requested
+    if ('spatialdata' %in% names(list(...))) {
+        # force class for addCovariates secr <= 4.5.6
+        class(xys) <- c('traps','list')  
+        tmp <- covariates(addCovariates(xys, ...))
+        xys <- mapply(cbind, xys, tmp, SIMPLIFY = FALSE)
+    }
+    
+    # add individual covariates if present
+    covar <- covariates(capthist)
+    if (!is.null(covar) && all(sapply(covar,nrow)>0)) {
+        xys <- mapply(cbind, xys, covar, SIMPLIFY = FALSE)
+    }
+    
+    # add session
+    addsess <- function(df, fact) {
+        df$session <- fact; df
+    }
+    xys <- mapply(addsess, xys, factor(1:length(capthist)), SIMPLIFY = FALSE)
+    
+    # replicate by nocc within session, only if byoccasion
+    if (byoccasion) {
+        addocc <- function(df, occ) {
+            df$occasion <- occ; df
+        }
+        n    <- sapply(capthist, nrow)
+        nocc <- sapply(capthist, ncol)
+        id   <-  mapply(rep, lapply(n,seq_len), nocc, SIMPLIFY = FALSE)
+        occ  <- mapply(rep, lapply(nocc,seq_len), each = n, SIMPLIFY = FALSE)
+        xys  <- mapply(function(x,i) x[i,], xys, id, SIMPLIFY = FALSE)
+        xys  <- mapply(addocc, xys, occ, SIMPLIFY = FALSE)
+    }
+    
+    # form single dataframe from list of dataframes
+    designdata <- do.call(rbind, xys)
+    
+    designdata
+}
+##################################################
+
 proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL, ...) {
     
     ## force list for simplicity
@@ -91,38 +140,12 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL, ...) {
     }
     smodel <- model$sigma
     if (pmodel != ~1 ) {
-        # prepare animaldesigndata
-        getxy <- function(ch,nocc) as.data.frame(centroids(ch))[rep(1:nrow(ch), nocc),]
-        animaldesigndata <- do.call(rbind, mapply(getxy, capthist, nocc, SIMPLIFY = FALSE))
-        names(animaldesigndata) <- c('x','y')
-        animaldesigndata$session <- factor(rep(1:length(capthist), n*nocc))
-        animaldesigndata$nocc <- rep(nocc, n*nocc)
-        covar1 <- covariates(capthist[[1]])
-        if (!is.null(covar1) && nrow(covar1)>0) {
-            getcov <- function(ch,nocc) covariates(ch)[rep(1:nrow(ch), nocc),, drop = FALSE]
-            animalcovlist <- mapply(getcov, capthist, nocc, SIMPLIFY = FALSE)
-            animalcov <- do.call(rbind, animalcovlist)
-            animaldesigndata <- cbind(animaldesigndata, animalcov)
-        }
+        animaldesigndata <- detectionDesignData(capthist, byoccasion = TRUE, ...)
     }    
     if (smodel != ~1) {
-        # prepare animaldesigndata.s
-        getxys <- function(ch) as.data.frame(centroids(ch))
-        xys <- lapply(capthist, getxys)
-        class(xys) <- c('traps','list')  # fool addCovariates secr <= 4.5.6
-        if ('spatialdata' %in% names(list(...))) {
-            tmp <- covariates(addCovariates(xys, ...))
-            xys <- mapply(cbind, xys, tmp, SIMPLIFY = FALSE)
-        }
-        animaldesigndata.s <- do.call(rbind, xys)
-        names(animaldesigndata.s)[1:2] <- c('x','y')   # replaces meanx, meany
-        animaldesigndata.s$session <- factor(rep(1:length(capthist), n))
-        covar1 <- covariates(capthist[[1]])
-        if (!is.null(covar1) && nrow(covar1)>0) {
-            animalcov <- do.call(rbind, lapply(capthist, covariates))
-            animaldesigndata.s <- cbind(animaldesigndata.s, animalcov)
-        }
-        animaldesigndata.s$freq <- unlist(sapply(capthist,function(x) apply(abs(x)>0,1,sum)-1))
+        animaldesigndata.s <- detectionDesignData(capthist, byoccasion = FALSE, ...)
+        freq <- unlist(sapply(capthist,function(x) apply(abs(x)>0,1,sum)-1))
+        animaldesigndata.s$freq <- unname(as.numeric(freq))
     }    
     
     if (binary) {
@@ -133,18 +156,16 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL, ...) {
         else {
             # binary animal x occasion data
             ni <- lapply(capthist, function(x) apply(abs(x),1:2,sum))
-
+            
             animaldesigndata$ni <- unlist(lapply(ni, as.numeric)) 
             pmodel <- update(pmodel, ni ~ .)  ## ni on LHS
             if (binom) {
-                glmfit <- glm(pmodel, data = animaldesigndata, family = binomial())
+                # glmfit <- glm(pmodel, data = animaldesigndata, family = binomial(link = "logit"))
+                glmfit <- glm(pmodel, data = animaldesigndata, family = binomial(link = "cloglog"))  # 1.4.0
             }
             else {
-                # ntraps <- sapply(capthist, function(x) dim(x)[3])
-                # animaldesigndata$ntraps <- rep(ntraps, n*nocc)
-                # glmfit <- glm(pmodel, data = animaldesigndata, family = binomial(), weights = ntraps)
                 # using Poisson approximation
-                glmfit <- glm(pmodel, data = animaldesigndata, family = poisson())
+                glmfit <- glm(pmodel, data = animaldesigndata, family = poisson(link = "log"))
             }
             pterms <- coef(glmfit)    
         }
@@ -152,15 +173,22 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL, ...) {
             sterms <- c(logRPSV = log(mean(unlist(rpsv(capthist)))))
         }
         else {
-            # si <- lapply(capthist, rpsvi)
-            # animaldesigndata.s$si <- unlist(lapply(si, as.numeric)) 
             getsi <- function (capthist) log( as.numeric(rpsvi(capthist)) + 1 )
             animaldesigndata.s$si <- unlist(lapply(capthist, getsi))
+            animaldesigndata.s <- animaldesigndata.s[animaldesigndata.s$freq>0,]
+
             smodel <- update(smodel, si ~ .)  ## si on LHS
-            freq <- animaldesigndata.s$freq
-            glmfit <- glm(smodel, data = animaldesigndata.s, 
+            glmfit <- glm(smodel, data = animaldesigndata.s, family = gaussian(link = "identity"),
                 na.action = na.omit, weights = freq)
             sterms <- coef(glmfit)
+                   
+            # experimental Tobit model 2023-01-05
+            # if (!requireNamespace("survival")) stop ("sigma model requires survival package; please install")
+            # smodel <- update(smodel, survival::Surv(si, si>0, type = 'left') ~ .)  ## si on LHS
+            # tobitfit <- survival::survreg(smodel, data = animaldesigndata.s,
+            #     na.action = na.omit, weights = freq, dist = "gaussian", y = FALSE)
+            # sterms <- coef(tobitfit)
+            
         }
     }
     else {
@@ -178,7 +206,7 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL, ...) {
         nk <- mapply(function(x,Kj) tabulate(trap(x, names = FALSE), Kj), capthist, K)
         trapdesigndata$nk <- as.numeric(nk)
         model$D <- update(model$D, nk ~ .)  ## nk on LHS
-        glmfit <- glm(model$D, data = trapdesigndata, family = poisson())
+        glmfit <- glm(model$D, data = trapdesigndata, family = poisson(link = "log"))
         Dterms <- coef(glmfit)    
     }
     
@@ -211,7 +239,7 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL, ...) {
             }
             else {
                 glmfitNT <- glm(model$NT, data = trapdesigndata, weights = nocc, 
-                    family = poisson())
+                    family = poisson(link = "log"))
             }
             NTterms <- coef(glmfitNT)    
             names(NTterms) <- paste('NT', names(NTterms), sep = '.')

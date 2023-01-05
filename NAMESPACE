@@ -1,4 +1,4 @@
-# 2022-03-31, 2022-04-19, 2022-07-06, 2022-08-25, 2022-09-07
+# 2022-03-31, 2022-04-19, 2022-07-06, 2022-08-25, 2022-09-07, 2023-01-05
 
 import (secr)
 import (parallel)
@@ -13,7 +13,7 @@ importFrom (grDevices, chull, contourLines, grey, palette,
     terrain.colors, topo.colors, rainbow)
 
 importFrom (stats, AIC, approx, approxfun, as.formula, binomial, chisq.test, coef,
-    cutree, deviance, df.residual, dist, dpois,  formula, glm, hclust,
+    cutree, deviance, df.residual, dist, dpois,  formula, gaussian, glm, hclust,
     integrate, lm, logLik, median, model.matrix, na.omit, nlm, nls, optim,
     optimise, optimize, pchisq, pgamma, plnorm, pnorm, poisson,
     predict, qchisq, qnorm, quantile, rbeta, rbinom, rexp, rgamma, rlnorm, 
@@ -48,6 +48,7 @@ export (ipsecr.fit)
 export (plot3D.IP)
 export (plotProxy)
 export (proxy.ms)
+export (detectionDesignData)
 export (proxyfn0) # defunct 1.2.0
 export (proxyfn1)
 export (rpsv)

@@ -1,14 +1,16 @@
-Changes in version 1.4.0 (2023-01-03)
+Changes in version 1.4.0 (2023-01-05)
 
 New features or changed behaviour of old functions
     o   user-defined extra parameters in ipsecr.fit
 
 Other
     o   suggests spatstat (for example in vignette)
-    o   'Preparing cluster' memo includes ncores 
+    o   'Preparing cluster' memo reports ncores 
     o   dots argument added to simpop and simCH for flexibility
     o   forking parallel cluster on Unix now optional (details$forkOnUnix)
     o   simCH uses R::Rexp instead of Armadillo random stream
+    o   exports internal function detectionDesignData() used by proxy.ms()
+    o   proxy.ms() binomial glm uses cloglog link instead of logit (for consistency)
 
 Bugs fixed
     o   simCH could hang when used with multiple cores on Unix (RcppArmadillo problem)
