@@ -66,7 +66,6 @@ if (requireNamespace('plot3D')) {
     mtext(outer = TRUE, side = 3, c('Parameter space','Proxy space'), 
         adj = c(0.21,0.77))
 } else warning ('install package plot3D to generate Fig. 2')
-secr459 <- packageVersion('secr') >= '4.5.9'
 ```
 
 **Figure 2.** Schematic process of fitting in `ipsecr.fit` (requires package plot3D). Simulations are conducted at the vertices of a box in parameter space (top left; link scale) centred on an initial guess (blue diamond). The results in proxy space (top right; frame connects design point means, centre omitted for clarity) support a linear model for proxies as a function of parameters. The model is inverted and applied to the observed proxy vector (yellow square) giving the centre of a new, smaller box in parameter space (bottom left). The model is refined by further simulations (bottom right) from which the final estimate is inferred (white square, bottom left)
@@ -77,11 +76,13 @@ This example uses a simulated single-catch trap dataset in **secr** that is load
 
 ```{r setup, message = FALSE, results = 'hide'}
 library(ipsecr)
+if (!require("spatstat")) warning ("install spatstat to run vignette code")
 setNumThreads(2)   # adjust to number of available cores
 ```
 
 ```{r options, echo = FALSE}
 runall <- FALSE
+secr459 <- packageVersion('secr') >= '4.5.9'
 ```
 
 ```{r retrieve, eval = !runall, echo = FALSE}
@@ -306,34 +307,9 @@ Extensions of **ipsecr** may involve the estimation of additional 'real' paramet
 
 Our example fits a clumped distribution of activity centres instead of the usual Poisson distribution. This uses a form of Neyman-Scott clustering (a Thomas distribution). The Thomas distribution draws cluster 'parent' points from a uniform (Poisson) distribution and places a Poisson random number of centres in a bivariate normal pattern around each parent. Parameters to be estimated are the overall intensity (density D), the expected number of centres per parent (mu), and the spatial spread of each cluster (named hsigma, following the cluster option in `secr::sim.popn`). Experimentation suggests that SECR data are usually inadequate to estimate both mu and hsigma, but there are biologically interesting scenarios for which hsigma may be considered known: specifically, clumped groups of animals sharing an activity centre may be modelled with hsigma = $\epsilon$ where $\epsilon$ is a small positive distance (e.g. 1 metre).
 
-We proceed to estimate mu and fix hsigma. This requires a custom function for simulation and a custom proxy function. Simulation is straightforward - just a wrapper around the function from secr. For a cluster proxy we fit a Thomas distribution in **spatstat** (Baddeley and Turner 2005). This proxy is one of several possibilities, none obviously better than the rest. This requires that **spatstat** has been installed. Note the use of '::' and the full name of external functions (including from **secr**). The example will execute only if the **secr** version is 4.5.9 or later.
+We proceed to estimate mu and fix hsigma. This requires a custom function for simulation and a custom proxy function. Simulation is straightforward - just a wrapper around the function from secr. For a cluster proxy we fit a Thomas distribution in **spatstat** (Baddeley and Turner 2005). This proxy is one of several possibilities, none obviously better than the rest. This requires that **spatstat** has been installed. 
 
-```{r extraparamfn, eval = secr459}
-# user function to simulate Neyman-Scott distribution of activity centres
-# expect parameters mu and hsigma in list 'details$extraparam'
-simclusterpop <- function (mask, D, N, details) {
-    secr::sim.popn(
-        D = D[1], 
-        core = mask, 
-        buffer = 0, 
-        Ndist = 'poisson',    # necessary for N-S cluster process
-        model2D = 'cluster', 
-        details = details$extraparam)
-}
-
-# extend the built-in proxy with clumping argument mu
-# spatstat fits Thomas process parameters kappa and scale = hsigma^2
-# mu is a model parameter derived from mu = D / kappa
-clusterproxyT <- function (capthist, ...) {
-    pr <- ipsecr::proxy.ms(capthist)
-    pp <- spatstat.geom::as.ppp(secr::centroids(capthist), 
-        W = as.numeric(apply(secr::traps(capthist),2,range)))
-    tfit <- spatstat.core::thomas.estK(pp)
-    c(pr, logmu = log(tfit$modelpar['mu']))
-}
-```
-
-Simulate some test data:
+First simulate some test data (requires secr >= 4.5.9):
 
 ```{r extraparamdata, eval = secr459}
 grid <- make.grid(nx = 10, ny = 10, spacing = 20, detector = 'proximity')
@@ -353,13 +329,38 @@ Next, call `ipsecr.fit` with these customizations:
 * user parameters : mu, hsigma
 * fixed parameter : hsigma = 1
 
-```{r extraparamdemo, eval = secr459 && requireNamespace("spatstat") && runall}
+
+```{r extraparamfn}
+# user function to simulate Thomas (Neyman-Scott) distribution of activity centres
+# expect parameters mu and hsigma in list 'details$extraparam'
+simclusterpop <- function (mask, D, N, details) {
+    secr::sim.popn(
+        D = D[1], 
+        core = mask, 
+        buffer = 0, 
+        Ndist = 'poisson',    # necessary for N-S cluster process
+        model2D = 'cluster', 
+        details = details$extraparam)
+}
+```
+
+```{r extraparamdemo, eval = requireNamespace("spatstat") && runall}
+# extend the built-in proxy with clumping argument mu
+# spatstat fits Thomas process parameters kappa and scale = hsigma^2
+# mu is a model parameter derived from mu = D / kappa
+clusterproxyT <- function (capthist, ...) {
+    pr <- ipsecr::proxy.ms(capthist)
+    pp <- spatstat.geom::as.ppp(secr::centroids(capthist), 
+        W = as.numeric(apply(secr::traps(capthist),2,range)))
+    tfit <- spatstat.core::thomas.estK(pp)
+    c(pr, logmu = log(tfit$modelpar['mu']))
+}
 clusterfitT <- ipsecr.fit(ch, proxyfn = clusterproxyT, mask = msk, 
     detectfn = 'HHN', details = list(popmethod = simclusterpop, 
     extraparam = list(mu = 5, hsigma = NA)), fixed = list(hsigma = 1))
 ```
 
-```{r clusterresults, eval = secr459}
+```{r clusterresults}
 predict(clusterfitT)
 ```
 
@@ -438,9 +439,9 @@ Try specifying a wider boxsize1 for the first box, or set starting values.
 
 ```{r saveall, echo = FALSE, eval = runall}
 save(ip.single, ip.single.1, ip.single.nontarget, ipx, clusterfitT, clusterfitML,
-      file = 'd:/density secr 4.5/ipsecr/inst/example/fittedmodels.RData')
-save(ip.Fr, file = 'd:/density secr 4.5/ipsecr/inst/example/ip.Fr.RData')
-tools::resaveRdaFiles(paste0('d:/density secr 4.5/ipsecr/inst/example'),'xz')
+      file = '../inst/example/fittedmodels.RData')
+save(ip.Fr, file = '../inst/example/ip.Fr.RData')
+tools::resaveRdaFiles(paste0('../inst/example'),'xz')
 ```
 
 # References
