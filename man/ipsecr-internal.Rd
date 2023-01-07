@@ -67,7 +67,7 @@ rpsvi(capthist)
 
   \code{simpop} is used by \code{\link{ipsecr.fit}} for popmethod 'internal'. It is faster and simpler than the \pkg{secr} function \code{\link{sim.popn}}. The details component 'distribution' is a character value that may be `poisson' (default) or `even.
 
-  \code{simCH} is used by \code{\link{ipsecr.fit}} for CHmethod 'internal'. It is faster and simpler than the \pkg{secr} function \code{\link{sim.capthist}}, and optionally simulates non-target interference. The argument \code{detparmat} is an individual x parameter matrix, with parameters in the order usual for \code{detectfn}. 
+  \code{simCH} is used by \code{\link{ipsecr.fit}} for CHmethod 'internal'. It is faster and simpler than the \pkg{secr} function \code{\link{sim.capthist}}, and optionally simulates non-target interference. The argument \code{detparmat} is an individual x parameter matrix, with parameters in the order usual for \code{detectfn}.
  
  \code{D} and \code{NT} are matrices with one column per session. 
  
@@ -89,13 +89,7 @@ proxyfn1 -- a numeric vector of length 3 corresponding to proxies for
 
 simpop -- a \code{\link{popn}} object.
 
-simCH -- a single-session \code{\link{capthist}} object. If \code{details$times = TRUE} and the \code{traps} input has detector type `single', `multi' or `proximity' then the capthist includes the relative event times (0 < t < 1) as attributes:
-\itemize{
-\item `times' complete individual x occasion x detector array
-\item `vt' individual x occasion matrix
-\item `at' detector x occasion matrix.
-}
-Only the last event time is reported, so `vt' is meaningful only for single-catch and multi-catch traps, and `at' is meaningful for single-catch traps and capped detectors. 
+simCH -- a single-session \code{\link{capthist}} object. 
 
 rpsv -- scalar
 

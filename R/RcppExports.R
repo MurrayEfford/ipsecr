@@ -9,10 +9,6 @@ armaCHcpp <- function(d, Tsk, detpar, NT, binomN, detectfn, detectorcode, nontar
     .Call(`_ipsecr_armaCHcpp`, d, Tsk, detpar, NT, binomN, detectfn, detectorcode, nontargetcode, debug)
 }
 
-armaCHtimecpp <- function(d, Tsk, detpar, NT, binomN, detectfn, detectorcode, nontargetcode, debug) {
-    .Call(`_ipsecr_armaCHtimecpp`, d, Tsk, detpar, NT, binomN, detectfn, detectorcode, nontargetcode, debug)
-}
-
 popcpp <- function(mask, prob, maskspacing, N) {
     .Call(`_ipsecr_popcpp`, mask, prob, maskspacing, N)
 }

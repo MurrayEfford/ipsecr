@@ -1,10 +1,9 @@
-Changes in version 1.4.0 (2023-01-06)
+Changes in version 1.4.0 (2023-01-08)
 
 New features or changed behaviour of old functions
     o   user-defined extra parameters in ipsecr.fit (see vignette for example)
     o   exports internal function detectionDesignData() used by proxy.ms()
     o   proxy.ms() binomial glm uses cloglog link instead of logit (for consistency)
-    o   simCH() optionally includes event times
 
 Other
     o   suggests spatstat (for example in vignette)

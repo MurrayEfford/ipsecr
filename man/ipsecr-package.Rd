@@ -23,7 +23,7 @@
 Package: \tab ipsecr\cr
 Type: \tab Package\cr
 Version: \tab 1.4.0\cr
-Date: \tab 2023-01-06\cr
+Date: \tab 2023-01-08\cr
 License: \tab GNU General Public License Version 2 or later\cr
 }
 
@@ -115,7 +115,7 @@ Efford, M. G. (2004) Density estimation in live-trapping studies.
 \emph{Oikos} \bold{106}, 598--610.
 
 Efford, M. G. (2022) secr: Spatially explicit capture--recapture models. 
-  R package version 4.5.4. https://CRAN.R-project.org/package=secr/
+  R package version 4.5.8. https://CRAN.R-project.org/package=secr/
 
 Efford, M. G., Borchers D. L. and Byrom, A. E. (2009) Density estimation
 by spatially explicit capture--recapture: likelihood-based methods. In:

@@ -1,7 +1,7 @@
 ###############################################################################
 ## package 'ipsecr'
 ## simCH.R
-## 2022-05-10, 2022-06-12, 2022-06-14, 2022-06-16
+## 2022-05-10, 2022-06-12, 2022-06-14, 2022-06-16, 2023-01-08
 ## 2022-09-07 RcppArmadillo armaCHcpp()
 ###############################################################################
 
@@ -73,30 +73,16 @@ simCH <- function (traps, popn, detectfn, detparmat, noccasions, NT = NULL,
              cat ('meandetparmat  ', apply(detparmat,2,mean), '\n')
          }
         
-        if (details$times) {
-            w <- armaCHtimecpp(
-                as.matrix(ptdist),
-                as.matrix(usge),
-                as.matrix(detparmat),
-                as.double(NT),
-                as.integer(binomN),
-                as.integer(detectfn),
-                as.integer(detectcode),
-                as.integer(nontargetcode),
-                as.integer(details$debug))
-        }
-        else {
-            w <- armaCHcpp(
-                as.matrix(ptdist),
-                as.matrix(usge),
-                as.matrix(detparmat),
-                as.double(NT),
-                as.integer(binomN),
-                as.integer(detectfn),
-                as.integer(detectcode),
-                as.integer(nontargetcode),
-                as.integer(details$debug))
-        }
+        w <- armaCHcpp(
+            as.matrix(ptdist),
+            as.matrix(usge),
+            as.matrix(detparmat),
+            as.double(NT),
+            as.integer(binomN),
+            as.integer(detectfn),
+            as.integer(detectcode),
+            as.integer(nontargetcode),
+            as.integer(details$debug))
         
         if (details$debug) {
             cat ('completed armaCHcpp\n')
@@ -118,15 +104,6 @@ simCH <- function (traps, popn, detectfn, detparmat, noccasions, NT = NULL,
         
         ## drop empty capture histories
         w <- w[apply(w,1,sum)>0,,, drop = FALSE]
-        
-        ## optional times added 2023-01-07
-        if (details$times) {
-            times <- w
-            w <- ceiling(w)
-            attr(w, 'times') <- times
-            attr(w, 'at') <- apply(times, 1:2, max)    # animal detection events
-            attr(w, 'vt') <- t(apply(times, 2:3, max)) # detector trigger events
-        }
         
         class(w)   <- 'capthist'
         if (nontargetcode > 0) {
