@@ -95,6 +95,7 @@ simCH -- a single-session \code{\link{capthist}} object. If \code{details$times 
 \item `vt' individual x occasion matrix
 \item `at' detector x occasion matrix.
 }
+Only the last event time is reported, so `vt' is meaningful only for single-catch and multi-catch traps, and `at' is meaningful for single-catch traps and capped detectors. 
 
 rpsv -- scalar
 
