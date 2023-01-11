@@ -255,7 +255,7 @@ arma::ucube armaCHcpp(
             
         }
         if(debug) {
-            Rprintf("sum CH %g\n", accu(CH));
+            Rprintf("sum CH %d\n", accu(CH));
         }
     }
     
