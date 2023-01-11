@@ -86,7 +86,7 @@ simCH <- function (traps, popn, detectfn, detparmat, noccasions, NT = NULL,
         
         if (details$debug) {
             cat ('completed armaCHcpp\n')
-            cat ('sum w\n ', sum(w), '\n')
+            cat ('sum w ', sum(w), '\n')
         }
         
         dimnames(w) <- list(seq_len(nrow(w)), 1:noccasions, NULL)
