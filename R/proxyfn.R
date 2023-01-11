@@ -65,13 +65,12 @@ detectionDesignData <- function (capthist, byoccasion = FALSE, ...) {
         tmp <- covariates(addCovariates(xys, ...))
         xys <- mapply(cbind, xys, tmp, SIMPLIFY = FALSE)
     }
-    
+
     # add individual covariates if present
     covar <- covariates(capthist)
-    if (!is.null(covar) && all(sapply(covar,nrow)>0)) {
+    if (!is.null(covar) && all(!sapply(covar, is.null)) && all(sapply(covar,nrow)>0)) {
         xys <- mapply(cbind, xys, covar, SIMPLIFY = FALSE)
     }
-    
     # add session
     addsess <- function(df, fact) {
         df$session <- fact; df
@@ -126,6 +125,11 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL, ...) {
             mean(apply(abs(chi),1,sum))
         }
     }
+    cleanNames <- function(myterms, prefix) {
+        names(myterms) <- paste0(prefix, names(myterms))
+        names(myterms) <- sub('..(Intercept))', '', names(myterms))
+        myterms
+    }
     binary <- detector(traps(capthist[[1]]))[1] %in% c('single','multi','proximity')
     binom <- detector(traps(capthist[[1]]))[1] %in% c('single','multi')
     n    <- sapply(capthist, nrow)         ## number of individuals per session
@@ -168,6 +172,7 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL, ...) {
                 glmfit <- glm(pmodel, data = animaldesigndata, family = poisson(link = "log"))
             }
             pterms <- coef(glmfit)    
+            pterms <- cleanNames(pterms, 'p.')
         }
         if (smodel == ~1) {
             sterms <- c(logRPSV = log(mean(unlist(rpsv(capthist)))))
@@ -181,7 +186,8 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL, ...) {
             glmfit <- glm(smodel, data = animaldesigndata.s, family = gaussian(link = "identity"),
                 na.action = na.omit, weights = freq)
             sterms <- coef(glmfit)
-                   
+            sterms <- cleanNames(sterms, 'sigma.')
+
             # experimental Tobit model 2023-01-05
             # if (!requireNamespace("survival")) stop ("sigma model requires survival package; please install")
             # smodel <- update(smodel, survival::Surv(si, si>0, type = 'left') ~ .)  ## si on LHS
@@ -208,6 +214,7 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL, ...) {
         model$D <- update(model$D, nk ~ .)  ## nk on LHS
         glmfit <- glm(model$D, data = trapdesigndata, family = poisson(link = "log"))
         Dterms <- coef(glmfit)    
+        Dterms <- cleanNames(Dterms, 'D.')
     }
     
     ## Optional model of nontarget data
@@ -242,9 +249,7 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL, ...) {
                     family = poisson(link = "log"))
             }
             NTterms <- coef(glmfitNT)    
-            names(NTterms) <- paste('NT', names(NTterms), sep = '.')
-            names(NTterms) <- sub('..(Intercept))', '', names(NTterms))
-            
+            NTterms <- cleanNames(NTterms, 'NT.')
         }
     }    
     else {
