@@ -461,9 +461,12 @@ ipsecr.fit <- function (
                 detparmat <- getDetParMat (popn2, model, detectfn, beta, parindx, 
                     link, fixed, details, sessionlevels)
                 #-----------------------------------------------------
-                
-                if (details$debug) print(apply(detparmat,2,mean))
-                
+                if (details$debug) {
+                    if (ms(capthist)) 
+                        lapply(detparmat, function(x) print(apply(x,2,mean)))
+                    else 
+                        print(apply(detparmat,2,mean))
+                }
                 # sample from population
                 if (is.function(details$CHmethod)) {   # user
                     ch <- details$CHmethod(trps, popn, detectfn, detparmat, noccasions, NT, details)
@@ -486,7 +489,6 @@ ipsecr.fit <- function (
                     if (any((r - n) < 1))
                         warning ("ipsecr.fit: no re-captures in simulation", call. = FALSE)
                 }
-                
                 if (details$debug) print(summary(ch))
                 
                 #------------------------------------------------
@@ -555,10 +557,11 @@ ipsecr.fit <- function (
     ## target values of predictor
     ##########################################
     y <- proxyfn(capthist, model = model, trapdesigndata = trapdesigndata, ...)
-    if (length(y) != NP)
-        stop ("need one proxy for each coefficient ",
+    # if (length(y) != NP)
+    if (length(y) < NP)
+        stop ("need at least one proxy for each coefficient ",
             paste(betanames, collapse=" "))
-
+    
     ##########################################
     ## starting values
     ##########################################
