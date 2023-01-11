@@ -583,7 +583,6 @@ getDetParMat <- function (popn, model, detectfn, beta, parindx, link, fixed,
         detparmat <- matrix(nrow = npop, ncol = length(detectparnames), 
             dimnames =list(NULL, detectparnames))
         designdata <- getDetDesignData(popn, model, session, sessionlevels)
-            
         for (parm in detectparnames) {
             if (!is.null(fixed[[parm]])) {
                 detparmat[,parm] <- fixed[[parm]]
@@ -592,7 +591,6 @@ getDetParMat <- function (popn, model, detectfn, beta, parindx, link, fixed,
                 if ('random' %in% all.vars(model[[parm]])) {
                     designdata$random <- rnorm(npop)
                 }
-                
                 design <- model.matrix(model[[parm]], data = designdata, 
                     contrasts.arg = details$contrasts)                   
                 detparmat[,parm] <- design %*% beta[parindx[[parm]]]
