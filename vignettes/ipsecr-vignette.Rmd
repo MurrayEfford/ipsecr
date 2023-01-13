@@ -26,7 +26,7 @@ The package **plot3D** should be installed to display Fig. 2, and some results r
 
 # Inverse prediction for capture--recapture estimation
 
-The method (Efford 2004; Efford, Dawson and Robbins 2004; see also Carothers 1979 and Pledger and Efford 1998) uses a vector-valued function of the raw data that provides a proxy for each coefficient (beta parameter) in the capture--recapture model. Each proxy is assumed to be monotonically related to the corresponding coefficient. 
+The method (Efford 2004; Efford, Dawson and Robbins 2004; see also Carothers 1979 and Pledger and Efford 1998) uses a vector-valued function of the raw data that provides one or more proxies for each coefficient (beta parameter) in the capture--recapture model. Each proxy is assumed to be monotonically related to the corresponding coefficient. 
 
 We use $\vec x_p$ for the vector of known parameter values at which simulations are performed and $\vec y_p$ for the vectors of proxies computed from these simulated data. The method fits a multivariate multiple regression over a set of points in parameter space ('box') and inverts that regression to estimate parameter values $\vec x$ from the observed proxy vector $\vec y$.
 
@@ -103,7 +103,7 @@ predict(ip.single)
 
 # Proxy functions
 
-The proxy function takes an **secr** capthist object as its first argument. It returns a vector of surrogate values, one for each coefficient (beta parameter) in the model. The default is `proxy.ms`. For example,
+The proxy function takes an **secr** capthist object as its first argument. It returns a vector of surrogate values, at least one for each coefficient (beta parameter) in the model. There does not strictly need to be a one-to-one relationship between proxies and coefficients, but multiple proxies have not so far been found useful and may muddy the water. The default function is `proxy.ms`. For example,
 
 ```{r exampleproxy}
 proxy.ms(captdata)
@@ -325,7 +325,7 @@ plot(ch, border = 20)
 Next, call `ipsecr.fit` with these customizations:
 
 * user proxyfn    : clusterproxyT
-* user popmethod  : simclusterpop
+* user popmethod  : simclusteredpop
 * user parameters : mu, hsigma
 * fixed parameter : hsigma = 1
 
@@ -333,7 +333,7 @@ Next, call `ipsecr.fit` with these customizations:
 ```{r extraparamfn}
 # user function to simulate Thomas (Neyman-Scott) distribution of activity centres
 # expect parameters mu and hsigma in list 'details$extraparam'
-simclusterpop <- function (mask, D, N, details) {
+simclusteredpop <- function (mask, D, N, details) {
     secr::sim.popn(
         D = D[1], 
         core = mask, 
@@ -356,7 +356,7 @@ clusterproxyT <- function (capthist, ...) {
     c(pr, logmu = log(tfit$modelpar['mu']))
 }
 clusterfitT <- ipsecr.fit(ch, proxyfn = clusterproxyT, mask = msk, 
-    detectfn = 'HHN', details = list(popmethod = simclusterpop, 
+    detectfn = 'HHN', details = list(popmethod = simclusteredpop, 
     extraparam = list(mu = 5, hsigma = NA)), fixed = list(hsigma = 1))
 ```
 
@@ -459,6 +459,9 @@ Efford, M. G. (2004) Density estimation in live-trapping studies. *Oikos* **106*
 
 Efford, M. G. (2022). secr: Spatially explicit capture--recapture models. R package version
   4.5.6. https://CRAN.R-project.org/package=secr/
+  
+Efford, M. G. (2023) ipsecr: An R package for awkward spatial capture--recapture data. 
+  *Methods in Ecology and Evolution* In review.
 
 Efford, M. G., Dawson, D. K. and Robbins C. S. (2004) DENSITY: software
 for analysing capture-recapture data from passive detector arrays.

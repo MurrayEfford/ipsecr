@@ -23,7 +23,7 @@
 Package: \tab ipsecr\cr
 Type: \tab Package\cr
 Version: \tab 1.4.0\cr
-Date: \tab 2023-01-08\cr
+Date: \tab 2023-01-14\cr
 License: \tab GNU General Public License Version 2 or later\cr
 }
 
@@ -41,7 +41,7 @@ excluded, e.g., ~t, ~b). Density models may include spatial trend. Habitat
 is distinguished from nonhabitat with an object of class `mask'.
 
 Models are fitted in \pkg{ipsecr} by simulation and inverse prediction 
-(Efford 2004). A model fitted with \code{\link{ipsecr.fit}} is an object
+(Efford 2004, 2023). A model fitted with \code{\link{ipsecr.fit}} is an object
 of class \code{ipsecr}. Generic methods (plot, print, summary, etc.) are
 provided.
 
@@ -116,6 +116,9 @@ Efford, M. G. (2004) Density estimation in live-trapping studies.
 
 Efford, M. G. (2022) secr: Spatially explicit capture--recapture models. 
   R package version 4.5.8. https://CRAN.R-project.org/package=secr/
+
+Efford, M. G. (2023) ipsecr: An R package for awkward spatial capture--recapture data. 
+  \emph{Methods in Ecology and Evolution} In review.
 
 Efford, M. G., Borchers D. L. and Byrom, A. E. (2009) Density estimation
 by spatially explicit capture--recapture: likelihood-based methods. In:

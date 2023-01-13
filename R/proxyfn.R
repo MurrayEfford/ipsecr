@@ -7,6 +7,7 @@
 ## 2022-08-24 fixed major bug in zippin
 ## 2022-08-24 defunct proxyfn0
 ## 2022-08-27 proxy.ms glm log(si+1)
+## 2023-01    pterms glm cloglog link replaces logit
 
 ###############################################################################
 
