@@ -11,8 +11,8 @@
 
 .localstuff <- new.env()
 
-## .localstuff$packageType <- ' pre-release'
-.localstuff$packageType <- ''
+.localstuff$packageType <- ' pre-release'
+## .localstuff$packageType <- ''
 
 .localstuff$countdetectors <- c('count','polygon','transect','unmarked','telemetry')
 .localstuff$detectionfunctions <-

@@ -1,3 +1,7 @@
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/MurrayEfford/ipsecr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/MurrayEfford/ipsecr/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+  
 # ipsecr
 Spatially Explicit Capture-Recapture by Inverse Prediction
 

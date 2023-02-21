@@ -74,7 +74,7 @@ session).
 
   \code{\link{predictDsurface}} should be used for predicting density at many
   points from a model with spatial variation. This deals automatically
-  with scaling of x- and y-coordinates, and is much is faster than
+  with scaling of x- and y-coordinates, and is much faster than
   predict.ipsecr. The resulting Dsurface object has its own plot method.
   
   The argument `scaled' was removed from both predict methods in version 2.10 as the scaleg0 and scalesigma features had been superceded by other parameterisations.
