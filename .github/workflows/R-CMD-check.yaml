@@ -28,10 +28,6 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
 
-    # see https://github.com/r-lib/actions Common questions (1)
-    if: runner.os == 'macOS'
-      run: brew install --cask xquartz
-  
     steps:
       - uses: actions/checkout@v3
 
@@ -45,6 +41,10 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
+
+      # see https://github.com/r-lib/actions Common questions (1)
+      - if: runner.os == 'macOS'
+        run: brew install --cask xquartz
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
