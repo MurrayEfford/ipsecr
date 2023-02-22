@@ -9,7 +9,7 @@ This package implements a simulation-based 'inverse prediction' algorithm for fi
 
 **ipsecr** depends on **secr** 4.5.8 or later. It improves on the functionality of `ip.secr` in earlier versions of **secr**. Many functions mirror those in **secr**.
 
-**ipsecr** 1.3.0 is available on CRAN.
+**ipsecr** 1.4.0 is available on CRAN.
 
 The code here is under development. It may be installed using
 ```
