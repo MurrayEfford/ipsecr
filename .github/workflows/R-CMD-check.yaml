@@ -33,6 +33,7 @@ jobs:
 
       - uses: r-lib/actions/setup-pandoc@v2
       
+      # required for latex vignette
       - uses: r-lib/actions/setup-tinytex@v2
       - run: tlmgr --version
       
@@ -54,4 +55,3 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
-          check-dir: '"check"'
