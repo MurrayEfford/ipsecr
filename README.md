@@ -1,4 +1,6 @@
 <!-- badges: start -->
+[![CRAN status](https://www.r-pkg.org/badges/version/ipsecr)](https://cran.r-project.org/package=ipsecr)
+[![Downloads (total)](https://cranlogs.r-pkg.org/badges/grand-total/ipsecr)](https://www.r-pkg.org/pkg/ipsecr)
 [![R-CMD-check](https://github.com/MurrayEfford/ipsecr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/MurrayEfford/ipsecr/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
   
