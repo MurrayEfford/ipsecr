@@ -4,9 +4,10 @@ year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date)
 vers <- paste("R package version", meta$Version)
 url <- "https://CRAN.R-project.org/package=ipsecr"
 
-citEntry(entry="Manual",
+bibentry(
+    bibtype = "Manual",
     title = "ipsecr: Spatially explicit capture-recapture using inverse prediction",
-    author = personList(as.person("Murray Efford")),
+    author = c(person("Murray","Efford")),
     year = year,
     note = vers,
     url = url,

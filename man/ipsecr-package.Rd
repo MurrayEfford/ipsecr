@@ -22,8 +22,8 @@
 \tabular{ll}{
 Package: \tab ipsecr\cr
 Type: \tab Package\cr
-Version: \tab 1.4.1\cr
-Date: \tab 2023-01-14\cr
+Version: \tab 1.4.2\cr
+Date: \tab 2024-01-15\cr
 License: \tab GNU General Public License Version 2 or later\cr
 }
 
@@ -118,7 +118,7 @@ Efford, M. G. (2022) secr: Spatially explicit capture--recapture models.
   R package version 4.5.8. https://CRAN.R-project.org/package=secr/
 
 Efford, M. G. (2023) ipsecr: An R package for awkward spatial capture--recapture data. 
-  \emph{Methods in Ecology and Evolution} In review.
+  \emph{Methods in Ecology and Evolution} \bold{14}, 1182--1189.
 
 Efford, M. G., Borchers D. L. and Byrom, A. E. (2009) Density estimation
 by spatially explicit capture--recapture: likelihood-based methods. In:
