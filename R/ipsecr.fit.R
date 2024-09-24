@@ -609,7 +609,7 @@ ipsecr.fit <- function (
             ), environment())
             # following are exported only during testing
             # ,"getD", "untransform", "simpop", "simCH", "ms", "getDetParMat",
-            # "parnames", "getDetDesignData", "covariates", "invlogit",
+            # "getDetDesignData", "covariates", "invlogit",
             # "usage", "detector", "armaCHcpp", "traps<-", "MS.capthist"
         }
         on.exit(stopCluster(clust))

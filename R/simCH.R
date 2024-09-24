@@ -30,9 +30,8 @@ simCH <- function (traps, popn, detectfn, detparmat, noccasions, NT = NULL,
         if (is.null(usge)) {
             usge <- matrix(1, K, noccasions)
         }
-        detectcode <- switch(detector(traps)[1], single = -1, 
-            multi = 0, proximity = 1, count = 2, capped = 8, 9)
-        if (detectcode == 9) stop ("unsupported detector type")
+        detectcode <- secr::detectorcode(detector(traps)[1])
+        if (detectcode>2) stop ("unsupported detector type")
         
         if (!is.matrix(detparmat)) {
             detparmat <- matrix(unlist(detparmat), byrow = TRUE, 

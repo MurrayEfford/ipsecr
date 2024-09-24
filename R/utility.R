@@ -2,7 +2,7 @@
 ## ipsecr/R/utility.R
 #######################################################################################
 
-## 2022-04-04, 2022-05-04, 2022-05-09, 2022-12-26
+## 2022-04-04, 2022-05-04, 2022-05-09, 2022-12-26, 2024-01-15
 #######################################################################################
 
 # Global variables in namespace
@@ -12,7 +12,7 @@
 .localstuff <- new.env()
 
 .localstuff$packageType <- ' pre-release'
-## .localstuff$packageType <- ''
+##.localstuff$packageType <- ''
 
 .localstuff$countdetectors <- c('count','polygon','transect','unmarked','telemetry')
 .localstuff$detectionfunctions <-
@@ -53,31 +53,6 @@ detectionfunctionnumber <- function (detname) {
     if (is.na(dfn))
         stop ("unrecognised detection function ", detname)
     dfn-1
-}
-parnames <- function (detectfn) {
-    parnames <- switch (detectfn+1,
-        c('g0','sigma'),   ## 0
-        c('g0','sigma','z'),
-        c('g0','sigma'),
-        c('g0','sigma','z'),
-        c('g0','sigma'),
-        c('g0','sigma','w'),
-        c('g0','sigma','w'),
-        c('g0','sigma','z'),
-        c('g0','sigma','z'),
-        c('b0','b1'),
-        c('beta0','beta1', 'sdS'),    ## include cutval?
-        c('beta0','beta1', 'sdS'),    ## include cutval?
-        c('beta0','beta1', 'sdS','muN','sdN'),
-        c('beta0','beta1', 'sdS','muN','sdN'),
-        c('lambda0','sigma'),
-        c('lambda0','sigma','z'),
-        c('lambda0','sigma'),
-        c('lambda0','sigma','w'),
-        c('lambda0','sigma','z'),
-        c('lambda0','sigma','z'),
-        c('lambda0')    ## 20
-    )
 }
 getdfn <- function (detectfn) {
     switch (detectfn+1, HN, HR, EX, CHN, UN, WEX, ANN, CLN, CG, BSS, SS, SSS,
@@ -489,37 +464,6 @@ nparameters <- function (object) {
 }
 ################################################################################
 
-detectorcode <- function (object, MLonly = TRUE, noccasions = NULL) {
-  ## numeric detector code from a traps object
-  detcode <- sapply(detector(object), switch,
-    single      = -1,
-    multi       = 0,
-    proximity   = 1,
-    count       = 2,
-    polygonX    = 3,
-    transectX   = 4,
-    signal      = 5,
-    polygon     = 6,
-    transect    = 7,
-    capped      = 8,
-    unmarked    = 10,
-    presence    = 11,
-    signalnoise = 12,
-    telemetry   = 13,
-    -2)
-  
-  if (MLonly) {
-    detcode <- ifelse (detcode==-1, rep(0,length(detcode)), detcode)
-    if (any(detcode<0))
-      stop ("Unrecognised detector type")
-  }
-  
-  if (!is.null(noccasions) & (length(detcode)==1))
-    detcode <- rep(detcode, noccasions)
-  detcode
-}
-################################################################################
-
 # modified from secr
 getD <- function (parm = 'D', designD, beta, mask, parindx, link, fixed, nsessions) {
     if (is.function(designD)) {
@@ -578,7 +522,7 @@ getDetParMat <- function (popn, model, detectfn, beta, parindx, link, fixed,
         out
     }
     else {
-        detectparnames <- parnames(detectfn)
+        detectparnames <- secr::parnames(detectfn)
         npop <- nrow(popn)
         detparmat <- matrix(nrow = npop, ncol = length(detectparnames), 
             dimnames =list(NULL, detectparnames))
@@ -609,7 +553,7 @@ getDetParMat <- function (popn, model, detectfn, beta, parindx, link, fixed,
 detBetaNames <- function(popn, model, detectfn, sessionlevels, fixed = NULL, 
     details = NULL) {
     if (ms(popn)) popn <- popn[[1]]
-    detectparnames <- parnames(detectfn)
+    detectparnames <- secr::parnames(detectfn)
     detparmat <- matrix(nrow = nrow(popn), ncol = length(detectparnames), 
         dimnames =list(NULL, detectparnames))
     designdata <- getDetDesignData(popn, model, sessionlevels[1], sessionlevels)
