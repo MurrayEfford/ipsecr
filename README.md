@@ -11,7 +11,7 @@ This package implements a simulation-based 'inverse prediction' algorithm for fi
 
 **ipsecr** depends on **secr** 4.5.8 or later. It improves on the functionality of `ip.secr` in earlier versions of **secr**. Many functions mirror those in **secr**.
 
-**ipsecr** 1.4.0 is available on CRAN.
+**ipsecr** is available on CRAN.
 
 The code here is under development. It may be installed using
 ```
@@ -25,7 +25,7 @@ Please report problems as Issues on GitHub.
 Efford, M. G. (2004) Density estimation in live-trapping studies. *Oikos* **106**, 598--610.
 
 Efford, M. G. (2023) ipsecr: An R package for awkward spatial capture-recapture data. 
-*Methods in Ecology and Evolution* In press.
+*Methods in Ecology and Evolution* **14**, 1182--1189.
 
 Efford, M. G., Dawson, D. K. and Robbins C. S. (2004) DENSITY: software
 for analysing capture-recapture data from passive detector arrays.
