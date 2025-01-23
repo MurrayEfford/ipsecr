@@ -99,24 +99,6 @@ memo <- function (text, verbose) {
     flush.console() }
 }
 
-## regularize a list of formulae
-stdform <- function (flist) {
-    LHS <- function (form) {
-        trms <- as.character (form)
-        if (length(trms)==2) '' else trms[2]
-    }
-    RHS <- function (form) {
-        trms <- as.character (form)
-        ## 2020-05-14 for compatibility with R 4.0
-        if (length(trms)==3) as.formula(paste(trms[c(1,3)], collapse = " ")) else form
-    }
-    lhs <- sapply(flist, LHS)
-    temp <- lapply(flist, RHS)
-    if (is.null(names(flist))) names(temp) <- lhs
-    else names(temp) <- ifelse(names(flist) == '', lhs, names(flist))
-    temp
-}
-
 ## Start of miscellaneous functions
 
 invlogit <- function (y) 1/(1+exp(-y))   # plogis(y)
@@ -522,7 +504,7 @@ getDetParMat <- function (popn, model, detectfn, beta, parindx, link, fixed,
         out
     }
     else {
-        detectparnames <- secr::parnames(detectfn)
+        detectparnames <- secr:::parnames(detectfn)
         npop <- nrow(popn)
         detparmat <- matrix(nrow = npop, ncol = length(detectparnames), 
             dimnames =list(NULL, detectparnames))
@@ -553,7 +535,7 @@ getDetParMat <- function (popn, model, detectfn, beta, parindx, link, fixed,
 detBetaNames <- function(popn, model, detectfn, sessionlevels, fixed = NULL, 
     details = NULL) {
     if (ms(popn)) popn <- popn[[1]]
-    detectparnames <- secr::parnames(detectfn)
+    detectparnames <- secr:::parnames(detectfn)
     detparmat <- matrix(nrow = nrow(popn), ncol = length(detectparnames), 
         dimnames =list(NULL, detectparnames))
     designdata <- getDetDesignData(popn, model, sessionlevels[1], sessionlevels)

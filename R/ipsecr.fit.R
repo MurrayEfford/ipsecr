@@ -225,7 +225,7 @@ ipsecr.fit <- function (
     #################################################
     
     if ('formula' %in% class(model)) model <- list(model)
-    model <- stdform (model)  ## named, no LHS
+    model <- secr:::stdform (model)  ## named, no LHS
     model <- updatemodel(model, detectfn, 14:20, 'g0', 'lambda0')
     
     detmodels <- names(model) %in% c('g0','lambda0','sigma')
