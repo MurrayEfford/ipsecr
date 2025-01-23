@@ -54,7 +54,7 @@ row).
 
 }
 
-\seealso{ \code{\link{Detection functions}}, \code{\link{plot}}, \code{\link{ipsecr}}, \code{\link{detectfnplot}} }
+\seealso{ \code{\link[secr]{Detection functions}}, \code{\link{plot}}, \code{\link{ipsecr}}, \code{\link[secr]{detectfnplot}} }
 
 \examples{
 

@@ -23,7 +23,7 @@
 Package: \tab ipsecr\cr
 Type: \tab Package\cr
 Version: \tab 1.4.2\cr
-Date: \tab 2024-01-15\cr
+Date: \tab 2025-01-23\cr
 License: \tab GNU General Public License Version 2 or later\cr
 }
 
@@ -65,9 +65,9 @@ from \code{proxyfn(capthist)} (the target vector) to statistics
 from simulations of a 2-D population using the postulated detection
 model. Statistics (see Note) are defined by the proxy function,
 which should return a vector equal in length to the number of parameters
-(default np = 3). Simulations of the 2-D population use either internal C++ code or \code{\link{sim.popn}}. The simulated 2-D distribution of animals is Poisson by default.
+(default np = 3). Simulations of the 2-D population use either internal C++ code or \code{\link[secr]{sim.popn}}. The simulated 2-D distribution of animals is Poisson by default.
 
-The simulated population is sampled with internal C++ code, \code{\link{sim.capthist}}, or a user-specified function. Simulations match the detector type (e.g., `single' or `multi') and detector layout specified in traps(capthist), including allowance for varying effort if the layout has a \code{\link{usage}} attribute.
+The simulated population is sampled with internal C++ code, \code{\link[secr]{sim.capthist}}, or a user-specified function. Simulations match the detector type (e.g., `single' or `multi') and detector layout specified in traps(capthist), including allowance for varying effort if the layout has a \code{\link[secr]{usage}} attribute.
 
 
 Simulations are usually conducted on a factorial experimental design in
@@ -94,13 +94,13 @@ See Efford et al. (2004) for an early description of the method, and
 Efford et al. (2005) for an application.
 
 If not provided, the starting values are determined automatically
-with the **secr** function \code{\link{makeStart}}.
+with the **secr** function \code{\link[secr]{makeStart}}.
 
 Linear measurements are assumed to be in metres and density in animals
 per hectare (10 000 \eqn{\mbox{m}^2}{m^2}).
 
 If \code{ncores > 1} the \pkg{parallel} package is used to create
-worker processes on multiple cores (see \link{Parallel} for more). 
+worker processes on multiple cores (see \link[secr]{Parallel} for more). 
 
 }
 

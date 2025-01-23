@@ -33,12 +33,12 @@ ipsecr.fit(capthist, proxyfn = proxy.ms, model = list(D ~ 1, g0 ~ 1, sigma ~ 1),
   \item{model}{list with optional components each symbolically defining a linear 
       predictor for one real parameter using \code{formula} notation }
   
-  \item{mask}{\code{\link{mask}} object }
+  \item{mask}{\code{\link[secr]{mask}} object }
   
   \item{buffer}{scalar mask buffer radius in metres if \code{mask} not specified}
 
   \item{detectfn}{integer code or character string for shape of
-      detection function 0 = halfnormal, 1 = hazard rate etc. -- see \link{detectfn}}
+      detection function 0 = halfnormal, 1 = hazard rate etc. -- see \link[secr]{detectfn}}
   
   \item{binomN}{integer code for distribution of counts (see Details) }
   
@@ -58,7 +58,7 @@ ipsecr.fit(capthist, proxyfn = proxy.ms, model = list(D ~ 1, g0 ~ 1, sigma ~ 1),
 
   \item{details}{list of additional settings, to control estimation (see Details) }
 
-  \item{verify}{logical, if TRUE the input data are checked with \code{\link{verify}} }
+  \item{verify}{logical, if TRUE the input data are checked with \code{\link[secr]{verify}} }
 
   \item{verbose}{ logical, if TRUE then messages are output during execution}
   
@@ -75,7 +75,7 @@ ipsecr.fit(capthist, proxyfn = proxy.ms, model = list(D ~ 1, g0 ~ 1, sigma ~ 1),
 The vignette should be consulted for a full exposition.
 
 \subsection{Parallel computation}{
-\code{ncores} determines the number of worker processes in a cluster created by \code{\link{makeCluster}} (default type "FORK" on Unix platforms, otherwise "PSOCK"). If \code{ncores = NULL} this defaults to the value from \code{\link{setNumThreads}}. Simulations are distributed over worker processes using \code{\link{parRapply}}. There are substantial overheads in running multiple processes: using too many will slow down fitting. With PSOCK clusters (i.e. on Windows) fitting is very often fastest with ncores = 1.
+\code{ncores} determines the number of worker processes in a cluster created by \code{\link{makeCluster}} (default type "FORK" on Unix platforms, otherwise "PSOCK"). If \code{ncores = NULL} this defaults to the value from \code{\link[secr]{setNumThreads}}. Simulations are distributed over worker processes using \code{\link{parRapply}}. There are substantial overheads in running multiple processes: using too many will slow down fitting. With PSOCK clusters (i.e. on Windows) fitting is very often fastest with ncores = 1.
 }
 
 \subsection{The `details' argument}{

@@ -72,7 +72,7 @@ session).
 
 \note{
 
-  \code{\link{predictDsurface}} should be used for predicting density at many
+  \code{\link[secr]{predictDsurface}} should be used for predicting density at many
   points from a model with spatial variation. This deals automatically
   with scaling of x- and y-coordinates, and is much faster than
   predict.ipsecr. The resulting Dsurface object has its own plot method.
@@ -84,7 +84,7 @@ session).
 \references{ 
 Lebreton, J.-D., Burnham, K. P., Clobert, J. and Anderson, D. R. (1992) Modeling survival and testing biological hypotheses using marked animals: a unified approach with case studies. \emph{Ecological Monographs} \bold{62}, 67--118. }
 
-\seealso{ \code{\link{ipsecr.fit}}, \code{\link{predictDsurface}} }
+\seealso{ \code{\link{ipsecr.fit}}, \code{\link[secr]{predictDsurface}} }
 
 \examples{
 

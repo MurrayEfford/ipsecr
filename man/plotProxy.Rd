@@ -29,7 +29,7 @@ plotProxy(parameter = "sigma", proxyfn = proxy.ms, traps, mask, detectfn = "HHN"
   \item{proxyfn}{function to compute vector of proxy values from a capthist object}
   \item{traps}{traps object}
   \item{mask}{habitat mask object}
-  \item{detectfn}{numeric or character code for detection function (see \link{detectfn})}
+  \item{detectfn}{numeric or character code for detection function (see \link[secr]{detectfn})}
   \item{noccasions}{integer number of sampling occasions}
   \item{basepar}{named list with central values of parameters}
   \item{xvals}{specified values of focal paramater to simulate (optional)}

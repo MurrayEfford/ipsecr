@@ -53,7 +53,7 @@ rpsvi(capthist)
  
   \item{traps}{detector locations as \pkg{secr} traps object}
   \item{popn}{animal locations as \pkg{secr} popn object}
-  \item{detectfn}{integer code for detection function (see \link{detectfn})}
+  \item{detectfn}{integer code for detection function (see \link[secr]{detectfn})}
   \item{detparmat}{numeric matrix of detection parameter values}
   \item{noccasions}{integer number of sampling occasions}
   \item{NT}{numeric hazard of non-target interference at each detector}
@@ -63,11 +63,11 @@ rpsvi(capthist)
 
 \details{
 
-  \code{proxy.ms} is the default proxyfn used by \code{\link{ipsecr.fit}}. When used internally by \code{\link{ipsecr.fit}}, `model' and `trapdesigndata' are passed automatically. The \dots argument of \code{proxy.ms} may be used to pass arguments to \code{\link{addCovariates}}, especially `spatialdata'. Function \code{detectionDesignData} is used internally to construct design data for non-constant detection models (lambda0, sigma), used in the glm 'data' argument. The capthist argument for \code{detectionDesignData} should always be a list (wrap a single-session capthist in list()).
+  \code{proxy.ms} is the default proxyfn used by \code{\link{ipsecr.fit}}. When used internally by \code{\link{ipsecr.fit}}, `model' and `trapdesigndata' are passed automatically. The \dots argument of \code{proxy.ms} may be used to pass arguments to \code{\link[secr]{addCovariates}}, especially `spatialdata'. Function \code{detectionDesignData} is used internally to construct design data for non-constant detection models (lambda0, sigma), used in the glm 'data' argument. The capthist argument for \code{detectionDesignData} should always be a list (wrap a single-session capthist in list()).
 
-  \code{simpop} is used by \code{\link{ipsecr.fit}} for popmethod 'internal'. It is faster and simpler than the \pkg{secr} function \code{\link{sim.popn}}. The details component 'distribution' is a character value that may be `poisson' (default) or `even.
+  \code{simpop} is used by \code{\link{ipsecr.fit}} for popmethod 'internal'. It is faster and simpler than the \pkg{secr} function \code{\link[secr]{sim.popn}}. The details component 'distribution' is a character value that may be `poisson' (default) or `even.
 
-  \code{simCH} is used by \code{\link{ipsecr.fit}} for CHmethod 'internal'. It is faster and simpler than the \pkg{secr} function \code{\link{sim.capthist}}, and optionally simulates non-target interference. The argument \code{detparmat} is an individual x parameter matrix, with parameters in the order usual for \code{detectfn}.
+  \code{simCH} is used by \code{\link{ipsecr.fit}} for CHmethod 'internal'. It is faster and simpler than the \pkg{secr} function \code{\link[secr]{sim.capthist}}, and optionally simulates non-target interference. The argument \code{detparmat} is an individual x parameter matrix, with parameters in the order usual for \code{detectfn}.
  
  \code{D} and \code{NT} are matrices with one column per session. 
  
@@ -87,9 +87,9 @@ detectionDesignData -- a dataframe with one row per individual per session (byoc
 proxyfn1 -- a numeric vector of length 3 corresponding to proxies for 
     population size, capture probability intercept and scale of detection.
 
-simpop -- a \code{\link{popn}} object.
+simpop -- a \code{\link[secr]{popn}} object.
 
-simCH -- a single-session \code{\link{capthist}} object. 
+simCH -- a single-session \code{\link[secr]{capthist}} object. 
 
 rpsv -- scalar
 

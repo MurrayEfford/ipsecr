@@ -44,7 +44,7 @@ University of Otago, Dunedin, New Zealand. \url{https://www.otago.ac.nz/density/
 
 }
 
-\seealso{ \code{\link{capthist}}, \code{\link{read.capthist}}, \code{\link{secrdemo}} }
+\seealso{ \code{\link[secr]{capthist}}, \code{\link[secr]{read.capthist}}, \code{\link[secr]{secrdemo}} }
 
 \examples{
 
