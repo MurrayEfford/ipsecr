@@ -39,7 +39,7 @@ ipsecr.fit <- function (
     #################################################
     ## inputs
     #################################################
-    
+
     trps <- traps(capthist)
     
     if (!is.null(covariates(mask))) {
@@ -51,11 +51,11 @@ ipsecr.fit <- function (
     if (!is.null(details$newdetector)) {
         warning("replacement detector type specified by user")
         detectortype <- details$newdetector       
-        if (ms(trps)) for (j in 1:length(trps)) detector(trps[[j]]) <- detectortype
+        if (secr::ms(trps)) for (j in 1:length(trps)) detector(trps[[j]]) <- detectortype
         else  detector(trps) <- detectortype
     } 
     else {
-        if (ms(trps)) detectortype <- unlist(sapply(trps, detector))[1]   ## assume all same
+        if (secr::ms(trps)) detectortype <- unlist(sapply(trps, detector))[1]   ## assume all same
         else detectortype <- detector(trps)[1]
     }
     #------------------------------------------
@@ -163,13 +163,13 @@ ipsecr.fit <- function (
     }
 
     sessionlevels <- session(capthist)
-    if (ms(capthist)) {
+    if (secr::ms(capthist)) {
         nsessions <- length(capthist)
         noccasions <- sapply(capthist, ncol)
         if (details$popmethod == 'sim.popn' && packageVersion('secr') < '4.5.6') {
             stop ("simulation of multi-session population with sim.popn requires secr >= 4.5.6")
         }
-        if (!is.null(mask) && !ms(mask)) {
+        if (!is.null(mask) && !secr::ms(mask)) {
             ## inefficiently replicate mask for each session!
             mask <- lapply(sessionlevels, function(x) mask)
             class (mask) <- c('mask', 'list')
@@ -232,7 +232,7 @@ ipsecr.fit <- function (
     # if (any(sapply(model[detmodels], "!=", ~1))) stop ("not ready for varying detection")
     notOK <- function(model) {
         sessvars <- names(sessioncov)
-        maskvars <- names(covariates(if (ms(mask)) mask[[1]] else mask))  
+        maskvars <- names(covariates(if (secr::ms(mask)) mask[[1]] else mask))  
         !all(all.vars(model) %in% c("session", "Session", "x", "y", sessvars, maskvars))
     }
     
@@ -420,7 +420,6 @@ ipsecr.fit <- function (
         # repeat {
         allOK <- FALSE
         while (attempts < details$max.ntries && !allOK) {
-            
             #------------------------------------------------
             # generate population
             if (is.function(details$popmethod)) {   # user
@@ -446,7 +445,7 @@ ipsecr.fit <- function (
                 #-----------------------------------------------------
                 # session-specific detection parameter matrix/matrices
                 scalepopn <- function (popn, mask) {
-                    if (ms(popn)) {
+                    if (secr::ms(popn)) {
                         out <- mapply(scalepopn, popn, mask, SIMPLIFY = FALSE)
                         class(out) <- class(popn)
                         out
@@ -462,7 +461,7 @@ ipsecr.fit <- function (
                     link, fixed, details, sessionlevels)
                 #-----------------------------------------------------
                 if (details$debug) {
-                    if (ms(capthist)) 
+                    if (secr::ms(capthist)) 
                         lapply(detparmat, function(x) print(apply(x,2,mean)))
                     else 
                         print(apply(detparmat,2,mean))
@@ -557,10 +556,11 @@ ipsecr.fit <- function (
     ## target values of predictor
     ##########################################
     y <- proxyfn(capthist, model = model, trapdesigndata = trapdesigndata, ...)
-    # if (length(y) != NP)
     if (length(y) < NP)
         stop ("need at least one proxy for each coefficient ",
             paste(betanames, collapse=" "))
+    if (any(is.na(y)))
+        stop ("proxy function not valid for at least one parameter")
     
     ##########################################
     ## starting values
