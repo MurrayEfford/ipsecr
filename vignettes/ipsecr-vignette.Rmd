@@ -221,6 +221,81 @@ predict(ip.single.nontarget)
 
 Note that 'NT' cannot be estimated if all traps are occupied. 'NT' may be modelled as a function of session and detector (trap), but not occasion.
 
+# Conditioning to minimise the effect of ghost individuals
+
+Genotyping errors or photo misidentification commonly manifest in SECR datasets 
+as ghost individuals with a single detection. Kodi et al. (2024) proposed to 
+reduce the resulting bias by conditioning on a certain minimum number of 
+detections *K*, specifically *K* = 2. The required modification to the likelihood 
+has not yet been implemented in **secr** owing to the complexity of covering all 
+**secr** options, but a model for $K \ge 2$ is readily implemented in **ipsecr** 
+as we show here.
+
+First we generate some data.
+```{r sim}
+grid <- make.grid(9,9, spacing = 20, detector = 'count')
+msk <- make.mask(grid, buffer = 100)
+CH <- sim.capthist(grid, popn = list(D = 10), detectfn = 'HHN', seed = 123, 
+                   detectpar = list(lambda0 = 0.3, sigma = 25))
+```
+
+Next we corrupt the simulated detection histories in two ways. Ghosting increases
+the number of individuals without changing the number of detections; dropping 
+singletons decreases both.
+
+
+```{r modifiedCH}
+# add ghosts
+pGhost <- 0.05
+CHdf <- as.data.frame(CH)
+gh <- runif(nrow(CHdf)) < pGhost
+CHdf$ID[gh] <- paste('N', CHdf$ID[gh], CHdf$Occasion[gh], CHdf$TrapID[gh], sep = '.')
+CHg <- make.capthist(CHdf, grid, noccasions = ncol(CH))
+
+# drop histories with only one detection
+CHg2 <- subset(CHg, apply(abs(CHg), 1, sum) >= 2)
+
+# summarise
+sapply(list(CH=CH, CHg=CHg, CHg2=CHg2), summary, terse = TRUE)
+```
+
+
+```{r}
+# conventional ML fit with and without ghosts
+predict(secr.fit(CH, mask = msk, detectfn = 'HHN', trace = FALSE))
+predict(secr.fit(CHg, mask = msk, detectfn = 'HHN', trace = FALSE))
+```
+
+Ghosting causes a spurious increase in the density estimate, as expected. Next we try 
+**ipsecr** on these datasets, plus one from which singletons have been removed.
+
+
+```{r iprepeat, cache = TRUE}
+# fits using inverse prediction also show the effect of ghosting
+fit0 <- ipsecr.fit(CH, mask = msk, detectfn = 'HHN', verbose = FALSE)
+fitg <- ipsecr.fit(CHg, mask = msk, detectfn = 'HHN',  verbose = FALSE)
+predict(fit0)
+predict(fitg)
+```
+
+We fit a model that allows for excluded singletons by tweaking the simulation function.
+```{r simCHK, cache = TRUE}
+# define a custom simulation function that drops singleton histories
+simCHK <- function (trps, popn, detectfn, detparmat, noccasions, NT, details, K = 2) {
+    ch <- secr::sim.capthist(traps = trps, popn  = popn, detectfn = detectfn, 
+                       detectpar = as.list(detparmat[1,]), noccasions = noccasions)
+    ndet <- apply(abs(ch),1,sum)
+    subset(ch, ndet >= K)
+}
+
+# fit with custom function
+fitg2 <- ipsecr.fit(CHg2, mask = msk, detectfn = 'HHN',  verbose = FALSE,
+                    details = list(CHmethod = simCHK))
+
+predict(fitg2)
+```
+
+The effect of ghosting is removed.
 
 # Tuning the algorithm
 
@@ -461,13 +536,16 @@ Efford, M. G. (2022). secr: Spatially explicit capture--recapture models. R pack
   4.5.6. https://CRAN.R-project.org/package=secr/
   
 Efford, M. G. (2023) ipsecr: An R package for awkward spatial capture--recapture data. 
-  *Methods in Ecology and Evolution* In review.
+  *Methods in Ecology and Evolution* **14**, 1182--1189.
 
 Efford, M. G., Dawson, D. K. and Robbins C. S. (2004) DENSITY: software
 for analysing capture-recapture data from passive detector arrays.
 *Animal Biodiversity and Conservation* **27**, 217--228.
 
 Groemping, U. (2014). R Package FrF2 for Creating and Analyzing Fractional Factorial 2-Level Designs. *Journal of Statistical Software*, **56**, 1--56. https://www.jstatsoft.org/article/view/v056i01.
+
+Kodi, A. R., Howard, J., Borchers, D. L., Worthington, H., Alexander, J. S., Lkhagvajav, P., Bayandonoi, G., Ochirjav, M., Erdenebaatar, S.,
+Byambasuren, C., Battulga, N., Johansson, Ö., and Sharma, K. (2024) Ghostbusting - reducing bias due to identification errors in spatial capture--recapture histories. *Methods in Ecology and Evolution* **15**, 1060--1070.
 
 Pledger, S. and Efford, M. G. (1998)  Correction of bias due to heterogeneous capture probability in capture-recapture studies of open populations. *Biometrics* **54**, 888--898.
 
