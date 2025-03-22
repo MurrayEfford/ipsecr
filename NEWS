@@ -1,7 +1,15 @@
-Changes in version 1.4.3 (2025-01-24)
+Changes in version 1.4.3 (2025-03-23)
 
 New features or changed behaviour of old functions
-    o   none
+    o   error if proxy function fails on input
+
+Bugs fixed
+    o   proxy.ms() failed with proximity detector
+    o   internal simCH failed when traps object detector was vector length>1
+
+Other
+    o   vignette includes example dropping histories with a single detection 
+        (suggested by  Kodi et al. 2024 to control for ID errors)
     
 Changes in version 1.4.2 (2025-01-23)
 
