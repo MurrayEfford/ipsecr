@@ -152,11 +152,14 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL, ...) {
         freq <- unlist(sapply(capthist,function(x) apply(abs(x)>0,1,sum)-1))
         animaldesigndata.s$freq <- unname(as.numeric(freq))
     }    
-    
     if (binary) {
         if (pmodel == ~1) {
             p    <- lapply(capthist, function(x) apply(x,1,nim))
-            pterms <- c(cloglogp = log(-log(1-mean(unlist(p)))))
+            if (binom)
+                pterms <- c(cloglogp = log(-log(1-mean(unlist(p)))))
+            else 
+                pterms <- c(logL = log(mean(unlist(p))))  # 2025-03-22
+            
         }
         else {
             # binary animal x occasion data
@@ -165,7 +168,6 @@ proxy.ms <- function (capthist, model = NULL, trapdesigndata = NULL, ...) {
             animaldesigndata$ni <- unlist(lapply(ni, as.numeric)) 
             pmodel <- update(pmodel, ni ~ .)  ## ni on LHS
             if (binom) {
-                # glmfit <- glm(pmodel, data = animaldesigndata, family = binomial(link = "logit"))
                 glmfit <- glm(pmodel, data = animaldesigndata, family = binomial(link = "cloglog"))  # 1.4.0
             }
             else {
