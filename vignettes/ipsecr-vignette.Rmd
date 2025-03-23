@@ -270,16 +270,20 @@ Ghosting causes a spurious increase in the density estimate, as expected. Next w
 **ipsecr** on these datasets, plus one from which singletons have been removed.
 
 
-```{r iprepeat, cache = TRUE}
+```{r iprepeat, eval = runall, cache = TRUE}
 # fits using inverse prediction also show the effect of ghosting
 fit0 <- ipsecr.fit(CH, mask = msk, detectfn = 'HHN', verbose = FALSE)
 fitg <- ipsecr.fit(CHg, mask = msk, detectfn = 'HHN',  verbose = FALSE)
+```
+
+
+```{r iprepeat2, cache = TRUE}
 predict(fit0)
 predict(fitg)
 ```
 
 We fit a model that allows for excluded singletons by tweaking the simulation function.
-```{r simCHK, cache = TRUE}
+```{r simCHK, eval = runall, cache = TRUE}
 # define a custom simulation function that drops singleton histories
 simCHK <- function (trps, popn, detectfn, detparmat, noccasions, NT, details, K = 2) {
     ch <- secr::sim.capthist(traps = trps, popn  = popn, detectfn = detectfn, 
@@ -291,7 +295,9 @@ simCHK <- function (trps, popn, detectfn, detparmat, noccasions, NT, details, K 
 # fit with custom function
 fitg2 <- ipsecr.fit(CHg2, mask = msk, detectfn = 'HHN',  verbose = FALSE,
                     details = list(CHmethod = simCHK))
+```
 
+```{r simCHK2, cache = TRUE}
 predict(fitg2)
 ```
 
@@ -514,7 +520,7 @@ Try specifying a wider boxsize1 for the first box, or set starting values.
 
 ```{r saveall, echo = FALSE, eval = runall}
 save(ip.single, ip.single.1, ip.single.nontarget, ipx, clusterfitT, clusterfitML,
-      file = '../inst/example/fittedmodels.RData')
+     fit0, fitg, fitg2, file = '../inst/example/fittedmodels.RData')
 save(ip.Fr, file = '../inst/example/ip.Fr.RData')
 tools::resaveRdaFiles(paste0('../inst/example'),'xz')
 ```
