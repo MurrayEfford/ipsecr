@@ -20,6 +20,11 @@ devtools::install_github("MurrayEfford/ipsecr")
 
 Compilation of C++ code is required.
 
+Alternatively, the development version may be installed with
+```
+install.packages("ipsecr", repos = "https://MurrayEfford.r-universe.dev")
+```
+
 Please report problems as Issues on GitHub.
 
 Efford, M. G. (2004) Density estimation in live-trapping studies. *Oikos* **106**, 598--610.
