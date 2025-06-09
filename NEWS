@@ -1,4 +1,4 @@
-Changes in version 1.4.3 (2025-03-23)
+Changes in version 1.4.3 (2025-06-10)
 
 New features or changed behaviour of old functions
     o   error if proxy function fails on input
@@ -10,6 +10,7 @@ Bugs fixed
 Other
     o   vignette includes example dropping histories with a single detection 
         (suggested by  Kodi et al. 2024 to control for ID errors)
+    o   vignette does not advocate adjustment for overdispersion
     
 Changes in version 1.4.2 (2025-01-23)
 
