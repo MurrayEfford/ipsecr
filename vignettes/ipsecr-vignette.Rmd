@@ -454,13 +454,12 @@ clusterfitML <- secr.fit(ch, mask = msk, detectfn = 'HHN', trace = FALSE)
 predict(clusterfitML)
 ```
 
-If the concern is to correct for the effect of clumping on the confidence interval for overall density then we would be better to apply a simple adjustment for overdispersion. Fletcher's c-hat (computed from the number of animals per detector) is 2.98, which suggests a more modest inflation of the variance estimate (below). Time-consuming simulations would be needed to determine which is the better approach, but I'm guessing it is Fletcher's c-hat.
+<!-- If the concern is to correct for the effect of clumping on the confidence interval for overall density then we would be better to apply a simple adjustment for overdispersion. Fletcher's c-hat (computed from the number of animals per detector) is 2.98, which suggests a more modest inflation of the variance estimate (below). Time-consuming simulations would be needed to determine which is the better approach, but I'm guessing it is Fletcher's c-hat. -->
 
-```{r adjustvard}
-secr::adjustVarD(clusterfitML)
-```
+<!-- ```{r adjustvard} -->
+<!-- secr::adjustVarD(clusterfitML) -->
+<!-- ``` -->
  
-
 # Relationship to package **secr** {#methods}
 
 Some functionality of **ipsecr** is shared with **secr**.
