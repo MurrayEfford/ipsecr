@@ -63,6 +63,7 @@ S3method(predict, ipsecr)
 S3method(print, ipsecr)
 S3method(print, summary.ipsecr)
 S3method(summary, ipsecr)
+S3method(trim, ipsecr)
 S3method(vcov, ipsecr)
 
 # S3method(region.N, ipsecr)

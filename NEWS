@@ -1,7 +1,8 @@
-Changes in version 1.4.3 (2025-06-10)
+Changes in version 1.4.4 (2025-06-10)
 
 New features or changed behaviour of old functions
     o   error if proxy function fails on input
+    o   trim method for ipsecr objects
 
 Bugs fixed
     o   proxy.ms() failed with proximity detector
