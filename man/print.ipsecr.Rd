@@ -1,8 +1,9 @@
 \name{print.ipsecr}
 \alias{print.ipsecr}
 \alias{summary.ipsecr}
+\alias{trim.ipsecr}
 
-\title{ Print or Summarise ipsecr Object }
+\title{ Print, Trim or Summarise ipsecr Object }
 
 \description{
 
@@ -14,6 +15,7 @@
 \usage{
 \method{print}{ipsecr} (x, newdata = NULL, alpha = 0.05, call = TRUE, ...)
 \method{summary}{ipsecr} (object, newdata = NULL, alpha = 0.05, ...)
+\method{trim}{ipsecr} (object, drop = c('call', 'proxyfn', 'mask', 'sim.lm'), keep = NULL)
 }
 
 \arguments{
@@ -23,6 +25,8 @@
   \item{alpha}{ alpha level }
   \item{call}{ logical; if TRUE the call is printed }
   \item{...}{ other arguments (not used) }
+  \item{drop}{ character vector identifying components to be dropped } 
+  \item{keep}{ character vector identifying components to be kept } 
 }
 
 \details{
@@ -82,7 +86,12 @@ predicted       \tab predicted values (`real' parameter estimates) \cr
 
 }
 
-\seealso{ \code{\link{ipsecr.fit}} }
+\seealso{ 
+
+\code{\link{ipsecr.fit}},
+\code{\link[secr]{trim}}
+
+}
 
 \examples{
 

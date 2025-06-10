@@ -601,3 +601,9 @@ rpsvi <- function (capthist)
 
 ################################################################################
 replacedefaults <- function (default, user) replace(default, names(user), user)
+
+trim.ipsecr <- function (object, drop = c('call', 'proxyfn', 'mask', 'sim.lm'), 
+                         keep = NULL) {
+    secr:::trim.default(object, drop = drop, keep = keep)
+}
+############################################################################################
