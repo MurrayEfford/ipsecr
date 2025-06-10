@@ -22,7 +22,7 @@
 \tabular{ll}{
 Package: \tab ipsecr\cr
 Type: \tab Package\cr
-Version: \tab 1.4.3\cr
+Version: \tab 1.4.4\cr
 Date: \tab 2025-06-10\cr
 License: \tab GNU General Public License Version 2 or later\cr
 }
@@ -52,10 +52,9 @@ The analyses in \pkg{ipsecr} extend those available in the software
 Density (see
 \href{https://www.otago.ac.nz/density/}{www.otago.ac.nz/density/}
 for the most recent version of Density).  Help is available on the
-`DENSITY | secr' forum at
-\href{http://www.phidot.org/forum/}{www.phidot.org} and
-the Google group \href{https://groups.google.com/forum/#!forum/secrgroup}{secrgroup}. Feedback
-on the software is also welcome, including suggestions for additional
+`DENSITY | secr' forum at www.phidot.org/forum/ and
+the Google group \href{https://groups.google.com/forum/#!forum/secrgroup}{secrgroup}. 
+Feedback on the software is also welcome, including suggestions for additional
 documentation or new features consistent with the overall design.
 
 `Inverse prediction' uses methods from multivariate calibration (Brown
