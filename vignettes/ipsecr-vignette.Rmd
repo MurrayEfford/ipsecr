@@ -518,6 +518,9 @@ It seems ipsecr.fit is not converging on the right part of the parameter space.
 Try specifying a wider boxsize1 for the first box, or set starting values. 
 
 ```{r saveall, echo = FALSE, eval = runall}
+fit0 <- trim(fit0)
+fitg <- trim(fitg)
+fitg2 <- trim(fitg2)
 save(ip.single, ip.single.1, ip.single.nontarget, ipx, clusterfitT, clusterfitML,
      fit0, fitg, fitg2, file = '../inst/example/fittedmodels.RData')
 save(ip.Fr, file = '../inst/example/ip.Fr.RData')
@@ -578,6 +581,5 @@ Pledger, S. and Efford, M. G. (1998)  Correction of bias due to heterogeneous ca
 
 [secr-version4.pdf]: https://www.otago.ac.nz/density/pdfs/secr-version4.pdf
 
-[phidot]: http://www.phidot.org/forum/
 [secrgroup]: <https://groups.google.com/forum/#!forum/secrgroup>
 [CRAN]: https://cran.r-project.org/package=secr
