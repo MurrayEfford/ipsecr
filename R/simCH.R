@@ -30,7 +30,7 @@ simCH <- function (traps, popn, detectfn, detparmat, noccasions, NT = NULL,
         if (is.null(usge)) {
             usge <- matrix(1, K, noccasions)
         }
-        detectcode <- secr:::detectorcode(traps, MLonly = FALSE)
+        detectcode <- secr:::secr_detectorcode(traps, MLonly = FALSE)
         if (length(unique(detectcode))>1) 
             stop ("simCH requires constant detector type")
         detectcode <- detectcode[1]

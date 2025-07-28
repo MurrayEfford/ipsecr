@@ -504,7 +504,7 @@ getDetParMat <- function (popn, model, detectfn, beta, parindx, link, fixed,
         out
     }
     else {
-        detectparnames <- secr:::parnames(detectfn)
+        detectparnames <- secr:::secr_parnames(detectfn)
         npop <- nrow(popn)
         detparmat <- matrix(nrow = npop, ncol = length(detectparnames), 
             dimnames =list(NULL, detectparnames))
@@ -535,7 +535,7 @@ getDetParMat <- function (popn, model, detectfn, beta, parindx, link, fixed,
 detBetaNames <- function(popn, model, detectfn, sessionlevels, fixed = NULL, 
     details = NULL) {
     if (ms(popn)) popn <- popn[[1]]
-    detectparnames <- secr:::parnames(detectfn)
+    detectparnames <- secr:::secr_parnames(detectfn)
     detparmat <- matrix(nrow = nrow(popn), ncol = length(detectparnames), 
         dimnames =list(NULL, detectparnames))
     designdata <- getDetDesignData(popn, model, sessionlevels[1], sessionlevels)
@@ -604,6 +604,6 @@ replacedefaults <- function (default, user) replace(default, names(user), user)
 
 trim.ipsecr <- function (object, drop = c('call', 'proxyfn', 'mask', 'sim.lm'), 
                          keep = NULL) {
-    secr:::trim.default(object, drop = drop, keep = keep)
+    secr::trim.default(object, drop = drop, keep = keep)
 }
 ############################################################################################
