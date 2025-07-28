@@ -1,4 +1,4 @@
-Changes in version 1.4.4 (2025-06-10)
+Changes in version 1.4.5 (2025-07-29)
 
 New features or changed behaviour of old functions
     o   error if proxy function fails on input
@@ -12,6 +12,7 @@ Other
     o   vignette includes example dropping histories with a single detection 
         (suggested by  Kodi et al. 2024 to control for ID errors)
     o   vignette does not advocate adjustment for overdispersion
+    o   rename internal functions secr_ for  secr 5.3.0
     
 Changes in version 1.4.2 (2025-01-23)
 
