@@ -4,42 +4,43 @@
 ## 2022-04-01,18,19, 2022-05-08, 2022-06-11
 ## 2022-06-13 lambdak renamed NT
 ## 2022-12-21 etc. allow extra parameters
+## 2022-12-21 etc. allow extra parameters
 ###############################################################################
 
 ipsecr.fit <- function (
-    capthist, 
-    proxyfn = proxy.ms, 
-    model = list(D~1, g0~1, sigma~1), 
-    mask = NULL,
-    buffer = 100, 
-    detectfn = 'HN', 
-    binomN = NULL,
-    start = NULL, 
-    link = list(),
-    fixed = list(),
-    timecov = NULL,
-    sessioncov = NULL,
-    details = list(), 
-    verify = TRUE, 
-    verbose = TRUE, 
-    ncores = NULL, 
-    seed = NULL,
-    ...) {
+        capthist, 
+        proxyfn = proxy.ms, 
+        model = list(D~1, g0~1, sigma~1), 
+        mask = NULL,
+        buffer = 100, 
+        detectfn = 'HN', 
+        binomN = NULL,
+        start = NULL, 
+        link = list(),
+        fixed = list(),
+        timecov = NULL,
+        sessioncov = NULL,
+        details = list(), 
+        verify = TRUE, 
+        verbose = TRUE, 
+        ncores = NULL, 
+        seed = NULL,
+        ...) {
     
     ## ... passed to proxyfn
     ## proxy.ms is default defined separately
-
+    
     ptm  <- proc.time()
     starttime <- format(Sys.time(), "%H:%M:%S %d %b %Y")
     cl <- match.call(expand.dots = TRUE)
     cl <- paste(names(cl)[-1],cl[-1], sep=' = ', collapse=', ' )
     cl <- paste('ipsecr.fit(', cl, ')')
     code <- 0  # exit code
-
+    
     #################################################
     ## inputs
     #################################################
-
+    
     trps <- traps(capthist)
     
     if (!is.null(covariates(mask))) {
@@ -89,9 +90,9 @@ ipsecr.fit <- function (
     if (is.character(detectfn)) {
         detectfn <- detectionfunctionnumber(detectfn)
     }
-    if (!(detectfn %in% c(0,2,4,14,16))) {
+    if (!(detectfn %in% c(0,2,4,14,16,20))) {
         stop (detectionfunctionname(detectfn),
-            " detection function not implemented in ipsecr.fit")
+              " detection function not implemented in ipsecr.fit")
     }
     
     #################################################
@@ -153,7 +154,7 @@ ipsecr.fit <- function (
     #################################################
     # nontarget model 
     #################################################
-
+    
     validnontargettype <- c('exclusive', 'truncated','erased','independent', 'dependent')
     details$nontargettype <- match.arg(details$nontargettype, choices = validnontargettype)
     if (detectortype %in% c('multi', 'proximity', 'count')) {
@@ -161,7 +162,7 @@ ipsecr.fit <- function (
             details$nontargettype <- 'truncated'   # downgrade for these detectors
         }
     }
-
+    
     sessionlevels <- session(capthist)
     if (secr::ms(capthist)) {
         nsessions <- length(capthist)
@@ -186,7 +187,7 @@ ipsecr.fit <- function (
         trapmeanSD <- getMeanSD(trps)
         nontarget <- attr(capthist, 'nontarget', exact = TRUE)
     }
-
+    
     #################################################
     ## optional data check
     #################################################
@@ -208,12 +209,12 @@ ipsecr.fit <- function (
     #################################################
     ## nontarget interference 
     #################################################
-   
+    
     modelnontarget <- length(unlist(nontarget))>0 && !details$ignorenontarget
     ## check
     if (modelnontarget) {
         trapdesigndata <- D.designdata(trps, model$NT, 1, 
-            sessionlevels, sessioncov, trapmeanSD)
+                                       sessionlevels, sessioncov, trapmeanSD)
     } 
     else {
         trapdesigndata <- NULL
@@ -225,11 +226,13 @@ ipsecr.fit <- function (
     #################################################
     
     if ('formula' %in% class(model)) model <- list(model)
-    model <- secr:::stdform (model)  ## named, no LHS
-    model <- updatemodel(model, detectfn, 14:20, 'g0', 'lambda0')
-    
-    detmodels <- names(model) %in% c('g0','lambda0','sigma')
-    # if (any(sapply(model[detmodels], "!=", ~1))) stop ("not ready for varying detection")
+    model <- secr:::secr_stdform (model)  ## named, no LHS
+    model <- updatemodel(model, detectfn, 14:19, 'g0', 'lambda0')
+    if (detectfn == 20) {
+        model <- updatemodel(model, detectfn, 20, 'g0', 'epsilon')
+        if (is.null(model$tau)) model$tau <- ~1
+    }
+    detmodels <- names(model) %in% c('g0','lambda0','sigma','epsilon','tau')
     notOK <- function(model) {
         sessvars <- names(sessioncov)
         maskvars <- names(covariates(if (secr::ms(mask)) mask[[1]] else mask))  
@@ -246,12 +249,12 @@ ipsecr.fit <- function (
     pnames <- valid.pnames (details, FALSE, detectfn, FALSE, FALSE, 1)
     extrapnames <- extraParNames(details, fixed)  # estimated user parameters
     if (modelnontarget) pnames <- c(pnames, 'NT')
-
+    
     #################################################
     ## build default model and update with user input
     #################################################
     
-    defaultmodel <- list(D=~1, g0=~1, lambda0=~1, sigma=~1, z=~1, w=~1, NT=~1)
+    defaultmodel <- list(D=~1, g0=~1, lambda0=~1, epsilon=~1, sigma=~1, z=~1, w=~1, NT=~1, tau=~1)
     defaultmodel <- replace (defaultmodel, names(model), model)
     for (p in extrapnames) {
         defaultmodel[[p]] <- ~1
@@ -259,7 +262,7 @@ ipsecr.fit <- function (
     for (f in fnames) {
         if (f %in% names(details$extraparam)) details$extraparam[[f]] <- fixed[[f]]
     }
-
+    
     #################################################
     ## test for irrelevant parameters in user's model
     #################################################
@@ -267,11 +270,11 @@ ipsecr.fit <- function (
     OK <- names(model) %in% pnames
     if (any(!OK))
         stop ("parameters in model not consistent with detectfn etc. : ",
-            paste(names(model)[!OK], collapse = ', '))
+              paste(names(model)[!OK], collapse = ', '))
     OK <- fnames %in% pnames
     if (any(!OK))
         stop ("attempt to fix parameters not in model : ",
-            paste(fnames[!OK], collapse = ', '))
+              paste(fnames[!OK], collapse = ', '))
     
     #################################################
     ## finalise model
@@ -286,7 +289,7 @@ ipsecr.fit <- function (
     # Link functions (model-specific)
     #################################################
     
-    defaultlink <- list(D = 'log', g0 = 'logit', lambda0 = 'log', sigma = 'log', NT = 'log')
+    defaultlink <- list(D = 'log', g0 = 'logit', lambda0 = 'log', epsilon = 'log', sigma = 'log', NT = 'log', tau = 'log')
     defaultextralink <- setNames(as.list(rep('log',length(extrapnames))), extrapnames)
     link <- replace (c(defaultlink, defaultextralink), names(link), link)
     link[!(names(link) %in% pnames)] <- NULL
@@ -347,7 +350,6 @@ ipsecr.fit <- function (
     popn <- simpop(mask, D=1, N = 10, details) # throw-away popn for parameter counting
     detbetanames <- detBetaNames(popn, model, detectfn, sessionlevels, fixed, details)
     nDetectionParameters <- sapply(detbetanames, length)
-    
     if (length(extrapnames)>0) {
         nExtraParameters <- sapply(extrapnames, length)
     }
@@ -365,7 +367,10 @@ ipsecr.fit <- function (
     ############################################
     realnames <- names(model)
     ## coefficients for D precede all others
-    betanames <- c(paste('D', Dnames, sep='.'), unlist(detbetanames))
+    if (length(nDensityParameters)>0 && nDensityParameters>0)
+        betanames <- c(paste('D', Dnames, sep='.'), unlist(detbetanames))
+    else
+        betanames <- unlist(detbetanames)
     if (nNTParameters>0) {
         betanames <- c(betanames, paste('NT', NTnames, sep='.'))
     }
@@ -387,10 +392,15 @@ ipsecr.fit <- function (
     else if (length(details$boxsize2) != NP)
         stop ("invalid boxsize2 vector")
     else boxsize2 <- details$boxsize2
-
+    
     #---------------------------------------------------------------------------
     # to simulate one realization
     #---------------------------------------------------------------------------
+    
+    # "mask", "trps", "link", "fixed", "details", 
+    # "detectfn", "noccasions", "nsessions", "proxyfn",
+    # "model", "trapdesigndata", "parindx", 
+    # "designD", "designNT", "modelnontarget", "cellarea"
     
     simfn <- function (beta, distribution = 'binomial', ...) {
         NP <- length(beta)
@@ -416,7 +426,7 @@ ipsecr.fit <- function (
                 details$extraparam[[parm]] <- untransform (beta[parm], link[[parm]])
             }
         }
-       
+        
         # repeat {
         allOK <- FALSE
         while (attempts < details$max.ntries && !allOK) {
@@ -430,7 +440,7 @@ ipsecr.fit <- function (
             }
             else if (details$popmethod == "sim.popn") {
                 popn <- sim.popn (D = as.data.frame(D), core = mask, 
-                    model2D = 'IHP', Ndist = Ndist, nsessions = nsessions)
+                                  model2D = 'IHP', Ndist = Ndist, nsessions = nsessions)
             }
             
             if (details$debug) print(summary(popn))
@@ -458,7 +468,7 @@ ipsecr.fit <- function (
                 }
                 popn2 <- scalepopn(popn, mask)
                 detparmat <- getDetParMat (popn2, model, detectfn, beta, parindx, 
-                    link, fixed, details, sessionlevels)
+                                           link, fixed, details, sessionlevels)
                 #-----------------------------------------------------
                 if (details$debug) {
                     if (secr::ms(capthist)) 
@@ -466,8 +476,13 @@ ipsecr.fit <- function (
                     else 
                         print(apply(detparmat,2,mean))
                 }
+                
                 # sample from population
-                if (is.function(details$CHmethod)) {   # user
+                if (detectfn == 20) {
+                    if (modelnontarget) stop ("simOU.capthist does not simulate nontarget detections")
+                    ch <- simOU.capthist(trps, popn, as.list(detparmat[1,]), noccasions, verify = FALSE)
+                }
+                else if (is.function(details$CHmethod)) {   # user
                     ch <- details$CHmethod(trps, popn, detectfn, detparmat, noccasions, NT, details)
                 }
                 else if (details$CHmethod == 'internal') {   # C++
@@ -476,7 +491,7 @@ ipsecr.fit <- function (
                 else if (details$CHmethod == 'sim.capthist') {   
                     if (modelnontarget) stop ("sim.capthist does not simulate nontarget detections")
                     ch <- sim.capthist(trps, popn, detectfn, as.list(detparmat[1,]), noccasions, nsessions, 
-                        renumber = FALSE)
+                                       renumber = FALSE)
                 }
                 # check valid
                 n <- if (nsessions == 1) nrow(ch) else sapply(ch,nrow)
@@ -501,9 +516,9 @@ ipsecr.fit <- function (
                     # (fails with ncores>1)
                     debug <- as.numeric(details$debug)
                     if (abs(debug)==1 || 
-                            (abs(debug)>1 && 
-                                    isTRUE(all.equal(designbeta[abs(debug),], 
-                                        beta, tolerance = 1e-4)))) 
+                        (abs(debug)>1 && 
+                         isTRUE(all.equal(designbeta[abs(debug),], 
+                                          beta, tolerance = 1e-4)))) 
                     {
                         cat('debug point ', abs(debug), '\n')
                         cat('designbeta ', unlist(designbeta[abs(debug),]), '\n')
@@ -531,10 +546,10 @@ ipsecr.fit <- function (
             }
         }
         #----------------------------------------------------
-
+        
         if (!allOK) {
             warning ("ipsecr.fit: no successful simulation after ", details$max.ntries,
-                " attempts", call. = FALSE)
+                     " attempts", call. = FALSE)
             return (rep(NA, NP))
         } 
         else {
@@ -558,7 +573,7 @@ ipsecr.fit <- function (
     y <- proxyfn(capthist, model = model, trapdesigndata = trapdesigndata, ...)
     if (length(y) < NP)
         stop ("need at least one proxy for each coefficient ",
-            paste(betanames, collapse=" "))
+              paste(betanames, collapse=" "))
     if (any(is.na(y)))
         stop ("proxy function not valid for at least one parameter")
     
@@ -568,7 +583,7 @@ ipsecr.fit <- function (
     ## ad hoc exclusion of NT and extra parameters
     details$trace <- verbose  # as used by makeStart
     start <- makeStart(start, parindx[!(names(parindx) %in% c('NT', extrapnames))], 
-        capthist, mask, detectfn, link, details[names(details) != 'extraparam'], fixed)
+                       capthist, mask, detectfn, link, details[names(details) != 'extraparam'], fixed)
     if (modelnontarget) {
         start <- c(start, y[parindx$NT])
     }
@@ -597,20 +612,26 @@ ipsecr.fit <- function (
         clustertype <- if (details$forkonunix && .Platform$OS.type == "unix") "FORK" else "PSOCK"
         clusterfile <- if (details$debug) "clusterlogfile.txt" else "/dev/null"
         memo (paste0('Preparing ', clustertype, 
-            ' cluster for parallel processing (ncores = ', ncores, ')'), verbose)
+                     ' cluster for parallel processing (ncores = ', ncores, ')'), verbose)
         clust <- makeCluster(ncores, type = clustertype, outfile = clusterfile,
-            methods = FALSE, useXDR = .Platform$endian=='big')
+                             methods = FALSE, useXDR = .Platform$endian=='big')
         if (clustertype == "PSOCK") {
+            if (detectfn == 20) {
+                clusterEvalQ(clust, library(secrdesign))
+            }
             clusterExport(clust, c(
                 "mask", "trps", "link", "fixed", "details", 
                 "detectfn", "noccasions", "nsessions", "proxyfn",
-                "model", "trapdesigndata", "parindx", 
+                "model", "trapdesigndata", "parindx", "proxy.ms",
                 "designD", "designNT", "modelnontarget", "cellarea"
+                
+                # ,"getD", "untransform", "simpop", "simCH", "ms", "getDetParMat",
+                # "getDetDesignData", "covariates", "invlogit", "parnames",
+                # "usage", "detector", "traps<-", "MS.capthist"
+                # ,"armaCHcpp"
             ), environment())
             # following are exported only during testing
-            # ,"getD", "untransform", "simpop", "simCH", "ms", "getDetParMat",
-            # "getDetDesignData", "covariates", "invlogit",
-            # "usage", "detector", "armaCHcpp", "traps<-", "MS.capthist"
+            
         }
         on.exit(stopCluster(clust))
         clusterSetRNGStream(clust, seed)
@@ -618,7 +639,7 @@ ipsecr.fit <- function (
     else {
         clust <- NULL
     }
-
+    
     ####################################################################
     ## Loop over boxes
     ## keep trying until estimates within box or number exceeds max.nbox
@@ -627,10 +648,9 @@ ipsecr.fit <- function (
     beta <- start
     ip.nsim <- numeric(0)
     if (details$keep.sim) {
-      simulations <- vector('list')
-      parameters  <- vector('list')
+        simulations <- vector('list')
+        parameters  <- vector('list')
     }
-    
     for (m in 1:details$max.nbox) {
         if (verbose) {
             cat('\nFitting box', m, '...  \n')
@@ -639,11 +659,11 @@ ipsecr.fit <- function (
         boxsize <- if (m == 1) boxsize1 else boxsize2
         if (details$boxtype == 'relative') {
             vertices <- sweep (1 + outer(c(-1,1), boxsize), MARGIN = 2,
-                FUN = '*', STATS = beta)
+                               FUN = '*', STATS = beta)
         } 
         else {
             vertices <- sweep (outer(c(-1,1), boxsize), MARGIN = 2,
-                FUN = '+', STATS = beta)
+                               FUN = '+', STATS = beta)
         }
         vertices <- data.frame(vertices)
         names(vertices) <- betanames
@@ -684,7 +704,7 @@ ipsecr.fit <- function (
         tempdistn <- if (details$distribution == 'even') 'even' else 'binomial'
         
         basedesign <- designbeta[rep(1:nrow(designbeta), details$min.nsim),]
-
+        
         # accumulate simulations until reach precision target or exceed max.nsim
         tries <- 0
         repeat {
@@ -692,13 +712,14 @@ ipsecr.fit <- function (
             if (ncores > 1) {
                 list(...) # evaluate any promises cf boot
                 newsim <- parRapply(clust, basedesign, simfn, 
-                    distribution = tempdistn, ...)
-                newsim <- t(matrix(newsim, ncol = nrow(basedesign)))
+                                    distribution = tempdistn, ...)
+                newsim <- matrix(newsim, ncol = nrow(basedesign))
             } 
             else {
-                newsim <- t(apply(basedesign, 1, simfn, 
-                    distribution = tempdistn, ...))
+                newsim <- apply(basedesign, 1, simfn, 
+                                distribution = tempdistn, ...)
             }
+            newsim <- t(newsim)
             OK <- apply(!apply(newsim,1, is.na), 2, all)
             if (sum(OK) == 0) {
                 code <- 3
@@ -706,7 +727,6 @@ ipsecr.fit <- function (
             }
             sim <- rbind(sim, newsim[OK,])
             alldesignbeta <- rbind(alldesignbeta,basedesign[OK,])
-            
             if (details$YonX) {
                 sim.lm <- lm ( sim ~ alldesignbeta )  # proxy ~ link(param)
             } 
@@ -714,7 +734,7 @@ ipsecr.fit <- function (
                 warning ("regression of X on Y does not work in ipsecr 1.2.0")
                 sim.lm <- lm ( alldesignbeta ~ sim)  # link(param) ~ proxy
             }
-
+            
             # break if have exceeded allowed simulations
             if ((nrow(alldesignbeta) > (details$max.nsim * ndesignpoints))) break
             
@@ -738,8 +758,8 @@ ipsecr.fit <- function (
         ip.nsim <- c(ip.nsim, nrow(sim))  # 2022-06-14
         
         if (details$keep.sim) {
-          simulations[[m]] <- sim
-          parameters[[m]] <- alldesignbeta
+            simulations[[m]] <- sim
+            parameters[[m]] <- alldesignbeta
         }
         
         faildev <- (dev > dev.max[m])
@@ -813,12 +833,12 @@ ipsecr.fit <- function (
         if (ncores > 1) {
             list(...) # evaluate any promises cf boot
             newsim <- parRapply(clust, vardesign, simfn,  
-                distribution = details$distribution, ...)
+                                distribution = details$distribution, ...)
             newsim <- t(matrix(newsim, ncol = nrow(vardesign)))
         } 
         else {
             newsim <- t(apply(vardesign,1,simfn,
-                distribution = details$distribution, ...))
+                              distribution = details$distribution, ...))
         }
         OK <- apply(!apply(newsim,1, is.na), 2, all)
         memo(paste(sum(OK), " variance simulations successful\n"), verbose)
@@ -842,16 +862,16 @@ ipsecr.fit <- function (
         ymean <- apply(newsim, 2, mean, na.rm = T)
         yse <- apply(newsim, 2, function(x) sd(x, na.rm = T) / sum(!is.na(x)))
         yq <- apply(newsim, 2, function(x) quantile(x, na.rm = T, probs = c(0.025,0.5,0.975)))
-
+        
         bootstrap <- data.frame (target = y, nsim = nsim, simulated = ymean,
-            SE.simulated = yse, q025 = yq[1,], median = yq[2,], q975 = yq[3,])
+                                 SE.simulated = yse, q025 = yq[1,], median = yq[2,], q975 = yq[3,])
         
     } 
     else {
         vcov <- matrix(nrow = NP, ncol = NP)
         bootstrap <- NA
     }
-
+    
     dimnames(vcov) <- list(betanames, betanames)
     
     output <- list(
@@ -890,7 +910,7 @@ ipsecr.fit <- function (
     )
     class(output) <- 'ipsecr'
     memo(paste('Completed in ', round(output$proctime,2), ' seconds at ',
-        format(Sys.time(), "%H:%M:%S %d %b %Y")), verbose)
+               format(Sys.time(), "%H:%M:%S %d %b %Y")), verbose)
     output
 }
 ##################################################

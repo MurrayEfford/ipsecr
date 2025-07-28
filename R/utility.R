@@ -11,8 +11,8 @@
 
 .localstuff <- new.env()
 
-##.localstuff$packageType <- ' pre-release'
-.localstuff$packageType <- ''
+.localstuff$packageType <- ' pre-release'
+##.localstuff$packageType <- ''
 
 .localstuff$countdetectors <- c('count','polygon','transect','unmarked','telemetry')
 .localstuff$detectionfunctions <-
@@ -36,11 +36,11 @@
     'hazard annular normal',
     'hazard cumulative gamma',
     'hazard variable power',
-    'hazard pixelar')
+    'Ornstein-Uhlenbeck')
 
 .localstuff$DFN <- c('HN', 'HR', 'EX', 'CHN', 'UN', 'WEX', 'ANN', 'CLN', 'CG',
   'BSS', 'SS', 'SSS', 'SN', 'SNS',
-  'HHN', 'HHR', 'HEX', 'HAN', 'HCG', 'HVP','HPX')
+  'HHN', 'HHR', 'HEX', 'HAN', 'HCG', 'HVP','OU')
 
 detectionfunctionname <- function (fn) {
     .localstuff$detectionfunctions[fn+1]
@@ -56,7 +56,7 @@ detectionfunctionnumber <- function (detname) {
 }
 getdfn <- function (detectfn) {
     switch (detectfn+1, HN, HR, EX, CHN, UN, WEX, ANN, CLN, CG, BSS, SS, SSS,
-                       SN, SNS, HHN, HHR, HEX, HAN, HCG, HVP, HPX)
+                       SN, SNS, HHN, HHR, HEX, HAN, HCG, HVP, OU)
 }
 
 valid.pnames <- function (details, CL, detectfn, alltelem, sighting, nmix) {
@@ -82,7 +82,7 @@ valid.pnames <- function (details, CL, detectfn, alltelem, sighting, nmix) {
         c('lambda0','sigma','w'),  # 17
         c('lambda0','sigma','z'),  # 18
         c('lambda0','sigma','z'),  # 19
-        c('lambda0','sigma'))      # 20 hazard pixelar 2021-03-25    
+        c('epsilon','sigma','tau')) # 20 OU     
 
     # 2022-12-21 extended to allow user-defined parameters
     if (!is.null(details$extraparam)) {
@@ -504,7 +504,8 @@ getDetParMat <- function (popn, model, detectfn, beta, parindx, link, fixed,
         out
     }
     else {
-        detectparnames <- secr:::parnames(detectfn)
+       
+        detectparnames <- secr:::secr_parnames(detectfn)
         npop <- nrow(popn)
         detparmat <- matrix(nrow = npop, ncol = length(detectparnames), 
             dimnames =list(NULL, detectparnames))
@@ -535,7 +536,7 @@ getDetParMat <- function (popn, model, detectfn, beta, parindx, link, fixed,
 detBetaNames <- function(popn, model, detectfn, sessionlevels, fixed = NULL, 
     details = NULL) {
     if (ms(popn)) popn <- popn[[1]]
-    detectparnames <- secr:::parnames(detectfn)
+    detectparnames <- secr:::secr_parnames(detectfn)
     detparmat <- matrix(nrow = nrow(popn), ncol = length(detectparnames), 
         dimnames =list(NULL, detectparnames))
     designdata <- getDetDesignData(popn, model, sessionlevels[1], sessionlevels)
@@ -604,6 +605,7 @@ replacedefaults <- function (default, user) replace(default, names(user), user)
 
 trim.ipsecr <- function (object, drop = c('call', 'proxyfn', 'mask', 'sim.lm'), 
                          keep = NULL) {
-    secr:::trim.default(object, drop = drop, keep = keep)
+    secr::trim.default(object, drop = drop, keep = keep)
 }
-############################################################################################
+
+################################################################################

@@ -1,3 +1,13 @@
+Changes in version 1.4.5 (2025-07-28)
+
+New features or changed behaviour of old functions
+    o   added detectfn 20 to develpment branch
+
+Other
+    o   calls to secr::: use new function names secr:::secr_
+    o   requires secr >= 5.3.0
+
+
 Changes in version 1.4.4 (2025-06-10)
 
 New features or changed behaviour of old functions

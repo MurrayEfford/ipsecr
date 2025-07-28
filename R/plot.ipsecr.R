@@ -19,7 +19,7 @@ plot.ipsecr <- function (x, newdata = NULL, add = FALSE,
             out
         } 
         else {
-            pars <- predicted[secr:::parnames(x$detectfn),'estimate']
+            pars <- predicted[secr:::secr_parnames(x$detectfn),'estimate']
             pars[is.na(pars)] <- unlist(x$fixed)
             dfn <- getdfn(x$detectfn)
             if (sigmatick) {
@@ -44,7 +44,7 @@ plot.ipsecr <- function (x, newdata = NULL, add = FALSE,
                 if (is.null(newdata)) {
                     newdata <- makeNewData(x)
                 }
-                parnamvec <- secr:::parnames(x$detectfn)
+                parnamvec <- secr:::secr_parnames(x$detectfn)
                 ## 2019-01-25 added beta0
                 if (!parnamvec[1] %in% c('g0','lambda0','beta0'))
                     stop ("first detection parameter not g0 or lambda0")
